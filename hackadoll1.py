@@ -2,8 +2,11 @@ import discord
 import asyncio
 import sys
 
-WUG_ROLES = { 'mayushii': 'Hope revived', 'aichan': 'like a sakura', 'minyami': 'Never give up', 'yoppi': 'Try Everything', 'nanamin': 'again & again', 'kayatan': 'Hallelujah', 'myu': 'Keep smiling' }
-MUSICVIDEOS = { '7 girls war': 'https://streamable.com/1afp5', '7gw': 'https://streamable.com/1afp5', 'kotonoha aoba': 'https://streamable.com/bn9mt', '言の葉 青葉': 'https://streamable.com/bn9mt', 'tachiagare': 'https://streamable.com/w85fh', 'タチアガレ!': 'https://streamable.com/w85fh', 'タチアガレ': 'https://streamable.com/w85fh', 'shoujo koukyoukyoku': 'https://streamable.com/gidqx', '少女交響曲': 'https://streamable.com/gidqx', 'shoujokkk': 'https://streamable.com/gidqx', 'skkk': 'https://streamable.com/gidqx', 'beyond the bottom': 'https://streamable.com/2ppw5', 'btb': 'https://streamable.com/2ppw5', 'bokura no frontier': 'https://streamable.com/aoa4z', '僕らのフロンティア': 'https://streamable.com/aoa4z', '僕フロ': 'https://streamable.com/aoa4z', 'bokufuro': 'https://streamable.com/aoa4z', 'koi? de ai? de boukun desu!': 'https://streamable.com/17myh', '恋?で愛?で暴君です!': 'https://streamable.com/17myh', 'koiai': 'https://streamable.com/17myh', 'ででです': 'https://streamable.com/17myh', 'boukun': 'https://streamable.com/17myh', 'koi de ai de boukun desu': 'https://streamable.com/17myh', 'tunago': 'https://streamable.com/7flh7', '7 senses': 'https://streamable.com/f8myx', 'shizuku no kanmuri': 'https://streamable.com/drggd', '雫の冠': 'https://streamable.com/drggd', 'suki no skill': 'https://streamable.com/w92kw', 'sukinoskill': 'https://streamable.com/w92kw', 'スキノスキル': 'https://streamable.com/w92kw' }
+WUG_ROLE_IDS = { 'mayushii': '332788311280189443', 'aichan': '333727530680844288', 'minyami': '332793887200641028', 'yoppi': '332796755399933953', 'nanamin': '333721984196411392', 'kayatan': '333721510164430848', 'myu': '333722098377818115' }
+
+MUSICVIDEOS = { '7 Girls War': 'https://streamable.com/1afp5', '言の葉 青葉': 'https://streamable.com/bn9mt', 'タチアガレ!': 'https://streamable.com/w85fh', '少女交響曲': 'https://streamable.com/gidqx', 'Beyond the Bottom': 'https://streamable.com/2ppw5', '僕らのフロンティア': 'https://streamable.com/aoa4z', '恋?で愛?で暴君です!': 'https://streamable.com/17myh', 'TUNAGO': 'https://streamable.com/7flh7', '7 Senses': 'https://streamable.com/f8myx', '雫の冠': 'https://streamable.com/drggd', 'スキノスキル': 'https://streamable.com/w92kw' }
+
+MV_NAMES = { '7 Girls War': ['7 girls war', '7gw'], '言の葉 青葉': ['言の葉 青葉', 'kotonoha aoba'], 'タチアガレ!': ['タチアガレ!', 'tachiagare', 'タチアガレ'],  '少女交響曲': ['少女交響曲', 'skkk', 'shoujokkk', 'shoujo koukyoukyoku'], 'Beyond the Bottom': ['beyond the bottom', 'btb'], '僕らのフロンティア': ['僕らのフロンティア', 'bokufuro', '僕フロ', 'bokura no frontier'], '恋?で愛?で暴君です!': ['恋?で愛?で暴君です!', 'koiai', 'koi? de ai? de boukun desu!', 'koi de ai de boukun desu', 'boukun', 'ででです'], 'TUNAGO': ['tunago'], '7 Senses': ['7 senses'], '雫の冠': ['雫の冠', 'shizuku no kanmuri'], 'スキノスキル': ['スキノスキル', 'suki no skill', 'sukinoskill'] }
 
 client = discord.Client()
 
@@ -18,30 +21,21 @@ async def on_ready():
 async def on_message(message):
     if message.author == client.user:
         return
-    elif message.content == '!help':
-        await help_message(message)
+
+    commands = { '!help': help_message, '!userinfo': show_userinfo, '!serverinfo': show_serverinfo, '!seiyuu-vids': seiyuu_vids, '!hakooshi': hakooshi, '!roles': role_help, '!kamioshi-count': kamioshi_count, '!oshi-count': oshi_count, '!mv-list': show_mv_list }
+
+    if message.content in commands:
+        await commands[message.content](message)
     elif message.content.startswith('!kick '):
         await kick_member(message)
     elif message.content.startswith('!ban '):
         await ban_member(message)
-    elif message.content == '!userinfo':
-        await show_userinfo(message)
-    elif message.content == '!serverinfo':
-        await show_serverinfo(message)
-    elif message.content == '!seiyuu-vids':
-        await seiyuu_vids(message)
     elif message.content.startswith('!oshihen '):
         await oshihen(message)
     elif message.content.startswith('!oshimashi '):
         await oshimashi(message)
-    elif message.content == '!roles':
-        await role_help(message)
-    elif message.content == '!oshi-count':
-        await oshi_count(message)
     elif message.content.startswith('!mv '):
         await show_mv(message)
-    elif message.content == '!mv-list':
-        await show_mv_list(message)
 
 @client.event
 async def help_message(message):
@@ -54,7 +48,9 @@ async def help_message(message):
     msg += '`!seiyuu-vids`: Show link to the wiki page with WUG seiyuu content.\n\n'
     msg += '`!oshihen <member>`: Change your oshi role.\n'
     msg += '`!oshimashi <member>`: Get an additional oshi role.\n'
+    msg += '`!hakooshi`: Get all 7 WUG member roles.\n'
     msg += '`!roles`: Show additional help on how to get roles.\n'
+    msg += '`!kamioshi-count`: Show the number of members with each WUG member role as their highest role.\n'
     msg += '`!oshi-count`: Show the number of members with each WUG member role.\n\n'
     msg += '`!mv <song>`: Show full MV of a song.\n'
     msg += '`!mv-list`: Show list of available MVs.'
@@ -120,15 +116,15 @@ async def seiyuu_vids(message):
 @client.event
 async def oshihen(message):
     role_name = message.content[9:]
-    role = discord.utils.get(message.server.roles, name=WUG_ROLES[role_name.lower()])
+    role = discord.utils.get(message.server.roles, id=WUG_ROLE_IDS[role_name.lower()])
 
     roles_to_remove = []
     for existing_role in message.author.roles:
-        if existing_role.name in WUG_ROLES.values():
+        if str(existing_role.id) in WUG_ROLE_IDS.values():
             roles_to_remove.append(existing_role)
 
-    if len(roles_to_remove) == 1 and roles_to_remove[0].name == WUG_ROLES[role_name.lower()]:
-        msg = 'Hello {0.author.mention}, you already have that role.'.format(message, role_name)
+    if len(roles_to_remove) == 1 and roles_to_remove[0].name == role.name:
+        msg = 'Hello {0.author.mention}, you already have that role.'.format(message)
         await client.send_message(message.channel, msg)
         return;
 
@@ -138,31 +134,46 @@ async def oshihen(message):
 
     if role is not None:
         await client.add_roles(message.author, role)
-        msg = 'Hello {0.author.mention}, you have oshihened to {1}.'.format(message, role_name)
+        msg = 'Hello {0.author.mention}, you have oshihened to {1}.'.format(message, role_name.title())
         await client.send_message(message.channel, msg)
 
 @client.event
 async def oshimashi(message):
     role_name = message.content[11:]
-    role = discord.utils.get(message.server.roles, name=WUG_ROLES[role_name.lower()])
+    role = discord.utils.get(message.server.roles, id=WUG_ROLE_IDS[role_name.lower()])
 
     if role is not None:
         if role not in message.author.roles:
             await client.add_roles(message.author, role)
-            msg = 'Hello {0.author.mention}, you now have the {1} oshi role \'{2}\'.'.format(message, role_name, role.name)
+            msg = 'Hello {0.author.mention}, you now have the {1} oshi role \'{2}\'.'.format(message, role_name.title(), role.name)
             await client.send_message(message.channel, msg)
         else:
-            msg = 'Hello {0.author.mention}, you already have that role.'.format(message, role_name)
+            msg = 'Hello {0.author.mention}, you already have that role.'.format(message)
             await client.send_message(message.channel, msg)
 
 @client.event
+async def hakooshi(message):
+    roles_to_add = []
+    for role in message.server.roles:
+        if role not in message.author.roles and str(role.id) in WUG_ROLE_IDS.values():
+            roles_to_add.append(role)
+
+    if len(roles_to_add) > 0:
+        await client.add_roles(message.author, *roles_to_add)
+        msg = 'Hello {0.author.mention}, you now have every WUG member role.'.format(message)
+        await client.send_message(message.channel, msg)
+    else:
+        msg = 'Hello {0.author.mention}, you already have every WUG member role.'.format(message)
+        await client.send_message(message.channel, msg)
+
+@client.event
 async def role_help(message):
-    roles_to_member = {v: k for k, v in WUG_ROLES.items()}
+    ids_to_member = { v: k for k, v in WUG_ROLE_IDS.items() }
     member_to_role = {}
 
     for role in message.server.roles:
-        if role.name in roles_to_member:
-            member_to_role[roles_to_member[role.name]] = role
+        if str(role.id) in ids_to_member:
+            member_to_role[ids_to_member[role.id]] = role.name
 
     msg = '**How to get WUG Member Roles**\n\n'
     msg += 'Users can have any of the 7 WUG member roles. Use `!oshihen <member>` to get the role you want.\n\n'
@@ -173,18 +184,40 @@ async def role_help(message):
     msg += '`!oshihen Nanamin` for \'{0}\' role\n'.format(member_to_role['nanamin'])
     msg += '`!oshihen Kayatan` for \'{0}\' role\n'.format(member_to_role['kayatan'])
     msg += '`!oshihen Myu` for \'{0}\' role\n\n'.format(member_to_role['myu'])
-    msg += 'Note that using `!oshihen` will remove all of your existing member roles. To get an extra role without removing existing ones, use `!oshimashi <member>` instead.'
+    msg += 'Note that using `!oshihen` will remove all of your existing member roles. To get an extra role without removing existing ones, use `!oshimashi <member>` instead. To get all 7 roles, use `!hakooshi`.'
+    await client.send_message(message.channel, msg)
+
+@client.event
+async def kamioshi_count(message):
+    ids_to_member = { v: k for k, v in WUG_ROLE_IDS.items() }
+    oshi_num = {}
+
+    for member in message.server.members:
+        member_roles = [r for r in member.roles if str(r.id) in ids_to_member]
+        if len(member_roles) > 0:
+            role = sorted(member_roles)[-1]
+            if str(role.id) in ids_to_member:
+                oshi_num[ids_to_member[str(role.id)]] = oshi_num.get(ids_to_member[str(role.id)], 0) + 1
+
+    msg = '**Number of Users with Each WUG Member Role as Their Highest Role**\n\n'
+    msg += 'Mayushii {0}\n'.format(oshi_num.get('mayushii', 0))
+    msg += 'Aichan {0}\n'.format(oshi_num.get('aichan', 0))
+    msg += 'Minyami {0}\n'.format(oshi_num.get('minyami', 0))
+    msg += 'Yoppi {0}\n'.format(oshi_num.get('yoppi', 0))
+    msg += 'Nanamin {0}\n'.format(oshi_num.get('nanamin', 0))
+    msg += 'Kayatan {0}\n'.format(oshi_num.get('kayatan', 0))
+    msg += 'Myu {0}\n'.format(oshi_num.get('myu', 0))
     await client.send_message(message.channel, msg)
 
 @client.event
 async def oshi_count(message):
-    roles_to_member = {v: k for k, v in WUG_ROLES.items()}
+    ids_to_member = { v: k for k, v in WUG_ROLE_IDS.items() }
     oshi_num = {}
 
     for member in message.server.members:
         for role in member.roles:
-            if role.name in roles_to_member:
-                oshi_num[roles_to_member[role.name]] = oshi_num.get(roles_to_member[role.name], 0) + 1
+            if str(role.id) in ids_to_member:
+                oshi_num[ids_to_member[str(role.id)]] = oshi_num.get(ids_to_member[str(role.id)], 0) + 1
 
     msg = '**Number of Users with Each WUG Member Role**\n\n'
     msg += 'Mayushii {0}\n'.format(oshi_num.get('mayushii', 0))
@@ -195,18 +228,23 @@ async def oshi_count(message):
     msg += 'Kayatan {0}\n'.format(oshi_num.get('kayatan', 0))
     msg += 'Myu {0}\n'.format(oshi_num.get('myu', 0))
     await client.send_message(message.channel, msg)
-    
+
 @client.event
 async def show_mv(message):
     song_name = message.content[4:].lower()
-    if song_name in MUSICVIDEOS:
-        msg = MUSICVIDEOS[song_name]
+    name_to_mv = {}
+
+    for mv, names in list(MV_NAMES.items()):
+      name_to_mv.update({ name : mv for name in names })
+
+    if song_name in name_to_mv:
+        msg = MUSICVIDEOS[name_to_mv[song_name]]
         await client.send_message(message.channel, msg)
 
 @client.event
 async def show_mv_list(message):
     msg = '**List of Available Music Videos**\n\n'
-    msg += '7 Girls War\n言の葉 青葉\nタチアガレ!\n少女交響曲\nBeyond the Bottom\n僕らのフロンティア\n恋?で愛?で暴君です!\nTUNAGO\n7 Senses\n雫の冠\nスキノスキル\n\n'
+    msg += '{0}\n\n'.format('\n'.join(list(MUSICVIDEOS.keys())))
     msg += 'Use `!mv <song>` to show the full MV. You can also write the name of the song in English.'
     await client.send_message(message.channel, msg)
 
