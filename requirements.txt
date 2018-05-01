@@ -1,1 +1,2 @@
 discord.py==0.16.12
+forex-python==0.3.3

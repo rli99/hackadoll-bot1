@@ -1,11 +1,11 @@
-import discord
 import asyncio
+import discord
 import sys
+from decimal import Decimal
+from forex_python.converter import CurrencyRates
 
 WUG_ROLE_IDS = { 'mayushii': '332788311280189443', 'aichan': '333727530680844288', 'minyami': '332793887200641028', 'yoppi': '332796755399933953', 'nanamin': '333721984196411392', 'kayatan': '333721510164430848', 'myu': '333722098377818115' }
-
 MUSICVIDEOS = { '7 Girls War': 'https://streamable.com/1afp5', '言の葉 青葉': 'https://streamable.com/bn9mt', 'タチアガレ!': 'https://streamable.com/w85fh', '少女交響曲': 'https://streamable.com/gidqx', 'Beyond the Bottom': 'https://streamable.com/2ppw5', '僕らのフロンティア': 'https://streamable.com/aoa4z', '恋?で愛?で暴君です!': 'https://streamable.com/17myh', 'TUNAGO': 'https://streamable.com/7flh7', '7 Senses': 'https://streamable.com/f8myx', '雫の冠': 'https://streamable.com/drggd', 'スキノスキル': 'https://streamable.com/w92kw' }
-
 MV_NAMES = { '7 Girls War': ['7 girls war', '7gw'], '言の葉 青葉': ['言の葉 青葉', 'kotonoha aoba'], 'タチアガレ!': ['タチアガレ!', 'tachiagare', 'タチアガレ'],  '少女交響曲': ['少女交響曲', 'skkk', 'shoujokkk', 'shoujo koukyoukyoku'], 'Beyond the Bottom': ['beyond the bottom', 'btb'], '僕らのフロンティア': ['僕らのフロンティア', 'bokufuro', '僕フロ', 'bokura no frontier'], '恋?で愛?で暴君です!': ['恋?で愛?で暴君です!', 'koiai', 'koi? de ai? de boukun desu!', 'koi de ai de boukun desu', 'boukun', 'ででです'], 'TUNAGO': ['tunago'], '7 Senses': ['7 senses'], '雫の冠': ['雫の冠', 'shizuku no kanmuri'], 'スキノスキル': ['スキノスキル', 'suki no skill', 'sukinoskill'] }
 
 client = discord.Client()
@@ -36,6 +36,8 @@ async def on_message(message):
         await oshimashi(message)
     elif message.content.startswith('!mv '):
         await show_mv(message)
+    elif message.content.startswith('!currency '):
+        await convert_currency(message)
 
 @client.event
 async def help_message(message):
@@ -53,7 +55,8 @@ async def help_message(message):
     msg += '`!kamioshi-count`: Show the number of members with each WUG member role as their highest role.\n'
     msg += '`!oshi-count`: Show the number of members with each WUG member role.\n\n'
     msg += '`!mv <song>`: Show full MV of a song.\n'
-    msg += '`!mv-list`: Show list of available MVs.'
+    msg += '`!mv-list`: Show list of available MVs.\n\n'
+    msg += '`!currency <amount> <x> to <y>`: Convert <amount> of <x> currency to <y> currency, e.g. `!currency 12.34 AUD to USD`.\n'
     await client.send_message(message.channel, msg)
 
 @client.event
@@ -246,6 +249,20 @@ async def show_mv_list(message):
     msg = '**List of Available Music Videos**\n\n'
     msg += '{0}\n\n'.format('\n'.join(list(MUSICVIDEOS.keys())))
     msg += 'Use `!mv <song>` to show the full MV. You can also write the name of the song in English.'
+    await client.send_message(message.channel, msg)
+
+@client.event
+async def convert_currency(message):
+    conversion = message.content[10:].split()
+    if len(conversion) == 4 and conversion[2].lower() == 'to':
+        c = CurrencyRates()
+        try:
+            result = c.convert(conversion[1].upper(), conversion[3].upper(), Decimal(conversion[0].strip()))
+            msg = '{0} {1}'.format(('%f' % result).rstrip('0').rstrip('.'), conversion[3].upper())
+            await client.send_message(message.channel, msg)
+            return
+        except: pass
+    msg = 'Couldn\'t convert. Please follow this format for converting currency: `!currency 12.34 AUD to USD`.'
     await client.send_message(message.channel, msg)
 
 client.run(sys.argv[1])
