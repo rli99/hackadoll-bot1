@@ -2,13 +2,15 @@ import asyncio
 import discord
 import sys
 from decimal import Decimal
+from firebase import firebase
 from forex_python.converter import CurrencyRates
 
-WUG_ROLE_IDS = { 'mayushii': '332788311280189443', 'aichan': '333727530680844288', 'minyami': '332793887200641028', 'yoppi': '332796755399933953', 'nanamin': '333721984196411392', 'kayatan': '333721510164430848', 'myu': '333722098377818115' }
-MUSICVIDEOS = { '7 Girls War': 'https://streamable.com/1afp5', '言の葉 青葉': 'https://streamable.com/bn9mt', 'タチアガレ!': 'https://streamable.com/w85fh', '少女交響曲': 'https://streamable.com/gidqx', 'Beyond the Bottom': 'https://streamable.com/2ppw5', '僕らのフロンティア': 'https://streamable.com/aoa4z', '恋?で愛?で暴君です!': 'https://streamable.com/17myh', 'TUNAGO': 'https://streamable.com/7flh7', '7 Senses': 'https://streamable.com/f8myx', '雫の冠': 'https://streamable.com/drggd', 'スキノスキル': 'https://streamable.com/w92kw' }
-MV_NAMES = { '7 Girls War': ['7 girls war', '7gw'], '言の葉 青葉': ['言の葉 青葉', 'kotonoha aoba'], 'タチアガレ!': ['タチアガレ!', 'tachiagare', 'タチアガレ'],  '少女交響曲': ['少女交響曲', 'skkk', 'shoujokkk', 'shoujo koukyoukyoku'], 'Beyond the Bottom': ['beyond the bottom', 'btb'], '僕らのフロンティア': ['僕らのフロンティア', 'bokufuro', '僕フロ', 'bokura no frontier'], '恋?で愛?で暴君です!': ['恋?で愛?で暴君です!', 'koiai', 'koi? de ai? de boukun desu!', 'koi de ai de boukun desu', 'boukun', 'ででです'], 'TUNAGO': ['tunago'], '7 Senses': ['7 senses'], '雫の冠': ['雫の冠', 'shizuku no kanmuri'], 'スキノスキル': ['スキノスキル', 'suki no skill', 'sukinoskill'] }
+WUG_ROLE_IDS = {'mayushii': '332788311280189443', 'aichan': '333727530680844288', 'minyami': '332793887200641028', 'yoppi': '332796755399933953', 'nanamin': '333721984196411392', 'kayatan': '333721510164430848', 'myu': '333722098377818115'}
+MUSICVIDEOS = {'7 Girls War': 'https://streamable.com/1afp5', '言の葉 青葉': 'https://streamable.com/bn9mt', 'タチアガレ!': 'https://streamable.com/w85fh', '少女交響曲': 'https://streamable.com/gidqx', 'Beyond the Bottom': 'https://streamable.com/2ppw5', '僕らのフロンティア': 'https://streamable.com/aoa4z', '恋?で愛?で暴君です!': 'https://streamable.com/17myh', 'TUNAGO': 'https://streamable.com/7flh7', '7 Senses': 'https://streamable.com/f8myx', '雫の冠': 'https://streamable.com/drggd', 'スキノスキル': 'https://streamable.com/w92kw'}
+MV_NAMES = {'7 Girls War': ['7 girls war', '7gw'], '言の葉 青葉': ['言の葉 青葉', 'kotonoha aoba'], 'タチアガレ!': ['タチアガレ!', 'tachiagare', 'タチアガレ'],  '少女交響曲': ['少女交響曲', 'skkk', 'shoujokkk', 'shoujo koukyoukyoku'], 'Beyond the Bottom': ['beyond the bottom', 'btb'], '僕らのフロンティア': ['僕らのフロンティア', 'bokufuro', '僕フロ', 'bokura no frontier'], '恋?で愛?で暴君です!': ['恋?で愛?で暴君です!', 'koiai', 'koi? de ai? de boukun desu!', 'koi de ai de boukun desu', 'boukun', 'ででです'], 'TUNAGO': ['tunago'], '7 Senses': ['7 senses'], '雫の冠': ['雫の冠', 'shizuku no kanmuri'], 'スキノスキル': ['スキノスキル', 'suki no skill', 'sukinoskill']}
 
 client = discord.Client()
+firebase = firebase.FirebaseApplication(sys.argv[2], None)
 
 @client.event
 async def on_ready():
@@ -22,7 +24,7 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    commands = { '!help': help_message, '!userinfo': show_userinfo, '!serverinfo': show_serverinfo, '!seiyuu-vids': seiyuu_vids, '!hakooshi': hakooshi, '!roles': role_help, '!kamioshi-count': kamioshi_count, '!oshi-count': oshi_count, '!mv-list': show_mv_list }
+    commands = {'!help': help_message, '!userinfo': show_userinfo, '!serverinfo': show_serverinfo, '!seiyuu-vids': seiyuu_vids, '!hakooshi': hakooshi, '!roles': role_help, '!kamioshi-count': kamioshi_count, '!oshi-count': oshi_count, '!mv-list': show_mv_list}
 
     if message.content in commands:
         await commands[message.content](message)
@@ -38,6 +40,10 @@ async def on_message(message):
         await show_mv(message)
     elif message.content.startswith('!currency '):
         await convert_currency(message)
+    elif message.content.startswith('!tagcreate '):
+        await create_tag(message)
+    elif message.content.startswith('!tag '):
+        await display_tag(message)
 
 @client.event
 async def help_message(message):
@@ -56,7 +62,9 @@ async def help_message(message):
     msg += '`!oshi-count`: Show the number of members with each WUG member role.\n\n'
     msg += '`!mv <song>`: Show full MV of a song.\n'
     msg += '`!mv-list`: Show list of available MVs.\n\n'
-    msg += '`!currency <amount> <x> to <y>`: Convert <amount> of <x> currency to <y> currency, e.g. `!currency 12.34 AUD to USD`.\n'
+    msg += '`!currency <amount> <x> to <y>`: Convert <amount> of <x> currency to <y> currency, e.g. `!currency 12.34 AUD to USD`.\n\n'
+    msg += '`!tagcreate <tag_name> <content>`: Create a tag.\n'
+    msg += '`!tag <tag_name>`: Display a saved tag.'
     await client.send_message(message.channel, msg)
 
 @client.event
@@ -171,7 +179,7 @@ async def hakooshi(message):
 
 @client.event
 async def role_help(message):
-    ids_to_member = { v: k for k, v in WUG_ROLE_IDS.items() }
+    ids_to_member = {v: k for k, v in WUG_ROLE_IDS.items()}
     member_to_role = {}
 
     for role in message.server.roles:
@@ -192,7 +200,7 @@ async def role_help(message):
 
 @client.event
 async def kamioshi_count(message):
-    ids_to_member = { v: k for k, v in WUG_ROLE_IDS.items() }
+    ids_to_member = {v: k for k, v in WUG_ROLE_IDS.items()}
     oshi_num = {}
 
     for member in message.server.members:
@@ -214,7 +222,7 @@ async def kamioshi_count(message):
 
 @client.event
 async def oshi_count(message):
-    ids_to_member = { v: k for k, v in WUG_ROLE_IDS.items() }
+    ids_to_member = {v: k for k, v in WUG_ROLE_IDS.items()}
     oshi_num = {}
 
     for member in message.server.members:
@@ -238,7 +246,7 @@ async def show_mv(message):
     name_to_mv = {}
 
     for mv, names in list(MV_NAMES.items()):
-      name_to_mv.update({ name : mv for name in names })
+      name_to_mv.update({name : mv for name in names})
 
     if song_name in name_to_mv:
         msg = MUSICVIDEOS[name_to_mv[song_name]]
@@ -264,5 +272,35 @@ async def convert_currency(message):
         except: pass
     msg = 'Couldn\'t convert. Please follow this format for converting currency: `!currency 12.34 AUD to USD`.'
     await client.send_message(message.channel, msg)
+
+@client.event
+async def create_tag(message):
+    tag_to_create = message.content[11:].split()
+    if len(tag_to_create) > 1:
+        tag_name = tag_to_create[0].strip()
+        tag_content = message.content[12 + len(tag_name):]
+        existing_tag = firebase.get('/tags', tag_name)
+        if not existing_tag:
+            firebase.patch('/tags', {tag_name: tag_content})
+            msg = 'Created tag `{0}`\n\n{1}'.format(tag_name, tag_content)
+            await client.send_message(message.channel, msg)
+        else:
+            msg = 'That tag already exists. Please choose a different tag name.'
+            await client.send_message(message.channel, msg)
+        return
+
+    msg = 'Couldn\'t create tag. Please follow this format for creating a tag: `!createtag NameOfTag Content of the tag`.'
+    await client.send_message(message.channel, msg)
+
+@client.event
+async def display_tag(message):
+    tag_name = message.content[5:].strip()
+    tag_result = firebase.get('/tags', tag_name)
+    if tag_result and len(tag_result) > 0:
+        msg = tag_result
+        await client.send_message(message.channel, msg)
+    else:
+        msg = 'That tag doesn\'t exist.'
+        await client.send_message(message.channel, msg)
 
 client.run(sys.argv[1])
