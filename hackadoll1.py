@@ -1,8 +1,7 @@
-import asyncio
-import discord
-import sys
+import asyncio, discord, sys
 from argparse import ArgumentParser
 from decimal import Decimal
+from discord.ext import commands
 from firebase import firebase
 from forex_python.converter import CurrencyRates
 
@@ -17,42 +16,17 @@ MUSICVIDEOS = {'7 Girls War': 'https://streamable.com/1afp5', '言の葉 青葉'
 MV_NAMES = {'7 Girls War': ['7 girls war', '7gw'], '言の葉 青葉': ['言の葉 青葉', 'kotonoha aoba'], 'タチアガレ!': ['tachiagare!', 'タチアガレ!', 'tachiagare', 'タチアガレ'],  '少女交響曲': ['少女交響曲', 'skkk', 'shoujokkk', 'shoujo koukyoukyoku'], 'Beyond the Bottom': ['beyond the bottom', 'btb'], '僕らのフロンティア': ['僕らのフロンティア', 'bokufuro', '僕フロ', 'bokura no frontier'], '恋?で愛?で暴君です!': ['恋?で愛?で暴君です!', 'koiai', 'koi? de ai? de boukun desu!', 'koi de ai de boukun desu', 'boukun', 'ででです'], 'One In A Billion': ['one in a billion', 'oiab', 'ワンビリ'], 'One In A Billion (Dance)': ['one in a billion (dance)', 'oiab (dance)', 'ワンビリ (dance)', 'oiab dance'], 'TUNAGO': ['tunago'], '7 Senses': ['7 senses'], '雫の冠': ['雫の冠', 'shizuku no kanmuri'], 'スキノスキル': ['スキノスキル', 'suki no skill', 'sukinoskill']}
 
 args = parse_arguments()
-client = discord.Client()
+bot = commands.Bot(command_prefix='!', description='Discord bot for Wake Up, Girls! server.')
+bot.remove_command('help')
 firebase = firebase.FirebaseApplication(args.firebase_db, None)
 
-@client.event
+@bot.event
 async def on_ready():
-    print('Logged in as: {0} ({1})'.format(client.user.name, client.user.id))
+    print('Logged in as: {0} ({1})'.format(bot.user.name, bot.user.id))
     print('-------------')
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
-
-    commands = {'!help': help_message, '!userinfo': show_userinfo, '!serverinfo': show_serverinfo, '!seiyuu-vids': seiyuu_vids, '!hakooshi': hakooshi, '!roles': role_help, '!kamioshi-count': kamioshi_count, '!oshi-count': oshi_count, '!mv-list': show_mv_list}
-
-    if message.content in commands:
-        await commands[message.content](message)
-    elif message.content.startswith('!kick '):
-        await kick_member(message)
-    elif message.content.startswith('!ban '):
-        await ban_member(message)
-    elif message.content.startswith('!oshihen '):
-        await oshihen(message)
-    elif message.content.startswith('!oshimashi '):
-        await oshimashi(message)
-    elif message.content.startswith('!mv '):
-        await show_mv(message)
-    elif message.content.startswith('!currency '):
-        await convert_currency(message)
-    elif message.content.startswith('!tagcreate '):
-        await create_tag(message)
-    elif message.content.startswith('!tag '):
-        await display_tag(message)
-
-@client.event
-async def help_message(message):
+@bot.command()
+async def help():
     msg = '**Available Commands**\n\n'
     msg += '`!help`: Show this help message.\n\n'
     msg += '`!kick <member>`: Kick a member (mods only).\n'
@@ -71,35 +45,27 @@ async def help_message(message):
     msg += '`!currency <amount> <x> to <y>`: Convert <amount> of <x> currency to <y> currency, e.g. `!currency 12.34 AUD to USD`.\n\n'
     msg += '`!tagcreate <tag_name> <content>`: Create a tag.\n'
     msg += '`!tag <tag_name>`: Display a saved tag.'
-    await client.send_message(message.channel, msg)
+    await bot.say(msg)
 
-@client.event
-async def kick_member(message):
-    if len(message.mentions) > 0:
-        member = message.mentions[0]
-        if message.channel.permissions_for(message.author).kick_members:
-            await client.kick(member)
-            msg = '{0.mention} has been kicked.'.format(member)
-            await client.send_message(message.channel, msg)
-        else:
-            msg = 'You do not have permission to do that.'
-            await client.send_message(message.channel, msg)
+@bot.command(pass_context=True)
+async def kick(ctx, member : discord.Member):
+    if ctx.message.channel.permissions_for(ctx.message.author).kick_members:
+        await bot.kick(member)
+        await bot.say('{0.mention} has been kicked.'.format(member))
+    else:
+        await bot.say('You do not have permission to do that.')
 
-@client.event
-async def ban_member(message):
-    if len(message.mentions) > 0:
-        member = message.mentions[0]
-        if message.channel.permissions_for(message.author).ban_members:
-            await client.ban(member)
-            msg = '{0.mention} has been banned.'.format(member)
-            await client.send_message(message.channel, msg)
-        else:
-            msg = 'You do not have permission to do that.'
-            await client.send_message(message.channel, msg)
+@bot.command(pass_context=True)
+async def ban(ctx, member : discord.Member):
+    if ctx.message.channel.permissions_for(ctx.message.author).ban_members:
+        await bot.ban(member)
+        await bot.say('{0.mention} has been banned.'.format(member))
+    else:
+        await bot.say('You do not have permission to do that.')
 
-@client.event
-async def show_userinfo(message):
-    user = message.author
+@bot.command(pass_context=True)
+async def userinfo(ctx):
+    user = ctx.message.author
     msg = '**User Information for {0.mention}**\n\n'.format(user)
     msg += '**Name:** {0}\n'.format(user.display_name)
     msg += '**ID:** {0}\n'.format(user.id)
@@ -107,11 +73,11 @@ async def show_userinfo(message):
     msg += '**Account created:** {0} UTC\n'.format(user.created_at.strftime("%Y-%m-%d %H:%M:%S"))
     msg += '**Roles:** {0}\n'.format(', '.join([r.name for r in user.roles[1:]]))
     msg += '**Avatar:** <{0}>'.format(user.avatar_url)
-    await client.send_message(message.channel, msg)
+    await bot.say(msg)
 
-@client.event
-async def show_serverinfo(message):
-    server = message.server
+@bot.command(pass_context=True)
+async def serverinfo(ctx):
+    server = ctx.message.server
     msg = '**Server Information**\n\n'
     msg += '**{0}** (ID: {1})\n'.format(server.name, server.id)
     msg += '**Owner:** {0} (ID: {1})\n'.format(server.owner, server.owner.id)
@@ -122,73 +88,62 @@ async def show_serverinfo(message):
     msg += '**Default channel:** {0}\n'.format(server.default_channel.name if server.default_channel is not None else '')
     msg += '**Region:** {0}\n'.format(server.region)
     msg += '**Icon:** <{0}>'.format(server.icon_url)
-    await client.send_message(message.channel, msg)
+    await bot.say(msg)
 
-@client.event
-async def seiyuu_vids(message):
+@bot.command(name='seiyuu-vids')
+async def seiyuu_vids():
     msg = '**WUG Seiyuu Videos**\n'
     msg += '<http://wake-up-girls.wikia.com/wiki/List_of_Seiyuu_Content>'
-    await client.send_message(message.channel, msg)
+    await bot.say(msg)
 
-@client.event
-async def oshihen(message):
-    role_name = message.content[9:]
-    role = discord.utils.get(message.server.roles, id=WUG_ROLE_IDS[role_name.lower()])
-
+@bot.command(pass_context=True)
+async def oshihen(ctx, role_name : str):
+    role = discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[role_name.lower()])
     roles_to_remove = []
-    for existing_role in message.author.roles:
+    for existing_role in ctx.message.author.roles:
         if str(existing_role.id) in WUG_ROLE_IDS.values():
             roles_to_remove.append(existing_role)
 
     if len(roles_to_remove) == 1 and roles_to_remove[0].name == role.name:
-        msg = 'Hello {0.author.mention}, you already have that role.'.format(message)
-        await client.send_message(message.channel, msg)
-        return;
+        await bot.say('Hello {0.message.author.mention}, you already have that role.'.format(ctx))
+        return
 
     if len(roles_to_remove) > 0:
-        await client.remove_roles(message.author, *roles_to_remove)
+        await bot.remove_roles(ctx.message.author, *roles_to_remove)
         await asyncio.sleep(1)
 
     if role is not None:
-        await client.add_roles(message.author, role)
-        msg = 'Hello {0.author.mention}, you have oshihened to {1}.'.format(message, role_name.title())
-        await client.send_message(message.channel, msg)
+        await bot.add_roles(ctx.message.author, role)
+        await bot.say('Hello {0.message.author.mention}, you have oshihened to {1}.'.format(ctx, role_name.title()))
 
-@client.event
-async def oshimashi(message):
-    role_name = message.content[11:]
-    role = discord.utils.get(message.server.roles, id=WUG_ROLE_IDS[role_name.lower()])
-
+@bot.command(pass_context=True)
+async def oshimashi(ctx, role_name : str):
+    role = discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[role_name.lower()])
     if role is not None:
-        if role not in message.author.roles:
-            await client.add_roles(message.author, role)
-            msg = 'Hello {0.author.mention}, you now have the {1} oshi role \'{2}\'.'.format(message, role_name.title(), role.name)
-            await client.send_message(message.channel, msg)
+        if role not in ctx.message.author.roles:
+            await bot.add_roles(ctx.message.author, role)
+            await bot.say('Hello {0.message.author.mention}, you now have the {1} oshi role \'{2}\'.'.format(ctx, role_name.title(), role.name))
         else:
-            msg = 'Hello {0.author.mention}, you already have that role.'.format(message)
-            await client.send_message(message.channel, msg)
+            await bot.say('Hello {0.message.author.mention}, you already have that role.'.format(ctx))
 
-@client.event
-async def hakooshi(message):
+@bot.command(pass_context=True)
+async def hakooshi(ctx):
     roles_to_add = []
-    for role in message.server.roles:
-        if role not in message.author.roles and str(role.id) in WUG_ROLE_IDS.values():
+    for role in ctx.message.server.roles:
+        if role not in ctx.message.author.roles and str(role.id) in WUG_ROLE_IDS.values():
             roles_to_add.append(role)
 
     if len(roles_to_add) > 0:
-        await client.add_roles(message.author, *roles_to_add)
-        msg = 'Hello {0.author.mention}, you now have every WUG member role.'.format(message)
-        await client.send_message(message.channel, msg)
+        await bot.add_roles(ctx.message.author, *roles_to_add)
+        await bot.say('Hello {0.message.author.mention}, you now have every WUG member role.'.format(ctx))
     else:
-        msg = 'Hello {0.author.mention}, you already have every WUG member role.'.format(message)
-        await client.send_message(message.channel, msg)
+        await bot.say('Hello {0.message.author.mention}, you already have every WUG member role.'.format(ctx))
 
-@client.event
-async def role_help(message):
+@bot.command(pass_context=True)
+async def roles(ctx):
     ids_to_member = {v: k for k, v in WUG_ROLE_IDS.items()}
     member_to_role = {}
-
-    for role in message.server.roles:
+    for role in ctx.message.server.roles:
         if str(role.id) in ids_to_member:
             member_to_role[ids_to_member[role.id]] = role.name
 
@@ -202,14 +157,13 @@ async def role_help(message):
     msg += '`!oshihen Kayatan` for \'{0}\' role\n'.format(member_to_role['kayatan'])
     msg += '`!oshihen Myu` for \'{0}\' role\n\n'.format(member_to_role['myu'])
     msg += 'Note that using `!oshihen` will remove all of your existing member roles. To get an extra role without removing existing ones, use `!oshimashi <member>` instead. To get all 7 roles, use `!hakooshi`.'
-    await client.send_message(message.channel, msg)
+    await bot.say(msg)
 
-@client.event
-async def kamioshi_count(message):
+@bot.command(name='kamioshi-count', pass_context=True)
+async def kamioshi_count(ctx):
     ids_to_member = {v: k for k, v in WUG_ROLE_IDS.items()}
     oshi_num = {}
-
-    for member in message.server.members:
+    for member in ctx.message.server.members:
         member_roles = [r for r in member.roles if str(r.id) in ids_to_member]
         if len(member_roles) > 0:
             role = sorted(member_roles)[-1]
@@ -224,14 +178,13 @@ async def kamioshi_count(message):
     msg += 'Nanamin {0}\n'.format(oshi_num.get('nanamin', 0))
     msg += 'Kayatan {0}\n'.format(oshi_num.get('kayatan', 0))
     msg += 'Myu {0}\n'.format(oshi_num.get('myu', 0))
-    await client.send_message(message.channel, msg)
+    await bot.say(msg)
 
-@client.event
-async def oshi_count(message):
+@bot.command(name='oshi-count', pass_context=True)
+async def oshi_count(ctx):
     ids_to_member = {v: k for k, v in WUG_ROLE_IDS.items()}
     oshi_num = {}
-
-    for member in message.server.members:
+    for member in ctx.message.server.members:
         for role in member.roles:
             if str(role.id) in ids_to_member:
                 oshi_num[ids_to_member[str(role.id)]] = oshi_num.get(ids_to_member[str(role.id)], 0) + 1
@@ -244,69 +197,55 @@ async def oshi_count(message):
     msg += 'Nanamin {0}\n'.format(oshi_num.get('nanamin', 0))
     msg += 'Kayatan {0}\n'.format(oshi_num.get('kayatan', 0))
     msg += 'Myu {0}\n'.format(oshi_num.get('myu', 0))
-    await client.send_message(message.channel, msg)
+    await bot.say(msg)
 
-@client.event
-async def show_mv(message):
-    song_name = message.content[4:].lower()
+@bot.command()
+async def mv(*, song_name : str):
     name_to_mv = {}
-
     for mv, names in list(MV_NAMES.items()):
       name_to_mv.update({name : mv for name in names})
 
-    if song_name in name_to_mv:
-        msg = MUSICVIDEOS[name_to_mv[song_name]]
-        await client.send_message(message.channel, msg)
+    if song_name.lower() in name_to_mv:
+        msg = MUSICVIDEOS[name_to_mv[song_name.lower()]]
+        await bot.say(msg)
 
-@client.event
-async def show_mv_list(message):
+@bot.command(name='mv-list')
+async def mv_list():
     msg = '**List of Available Music Videos**\n\n'
     msg += '{0}\n\n'.format('\n'.join(list(MUSICVIDEOS.keys())))
     msg += 'Use `!mv <song>` to show the full MV. You can also write the name of the song in English.'
-    await client.send_message(message.channel, msg)
+    await bot.say(msg)
 
-@client.event
-async def convert_currency(message):
-    conversion = message.content[10:].split()
+@bot.command()
+async def currency(*conversion : str):
     if len(conversion) == 4 and conversion[2].lower() == 'to':
-        c = CurrencyRates()
         try:
-            result = c.convert(conversion[1].upper(), conversion[3].upper(), Decimal(conversion[0].strip()))
-            msg = '{0} {1}'.format(('%f' % result).rstrip('0').rstrip('.'), conversion[3].upper())
-            await client.send_message(message.channel, msg)
+            result = CurrencyRates().convert(conversion[1].upper(), conversion[3].upper(), Decimal(conversion[0].strip()))
+            await bot.say('{0} {1}'.format(('%f' % result).rstrip('0').rstrip('.'), conversion[3].upper()))
             return
         except: pass
-    msg = 'Couldn\'t convert. Please follow this format for converting currency: `!currency 12.34 AUD to USD`.'
-    await client.send_message(message.channel, msg)
+    await bot.say('Couldn\'t convert. Please follow this format for converting currency: `!currency 12.34 AUD to USD`.')
 
-@client.event
-async def create_tag(message):
-    tag_to_create = message.content[11:].split()
+@bot.command()
+async def tagcreate(*tag_to_create : str):
     if len(tag_to_create) > 1:
         tag_name = tag_to_create[0].strip()
-        tag_content = message.content[12 + len(tag_name):]
+        tag_content = ' '.join(tag_to_create[1:])
         existing_tag = firebase.get('/tags', tag_name)
         if not existing_tag:
             firebase.patch('/tags', {tag_name: tag_content})
-            msg = 'Created tag `{0}`\n\n{1}'.format(tag_name, tag_content)
-            await client.send_message(message.channel, msg)
+            await bot.say('Created tag `{0}`\n\n{1}'.format(tag_name, tag_content))
         else:
-            msg = 'That tag already exists. Please choose a different tag name.'
-            await client.send_message(message.channel, msg)
+            await bot.say('That tag already exists. Please choose a different tag name.')
         return
+    await bot.say('Couldn\'t create tag. Please follow this format for creating a tag: `!createtag NameOfTag Content of the tag`.')
 
-    msg = 'Couldn\'t create tag. Please follow this format for creating a tag: `!createtag NameOfTag Content of the tag`.'
-    await client.send_message(message.channel, msg)
-
-@client.event
-async def display_tag(message):
-    tag_name = message.content[5:].strip()
+@bot.command()
+async def tag(tag_name : str):
     tag_result = firebase.get('/tags', tag_name)
     if tag_result and len(tag_result) > 0:
-        msg = tag_result
-        await client.send_message(message.channel, msg)
+        await bot.say(tag_result)
     else:
-        msg = 'That tag doesn\'t exist.'
-        await client.send_message(message.channel, msg)
+        await bot.say('That tag doesn\'t exist.')
 
-client.run(args.token)
+bot.run(args.token)
