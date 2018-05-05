@@ -16,14 +16,13 @@ MUSICVIDEOS = {'7 Girls War': 'https://streamable.com/1afp5', '言の葉 青葉'
 MV_NAMES = {'7 Girls War': ['7 girls war', '7gw'], '言の葉 青葉': ['言の葉 青葉', 'kotonoha aoba'], 'タチアガレ!': ['tachiagare!', 'タチアガレ!', 'tachiagare', 'タチアガレ'],  '少女交響曲': ['少女交響曲', 'skkk', 'shoujokkk', 'shoujo koukyoukyoku'], 'Beyond the Bottom': ['beyond the bottom', 'btb'], '僕らのフロンティア': ['僕らのフロンティア', 'bokufuro', '僕フロ', 'bokura no frontier'], '恋?で愛?で暴君です!': ['恋?で愛?で暴君です!', 'koiai', 'koi? de ai? de boukun desu!', 'koi de ai de boukun desu', 'boukun', 'ででです'], 'One In A Billion': ['one in a billion', 'oiab', 'ワンビリ'], 'One In A Billion (Dance)': ['one in a billion (dance)', 'oiab (dance)', 'ワンビリ (dance)', 'oiab dance'], 'TUNAGO': ['tunago'], '7 Senses': ['7 senses'], '雫の冠': ['雫の冠', 'shizuku no kanmuri'], 'スキノスキル': ['スキノスキル', 'suki no skill', 'sukinoskill']}
 
 args = parse_arguments()
-bot = commands.Bot(command_prefix='!', description='Discord bot for Wake Up, Girls! server.')
+bot = commands.Bot(command_prefix='!')
 bot.remove_command('help')
 firebase = firebase.FirebaseApplication(args.firebase_db, None)
 
 @bot.event
 async def on_ready():
-    print('Logged in as: {0} ({1})'.format(bot.user.name, bot.user.id))
-    print('-------------')
+    print('Logged in as: {0} ({1})\n-------------\n'.format(bot.user.name, bot.user.id))
 
 @bot.command()
 async def help():
@@ -50,18 +49,22 @@ async def help():
 @bot.command(pass_context=True)
 async def kick(ctx, member : discord.Member):
     if ctx.message.channel.permissions_for(ctx.message.author).kick_members:
-        await bot.kick(member)
-        await bot.say('{0.mention} has been kicked.'.format(member))
-    else:
-        await bot.say('You do not have permission to do that.')
+        try:
+            await bot.kick(member)
+            await bot.say('{0.mention} has been kicked.'.format(member))
+            return
+        except: pass
+    await bot.say('You do not have permission to do that.')
 
 @bot.command(pass_context=True)
 async def ban(ctx, member : discord.Member):
     if ctx.message.channel.permissions_for(ctx.message.author).ban_members:
-        await bot.ban(member)
-        await bot.say('{0.mention} has been banned.'.format(member))
-    else:
-        await bot.say('You do not have permission to do that.')
+        try:
+            await bot.ban(member)
+            await bot.say('{0.mention} has been banned.'.format(member))
+            return
+        except: pass
+    await bot.say('You do not have permission to do that.')
 
 @bot.command(pass_context=True)
 async def userinfo(ctx):
@@ -99,6 +102,8 @@ async def seiyuu_vids():
 @bot.command(pass_context=True)
 async def oshihen(ctx, role_name : str):
     role = discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[role_name.lower()])
+    if role is None: return
+
     roles_to_remove = []
     for existing_role in ctx.message.author.roles:
         if str(existing_role.id) in WUG_ROLE_IDS.values():
@@ -106,25 +111,22 @@ async def oshihen(ctx, role_name : str):
 
     if len(roles_to_remove) == 1 and roles_to_remove[0].name == role.name:
         await bot.say('Hello {0.message.author.mention}, you already have that role.'.format(ctx))
-        return
-
-    if len(roles_to_remove) > 0:
+    elif len(roles_to_remove) > 0:
         await bot.remove_roles(ctx.message.author, *roles_to_remove)
         await asyncio.sleep(1)
-
-    if role is not None:
         await bot.add_roles(ctx.message.author, role)
         await bot.say('Hello {0.message.author.mention}, you have oshihened to {1}.'.format(ctx, role_name.title()))
 
 @bot.command(pass_context=True)
 async def oshimashi(ctx, role_name : str):
     role = discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[role_name.lower()])
-    if role is not None:
-        if role not in ctx.message.author.roles:
-            await bot.add_roles(ctx.message.author, role)
-            await bot.say('Hello {0.message.author.mention}, you now have the {1} oshi role \'{2}\'.'.format(ctx, role_name.title(), role.name))
-        else:
-            await bot.say('Hello {0.message.author.mention}, you already have that role.'.format(ctx))
+    if role is None: return
+    
+    if role not in ctx.message.author.roles:
+        await bot.add_roles(ctx.message.author, role)
+        await bot.say('Hello {0.message.author.mention}, you now have the {1} oshi role \'{2}\'.'.format(ctx, role_name.title(), role.name))
+    else:
+        await bot.say('Hello {0.message.author.mention}, you already have that role.'.format(ctx))
 
 @bot.command(pass_context=True)
 async def hakooshi(ctx):
@@ -220,7 +222,7 @@ async def mv_list():
 async def currency(*conversion : str):
     if len(conversion) == 4 and conversion[2].lower() == 'to':
         try:
-            result = CurrencyRates().convert(conversion[1].upper(), conversion[3].upper(), Decimal(conversion[0].strip()))
+            result = CurrencyRates().convert(conversion[1].upper(), conversion[3].upper(), Decimal(conversion[0]))
             await bot.say('{0} {1}'.format(('%f' % result).rstrip('0').rstrip('.'), conversion[3].upper()))
             return
         except: pass
@@ -229,7 +231,7 @@ async def currency(*conversion : str):
 @bot.command()
 async def tagcreate(*tag_to_create : str):
     if len(tag_to_create) > 1:
-        tag_name = tag_to_create[0].strip()
+        tag_name = tag_to_create[0]
         tag_content = ' '.join(tag_to_create[1:])
         existing_tag = firebase.get('/tags', tag_name)
         if not existing_tag:
