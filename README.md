@@ -7,4 +7,4 @@
   --------------------------- | -------------------------------------
   -h, --help                  | Show this help message and exit.  
   --token TOKEN               | Token for the discord app bot user.  
-  --firebase_db DB_URL        | URL of the Firebase Realtime Database.
+  --firebase_db DB_URL        | URL for the Firebase Realtime Database.
