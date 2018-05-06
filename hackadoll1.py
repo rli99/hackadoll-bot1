@@ -234,8 +234,13 @@ async def currency(*conversion : str):
 
 @bot.command()
 async def weather(*, location : str):
+    query = location.split(',')
+    if len(query) > 1:
+        try:
+            query[1] = pycountry.countries.get(name=query[1].strip().title()).alpha_2
+        except: pass
     try:
-        result = requests.get('http://api.openweathermap.org/data/2.5/weather', params={'q': location, 'APPID': args.weather_api_key}).json()
+        result = requests.get('http://api.openweathermap.org/data/2.5/weather', params={'q': ','.join(query), 'APPID': args.weather_api_key}).json()
         timezone = pytz.timezone(TimezoneFinder().timezone_at(lat=result['coord']['lat'], lng=result['coord']['lon']))
         msg = '**Weather for {0}, {1}**\n\n'.format(result['name'], pycountry.countries.lookup(result['sys']['country']).name)
         msg += 'Weather: {0}\n'.format(result['weather'][0]['description'].title())
