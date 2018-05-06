@@ -1,14 +1,17 @@
-import asyncio, discord, sys
+import asyncio, discord, pycountry, pytz, requests, sys
 from argparse import ArgumentParser
+from datetime import datetime
 from decimal import Decimal
 from discord.ext import commands
 from firebase import firebase
 from forex_python.converter import CurrencyRates
+from timezonefinder import TimezoneFinder
 
 def parse_arguments():
     parser = ArgumentParser(description='Discord bot for Wake Up, Girls! server.')
     parser.add_argument('--token', required=True, help='Token for the discord app bot user.')
-    parser.add_argument('--firebase_db', required=True, help='URL of the Firebase Realtime Database.')
+    parser.add_argument('--firebase_db', required=True, metavar='DB_URL', help='URL for the Firebase Realtime Database.')
+    parser.add_argument('--weather_api_key', required=True, metavar='KEY', help='API key for the OpenWeatherMap API.')
     return parser.parse_args()
 
 WUG_ROLE_IDS = {'mayushii': '332788311280189443', 'aichan': '333727530680844288', 'minyami': '332793887200641028', 'yoppi': '332796755399933953', 'nanamin': '333721984196411392', 'kayatan': '333721510164430848', 'myu': '333722098377818115'}
@@ -22,7 +25,7 @@ firebase = firebase.FirebaseApplication(args.firebase_db, None)
 
 @bot.event
 async def on_ready():
-    print('Logged in as: {0} ({1})\n-------------\n'.format(bot.user.name, bot.user.id))
+    print('\n-------------\nLogged in as: {0} ({1})\n-------------\n'.format(bot.user.name, bot.user.id))
 
 @bot.command()
 async def help():
@@ -42,6 +45,7 @@ async def help():
     msg += '`!mv <song>`: Show full MV of a song.\n'
     msg += '`!mv-list`: Show list of available MVs.\n\n'
     msg += '`!currency <amount> <x> to <y>`: Convert <amount> of <x> currency to <y> currency, e.g. `!currency 12.34 AUD to USD`.\n\n'
+    msg += '`!weather <city>, <country>`: Show weather information for <city>, <country> (optional), e.g. `!weather Melbourne, Australia`.\n\n'
     msg += '`!tagcreate <tag_name> <content>`: Create a tag.\n'
     msg += '`!tag <tag_name>`: Display a saved tag.'
     await bot.say(msg)
@@ -72,8 +76,8 @@ async def userinfo(ctx):
     msg = '**User Information for {0.mention}**\n\n'.format(user)
     msg += '**Name:** {0}\n'.format(user.display_name)
     msg += '**ID:** {0}\n'.format(user.id)
-    msg += '**Joined server:** {0} UTC\n'.format(user.joined_at.strftime("%Y-%m-%d %H:%M:%S"))
-    msg += '**Account created:** {0} UTC\n'.format(user.created_at.strftime("%Y-%m-%d %H:%M:%S"))
+    msg += '**Joined server:** {0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC\n'.format(user.joined_at)
+    msg += '**Account created:** {0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC\n'.format(user.created_at)
     msg += '**Roles:** {0}\n'.format(', '.join([r.name for r in user.roles[1:]]))
     msg += '**Avatar:** <{0}>'.format(user.avatar_url)
     await bot.say(msg)
@@ -87,7 +91,7 @@ async def serverinfo(ctx):
     msg += '**Members:** {0}\n'.format(server.member_count)
     msg += '**Channels:** {0} text, {1} voice\n'.format(sum(1 if str(channel.type) == 'text' else 0 for channel in server.channels), sum(1 if str(channel.type) == 'voice' else 0 for channel in server.channels))
     msg += '**Roles:** {0}\n'.format(len(server.roles))
-    msg += '**Created on:** {0} UTC\n'.format(server.created_at.strftime("%Y-%m-%d %H:%M:%S"))
+    msg += '**Created on:** {0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC\n'.format(server.created_at)
     msg += '**Default channel:** {0}\n'.format(server.default_channel.name if server.default_channel is not None else '')
     msg += '**Region:** {0}\n'.format(server.region)
     msg += '**Icon:** <{0}>'.format(server.icon_url)
@@ -121,7 +125,7 @@ async def oshihen(ctx, role_name : str):
 async def oshimashi(ctx, role_name : str):
     role = discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[role_name.lower()])
     if role is None: return
-    
+
     if role not in ctx.message.author.roles:
         await bot.add_roles(ctx.message.author, role)
         await bot.say('Hello {0.message.author.mention}, you now have the {1} oshi role \'{2}\'.'.format(ctx, role_name.title(), role.name))
@@ -223,10 +227,28 @@ async def currency(*conversion : str):
     if len(conversion) == 4 and conversion[2].lower() == 'to':
         try:
             result = CurrencyRates().convert(conversion[1].upper(), conversion[3].upper(), Decimal(conversion[0]))
-            await bot.say('{0} {1}'.format(('%f' % result).rstrip('0').rstrip('.'), conversion[3].upper()))
+            await bot.say('{0} {1}'.format(('{:f}'.format(result)).rstrip('0').rstrip('.'), conversion[3].upper()))
             return
         except: pass
     await bot.say('Couldn\'t convert. Please follow this format for converting currency: `!currency 12.34 AUD to USD`.')
+
+@bot.command()
+async def weather(*, location : str):
+    try:
+        result = requests.get('http://api.openweathermap.org/data/2.5/weather', params={'q': location, 'APPID': args.weather_api_key}).json()
+        timezone = pytz.timezone(TimezoneFinder().timezone_at(lat=result['coord']['lat'], lng=result['coord']['lon']))
+        msg = '**Weather for {0}, {1}**\n\n'.format(result['name'], pycountry.countries.lookup(result['sys']['country']).name)
+        msg += 'Weather: {0}\n'.format(result['weather'][0]['description'].title())
+        msg += 'Temperature: {0} °C, {1} °F\n'.format('{0:.2f}'.format(float(result['main']['temp']) - 273.15), '{0:.2f}'.format(1.8 * (float(result['main']['temp']) - 273.15) + 32.0))
+        msg += 'Humidity: {0}%\n'.format(result['main']['humidity'])
+        msg += 'Wind Speed: {0} m/s\n'.format(result['wind']['speed'])
+        msg += 'Pressure: {0} hPa\n'.format(result['main']['pressure'])
+        msg += 'Sunrise: {0:%I}:{0:%M} {0:%p}\n'.format(datetime.fromtimestamp(result['sys']['sunrise'], tz=timezone))
+        msg += 'Sunset: {0:%I}:{0:%M} {0:%p}\n'.format(datetime.fromtimestamp(result['sys']['sunset'], tz=timezone))
+        await bot.say(msg)
+        return
+    except: pass
+    await bot.say('Couldn\'t get weather. Please follow this format for checking the weather: `!weather Melbourne, Australia`.')
 
 @bot.command()
 async def tagcreate(*tag_to_create : str):
