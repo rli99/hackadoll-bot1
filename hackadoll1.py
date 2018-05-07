@@ -118,8 +118,9 @@ async def oshihen(ctx, role_name : str):
     elif len(roles_to_remove) > 0:
         await bot.remove_roles(ctx.message.author, *roles_to_remove)
         await asyncio.sleep(1)
-        await bot.add_roles(ctx.message.author, role)
-        await bot.say('Hello {0.message.author.mention}, you have oshihened to {1}.'.format(ctx, role_name.title()))
+        
+    await bot.add_roles(ctx.message.author, role)
+    await bot.say('Hello {0.message.author.mention}, you have oshihened to {1}.'.format(ctx, role_name.title()))
 
 @bot.command(pass_context=True)
 async def oshimashi(ctx, role_name : str):
