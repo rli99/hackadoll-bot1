@@ -5,6 +5,7 @@ from decimal import Decimal
 from discord.ext import commands
 from firebase import firebase
 from forex_python.converter import CurrencyRates
+from random import randrange
 from timezonefinder import TimezoneFinder
 
 def parse_arguments():
@@ -47,7 +48,8 @@ async def help():
     msg += '`!currency <amount> <x> to <y>`: Convert <amount> of <x> currency to <y> currency, e.g. `!currency 12.34 AUD to USD`.\n\n'
     msg += '`!weather <city>, <country>`: Show weather information for <city>, <country> (optional), e.g. `!weather Melbourne, Australia`.\n\n'
     msg += '`!tagcreate <tag_name> <content>`: Create a tag.\n'
-    msg += '`!tag <tag_name>`: Display a saved tag.'
+    msg += '`!tag <tag_name>`: Display a saved tag.\n\n'
+    msg += '`!choose <options>`: Randomly choose from one of the provided options, e.g. `!choose option1 option2`.'
     await bot.say(msg)
 
 @bot.command(pass_context=True)
@@ -106,7 +108,9 @@ async def seiyuu_vids():
 @bot.command(pass_context=True)
 async def oshihen(ctx, role_name : str):
     role = discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[role_name.lower()])
-    if role is None: return
+    if role is None: 
+        await bot.say('Couldn\'t find that role. Use `!roles` to show additional help on how to get roles.')
+        return
 
     roles_to_remove = []
     for existing_role in ctx.message.author.roles:
@@ -125,7 +129,9 @@ async def oshihen(ctx, role_name : str):
 @bot.command(pass_context=True)
 async def oshimashi(ctx, role_name : str):
     role = discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[role_name.lower()])
-    if role is None: return
+    if role is None:
+        await bot.say('Couldn\'t find that role. Use `!roles` to show additional help on how to get roles.')
+        return
 
     if role not in ctx.message.author.roles:
         await bot.add_roles(ctx.message.author, role)
@@ -213,8 +219,9 @@ async def mv(*, song_name : str):
       name_to_mv.update({name : mv for name in names})
 
     if song_name.lower() in name_to_mv:
-        msg = MUSICVIDEOS[name_to_mv[song_name.lower()]]
-        await bot.say(msg)
+        await bot.say(MUSICVIDEOS[name_to_mv[song_name.lower()]])
+    else:
+        await bot.say('Couldn\'t find that MV. Use `!mv-list` to show the list of available MVs.')
 
 @bot.command(name='mv-list')
 async def mv_list():
@@ -277,5 +284,12 @@ async def tag(tag_name : str):
         await bot.say(tag_result)
     else:
         await bot.say('That tag doesn\'t exist.')
+
+@bot.command()
+async def choose(*options : str):
+    if len(options) > 1:
+        await bot.say(options[randrange(len(options))])
+    else:
+        await bot.say('Please provide 2 or more options to choose from, e.g. `!choose option1 option2`.')
 
 bot.run(args.token)
