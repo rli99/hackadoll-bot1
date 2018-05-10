@@ -264,10 +264,11 @@ async def weather(*, location : str):
     await bot.say('Couldn\'t get weather. Please follow this format for checking the weather: `!weather Melbourne, Australia`.')
 
 @bot.command()
-async def tagcreate(*tag_to_create : str):
-    if len(tag_to_create) > 1:
-        tag_name = tag_to_create[0]
-        tag_content = ' '.join(tag_to_create[1:])
+async def tagcreate(*, tag_to_create : str):
+    split_request = tag_to_create.split()
+    if len(split_request) > 1:
+        tag_name = split_request[0]
+        tag_content = tag_to_create[len(tag_name) + 1:]
         existing_tag = firebase.get('/tags', tag_name)
         if not existing_tag:
             firebase.patch('/tags', {tag_name: tag_content})
