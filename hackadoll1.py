@@ -1,4 +1,4 @@
-import asyncio, discord, pycountry, pytz, requests, sys
+import asyncio, discord, pycountry, pytz, requests, time
 from argparse import ArgumentParser
 from datetime import datetime
 from decimal import Decimal
@@ -18,22 +18,44 @@ def parse_arguments():
 WUG_ROLE_IDS = {'mayushii': '332788311280189443', 'aichan': '333727530680844288', 'minyami': '332793887200641028', 'yoppi': '332796755399933953', 'nanamin': '333721984196411392', 'kayatan': '333721510164430848', 'myu': '333722098377818115'}
 MUSICVIDEOS = {'7 Girls War': 'https://streamable.com/1afp5', '言の葉 青葉': 'https://streamable.com/bn9mt', 'タチアガレ!': 'https://streamable.com/w85fh', '少女交響曲': 'https://streamable.com/gidqx', 'Beyond the Bottom': 'https://streamable.com/2ppw5', '僕らのフロンティア': 'https://streamable.com/pqydk', '恋?で愛?で暴君です!': 'https://streamable.com/88xas', 'One In A Billion': 'https://streamable.com/fa630', 'One In A Billion (Dance)': 'https://streamable.com/xbeeq', 'TUNAGO': 'https://streamable.com/4qjlp', '7 Senses': 'https://streamable.com/a34w9', '雫の冠': 'https://streamable.com/c6vfm', 'スキノスキル': 'https://streamable.com/w92kw'}
 MV_NAMES = {'7 Girls War': ['7 girls war', '7gw'], '言の葉 青葉': ['言の葉 青葉', 'kotonoha aoba'], 'タチアガレ!': ['tachiagare!', 'タチアガレ!', 'tachiagare', 'タチアガレ'],  '少女交響曲': ['少女交響曲', 'skkk', 'shoujokkk', 'shoujo koukyoukyoku'], 'Beyond the Bottom': ['beyond the bottom', 'btb'], '僕らのフロンティア': ['僕らのフロンティア', 'bokufuro', '僕フロ', 'bokura no frontier'], '恋?で愛?で暴君です!': ['恋?で愛?で暴君です!', 'koiai', 'koi? de ai? de boukun desu!', 'koi de ai de boukun desu', 'boukun', 'ででです'], 'One In A Billion': ['one in a billion', 'oiab', 'ワンビリ'], 'One In A Billion (Dance)': ['one in a billion (dance)', 'oiab (dance)', 'ワンビリ (dance)', 'oiab dance'], 'TUNAGO': ['tunago'], '7 Senses': ['7 senses'], '雫の冠': ['雫の冠', 'shizuku no kanmuri'], 'スキノスキル': ['スキノスキル', 'suki no skill', 'sukinoskill']}
+MUTED_ROLE_ID = '445572638543446016'
+SERVER_ID = '280439975911096320'
 
 args = parse_arguments()
 bot = commands.Bot(command_prefix='!')
 bot.remove_command('help')
 firebase = firebase.FirebaseApplication(args.firebase_db, None)
+muted_members = firebase.get('/muted_members', None) or {}
 
 @bot.event
 async def on_ready():
     print('\n-------------\nLogged in as: {0} ({1})\n-------------\n'.format(bot.user.name, bot.user.id))
+
+@bot.event
+async def check_mute_status():
+    await bot.wait_until_ready()
+    while not bot.is_closed:
+        members_to_unmute = []
+        for member_id in muted_members:
+            if time.time() > muted_members[member_id]:
+                firebase.delete('/muted_members', member_id)
+                members_to_unmute.append(member_id)
+                server = discord.utils.get(bot.servers, id=SERVER_ID)
+                muted_role = discord.utils.get(server.roles, id=MUTED_ROLE_ID)
+                member = discord.utils.get(server.members, id=member_id)
+                await bot.remove_roles(member, muted_role)
+        for member_id in members_to_unmute:
+            muted_members.pop(member_id)
+        await asyncio.sleep(30)
 
 @bot.command()
 async def help():
     msg = '**Available Commands**\n\n'
     msg += '`!help`: Show this help message.\n\n'
     msg += '`!kick <member>`: Kick a member (mods only).\n'
-    msg += '`!ban <member>`: Ban a member (mods only).\n\n'
+    msg += '`!ban <member>`: Ban a member (mods only).\n'
+    msg += '`!mute <member> <duration>`: Mute a member for <duration> minutes (mods only).\n'
+    msg += '`!unmute <member>`: Unmute a member (mods only).\n\n'
     msg += '`!userinfo`: Show your user information.\n'
     msg += '`!serverinfo`: Show server information.\n\n'
     msg += '`!seiyuu-vids`: Show link to the wiki page with WUG seiyuu content.\n\n'
@@ -71,6 +93,45 @@ async def ban(ctx, member : discord.Member):
             return
         except: pass
     await bot.say('You do not have permission to do that.')
+
+@bot.command(pass_context=True)
+async def mute(ctx, member : discord.Member, duration : int):
+    if ctx.message.channel.permissions_for(ctx.message.author).ban_members:
+        if duration > 0:
+            mute_endtime = time.time() + 60 * duration
+            firebase.patch('/muted_members', {member.id : mute_endtime})
+            muted_members[member.id] = mute_endtime
+            muted_role = discord.utils.get(ctx.message.server.roles, id=MUTED_ROLE_ID)
+            hours, minutes = divmod(duration, 60)
+            days, hours = divmod(hours, 24)
+            mute_duration = ''
+            if days > 0:
+                mute_duration += '{0} day{1}'.format(days, '' if days == 1 else 's')
+                if hours > 0:
+                    mute_duration += ' and ' if minutes == 0 else ', '
+                elif minutes > 0:
+                    mute_duration += ' and '
+            if hours > 0:
+                mute_duration += '{0} hour{1}{2} '.format(hours, '' if hours == 1 else 's', '' if minutes == 0 else ' and')
+            if minutes > 0:
+                mute_duration += '{0} minute{1}'.format(minutes, '' if minutes == 1 else 's')
+            await bot.add_roles(member, muted_role)
+            await bot.say('{0.mention} has been muted for {1}.'.format(member, mute_duration))
+        else:
+            await bot.say('Please specify a duration greater than 0.')
+    else:
+        await bot.say('You do not have permission to do that.')
+
+@bot.command(pass_context=True)
+async def unmute(ctx, member : discord.Member):
+    if ctx.message.channel.permissions_for(ctx.message.author).ban_members:
+        firebase.delete('/muted_members', member.id)
+        muted_members.pop(member.id)
+        muted_role = discord.utils.get(ctx.message.server.roles, id=MUTED_ROLE_ID)
+        await bot.remove_roles(member, muted_role)
+        await bot.say('{0.mention} has been unmuted.'.format(member))
+    else:
+        await bot.say('You do not have permission to do that.')
 
 @bot.command(pass_context=True)
 async def userinfo(ctx):
@@ -114,7 +175,7 @@ async def oshihen(ctx, role_name : str):
 
     roles_to_remove = []
     for existing_role in ctx.message.author.roles:
-        if str(existing_role.id) in WUG_ROLE_IDS.values():
+        if existing_role.id in WUG_ROLE_IDS.values():
             roles_to_remove.append(existing_role)
 
     if len(roles_to_remove) == 1 and roles_to_remove[0].name == role.name:
@@ -143,7 +204,7 @@ async def oshimashi(ctx, role_name : str):
 async def hakooshi(ctx):
     roles_to_add = []
     for role in ctx.message.server.roles:
-        if role not in ctx.message.author.roles and str(role.id) in WUG_ROLE_IDS.values():
+        if role not in ctx.message.author.roles and role.id in WUG_ROLE_IDS.values():
             roles_to_add.append(role)
 
     if len(roles_to_add) > 0:
@@ -157,7 +218,7 @@ async def roles(ctx):
     ids_to_member = {v: k for k, v in WUG_ROLE_IDS.items()}
     member_to_role = {}
     for role in ctx.message.server.roles:
-        if str(role.id) in ids_to_member:
+        if role.id in ids_to_member:
             member_to_role[ids_to_member[role.id]] = role.name
 
     msg = '**How to get WUG Member Roles**\n\n'
@@ -177,11 +238,11 @@ async def kamioshi_count(ctx):
     ids_to_member = {v: k for k, v in WUG_ROLE_IDS.items()}
     oshi_num = {}
     for member in ctx.message.server.members:
-        member_roles = [r for r in member.roles if str(r.id) in ids_to_member]
+        member_roles = [r for r in member.roles if r.id in ids_to_member]
         if len(member_roles) > 0:
             role = sorted(member_roles)[-1]
-            if str(role.id) in ids_to_member:
-                oshi_num[ids_to_member[str(role.id)]] = oshi_num.get(ids_to_member[str(role.id)], 0) + 1
+            if role.id in ids_to_member:
+                oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1
 
     msg = '**Number of Users with Each WUG Member Role as Their Highest Role**\n\n'
     msg += 'Mayushii {0}\n'.format(oshi_num.get('mayushii', 0))
@@ -199,8 +260,8 @@ async def oshi_count(ctx):
     oshi_num = {}
     for member in ctx.message.server.members:
         for role in member.roles:
-            if str(role.id) in ids_to_member:
-                oshi_num[ids_to_member[str(role.id)]] = oshi_num.get(ids_to_member[str(role.id)], 0) + 1
+            if role.id in ids_to_member:
+                oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1
 
     msg = '**Number of Users with Each WUG Member Role**\n\n'
     msg += 'Mayushii {0}\n'.format(oshi_num.get('mayushii', 0))
@@ -293,4 +354,5 @@ async def choose(*options : str):
     else:
         await bot.say('Please provide 2 or more options to choose from, e.g. `!choose option1 option2`.')
 
+bot.loop.create_task(check_mute_status())
 bot.run(args.token)
