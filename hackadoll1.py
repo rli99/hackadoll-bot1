@@ -50,49 +50,49 @@ async def check_mute_status():
 
 @bot.command()
 async def help():
-    msg = '**Available Commands**\n\n'
-    msg += '`!help`: Show this help message.\n\n'
-    msg += '`!kick <member>`: Kick a member (mods only).\n'
-    msg += '`!ban <member>`: Ban a member (mods only).\n'
-    msg += '`!mute <member> <duration>`: Mute a member for <duration> minutes (mods only).\n'
-    msg += '`!unmute <member>`: Unmute a member (mods only).\n\n'
-    msg += '`!userinfo`: Show your user information.\n'
-    msg += '`!serverinfo`: Show server information.\n\n'
-    msg += '`!seiyuu-vids`: Show link to the wiki page with WUG seiyuu content.\n\n'
-    msg += '`!oshihen <member>`: Change your oshi role.\n'
-    msg += '`!oshimashi <member>`: Get an additional oshi role.\n'
-    msg += '`!hakooshi`: Get all 7 WUG member roles.\n'
-    msg += '`!roles`: Show additional help on how to get roles.\n'
-    msg += '`!kamioshi-count`: Show the number of members with each WUG member role as their highest role.\n'
-    msg += '`!oshi-count`: Show the number of members with each WUG member role.\n\n'
-    msg += '`!mv <song>`: Show full MV of a song.\n'
-    msg += '`!mv-list`: Show list of available MVs.\n\n'
-    msg += '`!currency <amount> <x> to <y>`: Convert <amount> of <x> currency to <y> currency, e.g. `!currency 12.34 AUD to USD`.\n\n'
-    msg += '`!weather <city>, <country>`: Show weather information for <city>, <country> (optional), e.g. `!weather Melbourne, Australia`.\n\n'
-    msg += '`!tagcreate <tag_name> <content>`: Create a tag.\n'
-    msg += '`!tag <tag_name>`: Display a saved tag.\n\n'
-    msg += '`!choose <options>`: Randomly choose from one of the provided options, e.g. `!choose option1 option2`.'
-    await bot.say(msg)
+    embed_fields = []
+    embed_fields.append(('!help', 'Show this help message.'))
+    embed_fields.append(('!kick *member*', 'Kick a member (mods only).'))
+    embed_fields.append(('!ban *member*', 'Ban a member (mods only).'))
+    embed_fields.append(('!mute *member* *duration*', 'Mute a member for *duration* minutes (mods only).'))
+    embed_fields.append(('!unmute *member*', 'Unmute a member (mods only).'))
+    embed_fields.append(('!userinfo', 'Show your user information.'))
+    embed_fields.append(('!serverinfo', 'Show server information.'))
+    embed_fields.append(('!seiyuu-vids', 'Show link to the wiki page with WUG seiyuu content.'))
+    embed_fields.append(('!oshihen *member*', 'Change your oshi role.'))
+    embed_fields.append(('!oshimashi *member*', 'Get an additional oshi role.'))
+    embed_fields.append(('!hakooshi', 'Get all 7 WUG member roles.'))
+    embed_fields.append(('!roles', 'Show additional help on how to get roles.'))
+    embed_fields.append(('!kamioshi-count', 'Show the number of members with each WUG member role as their highest role.'))
+    embed_fields.append(('!oshi-count', 'Show the number of members with each WUG member role.'))
+    embed_fields.append(('!mv *song*', 'Show full MV of a song.'))
+    embed_fields.append(('!mv-list', 'Show list of available MVs.'))
+    embed_fields.append(('!currency *amount* *x* to *y*', 'Convert *amount* of *x* currency to *y* currency, e.g. **!currency** 12.34 AUD to USD'))
+    embed_fields.append(('!weather *city*, *country*', 'Show weather information for *city*, *country* (optional), e.g. **!weather** Melbourne, Australia'))
+    embed_fields.append(('!tagcreate *tag_name* *content*', 'Create a tag.'))
+    embed_fields.append(('!tag *tag_name*', 'Display a saved tag.'))
+    embed_fields.append(('!choose *options*', 'Randomly choose from one of the provided options, e.g. **!choose** option1 option2'))
+    await bot.say(content='**Available Commands**', embed=create_embed(fields=embed_fields))
 
 @bot.command(pass_context=True)
 async def kick(ctx, member : discord.Member):
     if ctx.message.channel.permissions_for(ctx.message.author).kick_members:
         try:
-            await bot.kick(member)
-            await bot.say('{0.mention} has been kicked.'.format(member))
+            await bot.say(embed=create_embed(title='{0.username}#{0.discriminator} has been kicked.'.format(member)))
+            await bot.kick(member)  
             return
         except: pass
-    await bot.say('You do not have permission to do that.')
+    await bot.say(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
 async def ban(ctx, member : discord.Member):
     if ctx.message.channel.permissions_for(ctx.message.author).ban_members:
         try:
+            await bot.say(embed=create_embed(title='{0.username}#{0.discriminator} has been banned.'.format(member)))
             await bot.ban(member)
-            await bot.say('{0.mention} has been banned.'.format(member))
             return
         except: pass
-    await bot.say('You do not have permission to do that.')
+    await bot.say(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
 async def mute(ctx, member : discord.Member, duration : int):
@@ -116,11 +116,11 @@ async def mute(ctx, member : discord.Member, duration : int):
             if minutes > 0:
                 mute_duration += '{0} minute{1}'.format(minutes, '' if minutes == 1 else 's')
             await bot.add_roles(member, muted_role)
-            await bot.say('{0.mention} has been muted for {1}.'.format(member, mute_duration))
+            await bot.say(embed=create_embed(description='{0.mention} has been muted for {1}.'.format(member, mute_duration)))
         else:
-            await bot.say('Please specify a duration greater than 0.')
+            await bot.say(embed=create_embed(title='Please specify a duration greater than 0.', colour=discord.Colour.red()))
     else:
-        await bot.say('You do not have permission to do that.')
+        await bot.say(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
 async def unmute(ctx, member : discord.Member):
@@ -129,48 +129,46 @@ async def unmute(ctx, member : discord.Member):
         muted_members.pop(member.id)
         muted_role = discord.utils.get(ctx.message.server.roles, id=MUTED_ROLE_ID)
         await bot.remove_roles(member, muted_role)
-        await bot.say('{0.mention} has been unmuted.'.format(member))
+        await bot.say(embed=create_embed(description='{0.mention} has been unmuted.'.format(member)))
     else:
-        await bot.say('You do not have permission to do that.')
+        await bot.say(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
 async def userinfo(ctx):
     user = ctx.message.author
-    msg = '**User Information for {0.mention}**\n\n'.format(user)
-    msg += '**Name:** {0}\n'.format(user.display_name)
-    msg += '**ID:** {0}\n'.format(user.id)
-    msg += '**Joined server:** {0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC\n'.format(user.joined_at)
-    msg += '**Account created:** {0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC\n'.format(user.created_at)
-    msg += '**Roles:** {0}\n'.format(', '.join([r.name for r in user.roles[1:]]))
-    msg += '**Avatar:** <{0}>'.format(user.avatar_url)
-    await bot.say(msg)
+    embed_fields = []
+    embed_fields.append(('Name', '{0}\n'.format(user.display_name)))
+    embed_fields.append(('ID', '{0}\n'.format(user.id)))
+    embed_fields.append(('Joined server', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC\n'.format(user.joined_at)))
+    embed_fields.append(('Account created', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC\n'.format(user.created_at)))
+    embed_fields.append(('Roles', '{0}\n'.format(', '.join([r.name for r in user.roles[1:]]))))
+    embed_fields.append(('Avatar', '<{0}>'.format(user.avatar_url)))
+    await bot.say(content='**User Information for {0.mention}**'.format(user), embed=create_embed(fields=embed_fields, inline=True))
 
 @bot.command(pass_context=True)
 async def serverinfo(ctx):
     server = ctx.message.server
-    msg = '**Server Information**\n\n'
-    msg += '**{0}** (ID: {1})\n'.format(server.name, server.id)
-    msg += '**Owner:** {0} (ID: {1})\n'.format(server.owner, server.owner.id)
-    msg += '**Members:** {0}\n'.format(server.member_count)
-    msg += '**Channels:** {0} text, {1} voice\n'.format(sum(1 if str(channel.type) == 'text' else 0 for channel in server.channels), sum(1 if str(channel.type) == 'voice' else 0 for channel in server.channels))
-    msg += '**Roles:** {0}\n'.format(len(server.roles))
-    msg += '**Created on:** {0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC\n'.format(server.created_at)
-    msg += '**Default channel:** {0}\n'.format(server.default_channel.name if server.default_channel is not None else '')
-    msg += '**Region:** {0}\n'.format(server.region)
-    msg += '**Icon:** <{0}>'.format(server.icon_url)
-    await bot.say(msg)
+    embed_fields = []
+    embed_fields.append(('{0}', '(ID: {1})\n'.format(server.name, server.id)))
+    embed_fields.append(('Owner', '{0} (ID: {1})\n'.format(server.owner, server.owner.id)))
+    embed_fields.append(('Members', '{0}\n'.format(server.member_count)))
+    embed_fields.append(('Channels', '{0} text, {1} voice\n'.format(sum(1 if str(channel.type) == 'text' else 0 for channel in server.channels), sum(1 if str(channel.type) == 'voice' else 0 for channel in server.channels))))
+    embed_fields.append(('Roles', '{0}\n'.format(len(server.roles))))
+    embed_fields.append(('Created on', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC\n'.format(server.created_at)))
+    embed_fields.append(('Default channel', '{0}\n'.format(server.default_channel.name if server.default_channel is not None else '')))
+    embed_fields.append(('Region', '{0}\n'.format(server.region)))
+    embed_fields.append(('Icon', '<{0}>'.format(server.icon_url)))
+    await bot.say(content='**Server Information**', embed=create_embed(fields=embed_fields, inline=True))
 
 @bot.command(name='seiyuu-vids')
 async def seiyuu_vids():
-    msg = '**WUG Seiyuu Videos**\n'
-    msg += '<http://wake-up-girls.wikia.com/wiki/List_of_Seiyuu_Content>'
-    await bot.say(msg)
+    await bot.say(content='**WUG Seiyuu Videos**', embed=create_embed(title='Wake Up, Girls! Wiki - List of Seiyuu Content', url='http://wake-up-girls.wikia.com/wiki/List_of_Seiyuu_Content'))
 
 @bot.command(pass_context=True)
 async def oshihen(ctx, role_name : str):
     role = discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[role_name.lower()])
     if role is None: 
-        await bot.say('Couldn\'t find that role. Use `!roles` to show additional help on how to get roles.')
+        await bot.say(embed=create_embed(description='Couldn\'t find that role. Use **!roles** to show additional help on how to get roles.', colour=discord.Colour.red()))
         return
 
     roles_to_remove = []
@@ -179,26 +177,26 @@ async def oshihen(ctx, role_name : str):
             roles_to_remove.append(existing_role)
 
     if len(roles_to_remove) == 1 and roles_to_remove[0].name == role.name:
-        await bot.say('Hello {0.message.author.mention}, you already have that role.'.format(ctx))
+        await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you already have that role.'.format(ctx), colour=discord.Colour.red()))
     elif len(roles_to_remove) > 0:
         await bot.remove_roles(ctx.message.author, *roles_to_remove)
         await asyncio.sleep(1)
         
     await bot.add_roles(ctx.message.author, role)
-    await bot.say('Hello {0.message.author.mention}, you have oshihened to {1}.'.format(ctx, role_name.title()))
+    await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you have oshihened to the **{1}** role {2.mention}.'.format(ctx, role_name.title(), role), colour=role.colour))
 
 @bot.command(pass_context=True)
 async def oshimashi(ctx, role_name : str):
     role = discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[role_name.lower()])
     if role is None:
-        await bot.say('Couldn\'t find that role. Use `!roles` to show additional help on how to get roles.')
+        await bot.say(embed=create_embed(description='Couldn\'t find that role. Use **!roles** to show additional help on how to get roles.', colour=discord.Colour.red()))
         return
 
     if role not in ctx.message.author.roles:
         await bot.add_roles(ctx.message.author, role)
-        await bot.say('Hello {0.message.author.mention}, you now have the {1} oshi role \'{2}\'.'.format(ctx, role_name.title(), role.name))
+        await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you now have the **{1}** oshi role {2.mention}.'.format(ctx, role_name.title(), role), colour=role.colour))
     else:
-        await bot.say('Hello {0.message.author.mention}, you already have that role.'.format(ctx))
+        await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you already have that role.'.format(ctx), colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
 async def hakooshi(ctx):
@@ -209,29 +207,22 @@ async def hakooshi(ctx):
 
     if len(roles_to_add) > 0:
         await bot.add_roles(ctx.message.author, *roles_to_add)
-        await bot.say('Hello {0.message.author.mention}, you now have every WUG member role.'.format(ctx))
+        await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you now have every WUG member role.'.format(ctx), colour=discord.Colour.teal()))
     else:
-        await bot.say('Hello {0.message.author.mention}, you already have every WUG member role.'.format(ctx))
+        await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you already have every WUG member role.'.format(ctx), colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
 async def roles(ctx):
-    ids_to_member = {v: k for k, v in WUG_ROLE_IDS.items()}
-    member_to_role = {}
-    for role in ctx.message.server.roles:
-        if role.id in ids_to_member:
-            member_to_role[ids_to_member[role.id]] = role.name
-
-    msg = '**How to get WUG Member Roles**\n\n'
-    msg += 'Users can have any of the 7 WUG member roles. Use `!oshihen <member>` to get the role you want.\n\n'
-    msg += '`!oshihen Mayushii` for \'{0}\' role\n'.format(member_to_role['mayushii'])
-    msg += '`!oshihen Aichan` for \'{0}\' role\n'.format(member_to_role['aichan'])
-    msg += '`!oshihen Minyami` for \'{0}\' role\n'.format(member_to_role['minyami'])
-    msg += '`!oshihen Yoppi` for \'{0}\' role\n'.format(member_to_role['yoppi'])
-    msg += '`!oshihen Nanamin` for \'{0}\' role\n'.format(member_to_role['nanamin'])
-    msg += '`!oshihen Kayatan` for \'{0}\' role\n'.format(member_to_role['kayatan'])
-    msg += '`!oshihen Myu` for \'{0}\' role\n\n'.format(member_to_role['myu'])
-    msg += 'Note that using `!oshihen` will remove all of your existing member roles. To get an extra role without removing existing ones, use `!oshimashi <member>` instead. To get all 7 roles, use `!hakooshi`.'
-    await bot.say(msg)
+    description = 'Users can have any of the 7 WUG member roles. Use **!oshihen** *member* to get the role you want.\n\n'
+    description += '**!oshihen** Mayushii for {0.mention}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['mayushii']))
+    description += '**!oshihen** Aichan for {0.mention}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['aichan']))
+    description += '**!oshihen** Minyami for {0.mention}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['minyami']))
+    description += '**!oshihen** Yoppi for {0.mention}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['yoppi']))
+    description += '**!oshihen** Nanamin for {0.mention}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['nanamin']))
+    description += '**!oshihen** Kayatan for {0.mention}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['kayatan']))
+    description += '**!oshihen** Myu for {0.mention}\n\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['myu']))
+    description += 'Note that using **!oshihen** will remove all of your existing member roles. To get an extra role without removing existing ones, use **!oshimashi** *member* instead. To get all 7 roles, use **!hakooshi**.'
+    await bot.say(content='**How to get WUG Member Roles**', embed=create_embed(description=description))
 
 @bot.command(name='kamioshi-count', pass_context=True)
 async def kamioshi_count(ctx):
@@ -243,16 +234,15 @@ async def kamioshi_count(ctx):
             role = sorted(member_roles)[-1]
             if role.id in ids_to_member:
                 oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1
-
-    msg = '**Number of Users with Each WUG Member Role as Their Highest Role**\n\n'
-    msg += 'Mayushii {0}\n'.format(oshi_num.get('mayushii', 0))
-    msg += 'Aichan {0}\n'.format(oshi_num.get('aichan', 0))
-    msg += 'Minyami {0}\n'.format(oshi_num.get('minyami', 0))
-    msg += 'Yoppi {0}\n'.format(oshi_num.get('yoppi', 0))
-    msg += 'Nanamin {0}\n'.format(oshi_num.get('nanamin', 0))
-    msg += 'Kayatan {0}\n'.format(oshi_num.get('kayatan', 0))
-    msg += 'Myu {0}\n'.format(oshi_num.get('myu', 0))
-    await bot.say(msg)
+ 
+    description = 'Mayushii {0}\n'.format(oshi_num.get('mayushii', 0))
+    description += 'Aichan {0}\n'.format(oshi_num.get('aichan', 0))
+    description += 'Minyami {0}\n'.format(oshi_num.get('minyami', 0))
+    description += 'Yoppi {0}\n'.format(oshi_num.get('yoppi', 0))
+    description += 'Nanamin {0}\n'.format(oshi_num.get('nanamin', 0))
+    description += 'Kayatan {0}\n'.format(oshi_num.get('kayatan', 0))
+    description += 'Myu {0}\n'.format(oshi_num.get('myu', 0))
+    await bot.say(content='**Number of Users with Each WUG Member Role as Their Highest Role**', embed=create_embed(description=description))
 
 @bot.command(name='oshi-count', pass_context=True)
 async def oshi_count(ctx):
@@ -263,15 +253,14 @@ async def oshi_count(ctx):
             if role.id in ids_to_member:
                 oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1
 
-    msg = '**Number of Users with Each WUG Member Role**\n\n'
-    msg += 'Mayushii {0}\n'.format(oshi_num.get('mayushii', 0))
-    msg += 'Aichan {0}\n'.format(oshi_num.get('aichan', 0))
-    msg += 'Minyami {0}\n'.format(oshi_num.get('minyami', 0))
-    msg += 'Yoppi {0}\n'.format(oshi_num.get('yoppi', 0))
-    msg += 'Nanamin {0}\n'.format(oshi_num.get('nanamin', 0))
-    msg += 'Kayatan {0}\n'.format(oshi_num.get('kayatan', 0))
-    msg += 'Myu {0}\n'.format(oshi_num.get('myu', 0))
-    await bot.say(msg)
+    description = 'Mayushii {0}\n'.format(oshi_num.get('mayushii', 0))
+    description += 'Aichan {0}\n'.format(oshi_num.get('aichan', 0))
+    description += 'Minyami {0}\n'.format(oshi_num.get('minyami', 0))
+    description += 'Yoppi {0}\n'.format(oshi_num.get('yoppi', 0))
+    description += 'Nanamin {0}\n'.format(oshi_num.get('nanamin', 0))
+    description += 'Kayatan {0}\n'.format(oshi_num.get('kayatan', 0))
+    description += 'Myu {0}\n'.format(oshi_num.get('myu', 0))
+    await bot.say(content='**Number of Users with Each WUG Member Role**', embed=create_embed(description=description))
 
 @bot.command()
 async def mv(*, song_name : str):
@@ -282,24 +271,23 @@ async def mv(*, song_name : str):
     if song_name.lower() in name_to_mv:
         await bot.say(MUSICVIDEOS[name_to_mv[song_name.lower()]])
     else:
-        await bot.say('Couldn\'t find that MV. Use `!mv-list` to show the list of available MVs.')
+        await bot.say(embed=create_embed(description='Couldn\'t find that MV. Use **!mv-list** to show the list of available MVs.', colour=discord.Colour.red()))
 
 @bot.command(name='mv-list')
 async def mv_list():
-    msg = '**List of Available Music Videos**\n\n'
-    msg += '{0}\n\n'.format('\n'.join(list(MUSICVIDEOS.keys())))
-    msg += 'Use `!mv <song>` to show the full MV. You can also write the name of the song in English.'
-    await bot.say(msg)
+    description = '{0}\n\n'.format('\n'.join(list(MUSICVIDEOS.keys())))
+    description += 'Use **!mv** *song* to show the full MV. You can also write the name of the song in English.'
+    await bot.say(content='**List of Available Music Videos**', embed=create_embed(description=description))
 
 @bot.command()
 async def currency(*conversion : str):
     if len(conversion) == 4 and conversion[2].lower() == 'to':
         try:
             result = CurrencyRates().convert(conversion[1].upper(), conversion[3].upper(), Decimal(conversion[0]))
-            await bot.say('{0} {1}'.format(('{:f}'.format(result)).rstrip('0').rstrip('.'), conversion[3].upper()))
+            await bot.say(embed=create_embed(title='{0} {1}'.format(('{:f}'.format(result)).rstrip('0').rstrip('.'), conversion[3].upper())))
             return
         except: pass
-    await bot.say('Couldn\'t convert. Please follow this format for converting currency: `!currency 12.34 AUD to USD`.')
+    await bot.say(embed=create_embed(description='Couldn\'t convert. Please follow this format for converting currency: **!currency** 12.34 AUD to USD', colour=discord.Colour.red()))
 
 @bot.command()
 async def weather(*, location : str):
@@ -311,18 +299,17 @@ async def weather(*, location : str):
     try:
         result = requests.get('http://api.openweathermap.org/data/2.5/weather', params={'q': ','.join(query), 'APPID': args.weather_api_key}).json()
         timezone = pytz.timezone(TimezoneFinder().timezone_at(lat=result['coord']['lat'], lng=result['coord']['lon']))
-        msg = '**Weather for {0}, {1}**\n\n'.format(result['name'], pycountry.countries.lookup(result['sys']['country']).name)
-        msg += 'Weather: {0}\n'.format(result['weather'][0]['description'].title())
-        msg += 'Temperature: {0} °C, {1} °F\n'.format('{0:.2f}'.format(float(result['main']['temp']) - 273.15), '{0:.2f}'.format(1.8 * (float(result['main']['temp']) - 273.15) + 32.0))
-        msg += 'Humidity: {0}%\n'.format(result['main']['humidity'])
-        msg += 'Wind Speed: {0} m/s\n'.format(result['wind']['speed'])
-        msg += 'Pressure: {0} hPa\n'.format(result['main']['pressure'])
-        msg += 'Sunrise: {0:%I}:{0:%M} {0:%p}\n'.format(datetime.fromtimestamp(result['sys']['sunrise'], tz=timezone))
-        msg += 'Sunset: {0:%I}:{0:%M} {0:%p}\n'.format(datetime.fromtimestamp(result['sys']['sunset'], tz=timezone))
-        await bot.say(msg)
+        description = 'Weather: {0}\n'.format(result['weather'][0]['description'].title())
+        description += 'Temperature: {0} °C, {1} °F\n'.format('{0:.2f}'.format(float(result['main']['temp']) - 273.15), '{0:.2f}'.format(1.8 * (float(result['main']['temp']) - 273.15) + 32.0))
+        description += 'Humidity: {0}%\n'.format(result['main']['humidity'])
+        description += 'Wind Speed: {0} m/s\n'.format(result['wind']['speed'])
+        description += 'Pressure: {0} hPa\n'.format(result['main']['pressure'])
+        description += 'Sunrise: {0:%I}:{0:%M} {0:%p}\n'.format(datetime.fromtimestamp(result['sys']['sunrise'], tz=timezone))
+        description += 'Sunset: {0:%I}:{0:%M} {0:%p}\n'.format(datetime.fromtimestamp(result['sys']['sunset'], tz=timezone))
+        await bot.say(content='**Weather for {0}, {1}**'.format(result['name'], pycountry.countries.lookup(result['sys']['country']).name), embed=create_embed(description=description))
         return
     except: pass
-    await bot.say('Couldn\'t get weather. Please follow this format for checking the weather: `!weather Melbourne, Australia`.')
+    await bot.say(embed=create_embed(description='Couldn\'t get weather. Please follow this format for checking the weather: **!weather** Melbourne, Australia', colour=discord.Colour.red()))
 
 @bot.command()
 async def tagcreate(*, tag_to_create : str):
@@ -333,11 +320,12 @@ async def tagcreate(*, tag_to_create : str):
         existing_tag = firebase.get('/tags', tag_name)
         if not existing_tag:
             firebase.patch('/tags', {tag_name: tag_content})
-            await bot.say('Created tag `{0}`\n\n{1}'.format(tag_name, tag_content))
+            await bot.say(content='Created Tag.', embed=create_embed(title=tag_name))
+            await bot.say(tag_content)
         else:
-            await bot.say('That tag already exists. Please choose a different tag name.')
+            await bot.say(embed=create_embed(title='That tag already exists. Please choose a different tag name.', colour=discord.Colour.red()))
         return
-    await bot.say('Couldn\'t create tag. Please follow this format for creating a tag: `!createtag NameOfTag Content of the tag`.')
+    await bot.say(embed=create_embed(description='Couldn\'t create tag. Please follow this format for creating a tag: **!tagcreate** NameOfTag Content of the tag.', colour=discord.Colour.red()))
 
 @bot.command()
 async def tag(tag_name : str):
@@ -345,14 +333,20 @@ async def tag(tag_name : str):
     if tag_result and len(tag_result) > 0:
         await bot.say(tag_result)
     else:
-        await bot.say('That tag doesn\'t exist.')
+        await bot.say(embed=create_embed(description='That tag doesn\'t exist. Use **!tagcreate** to create a tag.', colour=discord.Colour.red()))
 
 @bot.command()
 async def choose(*options : str):
     if len(options) > 1:
-        await bot.say(options[randrange(len(options))])
+        await bot.say(embed=create_embed(description=options[randrange(len(options))]))
     else:
-        await bot.say('Please provide 2 or more options to choose from, e.g. `!choose option1 option2`.')
+        await bot.say(embed=create_embed(description='Please provide 2 or more options to choose from, e.g. **!choose** option1 option2', colour=discord.Colour.red()))
+
+def create_embed(title='', fields={}, colour=discord.Colour.default(), description='', inline=False, url=''):
+    embed = discord.Embed(title=title, description=description, colour=colour, url=url)
+    for field in fields:
+        embed.add_field(name=field[0], value=field[1], inline=inline)
+    return embed
 
 bot.loop.create_task(check_mute_status())
 bot.run(args.token)
