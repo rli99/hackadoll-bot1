@@ -340,11 +340,11 @@ async def yt(*, query : str):
     url = 'https://www.youtube.com/results?search_query={0}'.format(quote(query))
     html_response = urlopen(url).read()
     soup = BeautifulSoup(html_response, 'html.parser')
-    top_result = soup.find(attrs={'class':'yt-uix-tile-link'})
-    if top_result is not None:
-        await bot.say('https://www.youtube.com{0}'.format(top_result['href']))
-    else:
-        await bot.say(embed=create_embed(title='Couldn\'t find any results.', colour=discord.Colour.red()))
+    for result in soup.findAll(attrs={'class': 'yt-uix-tile-link'}):
+        if result['href'].find('googleads.g.doubleclick.net') == -1:
+            await bot.say('https://www.youtube.com{0}'.format(result['href']))
+            return
+    await bot.say(embed=create_embed(title='Couldn\'t find any results.', colour=discord.Colour.red()))
 
 def create_embed(title='', description='', colour=discord.Colour.default(), url='', fields={}, inline=False):
     embed = discord.Embed(title=title, description=description, colour=colour, url=url)
