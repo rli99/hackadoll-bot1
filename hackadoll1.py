@@ -235,13 +235,13 @@ async def kamioshi_count(ctx):
             if role.id in ids_to_member:
                 oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1
  
-    description = 'Mayushii {0}\n'.format(oshi_num.get('mayushii', 0))
-    description += 'Aichan {0}\n'.format(oshi_num.get('aichan', 0))
-    description += 'Minyami {0}\n'.format(oshi_num.get('minyami', 0))
-    description += 'Yoppi {0}\n'.format(oshi_num.get('yoppi', 0))
-    description += 'Nanamin {0}\n'.format(oshi_num.get('nanamin', 0))
-    description += 'Kayatan {0}\n'.format(oshi_num.get('kayatan', 0))
-    description += 'Myu {0}\n'.format(oshi_num.get('myu', 0))
+    description = '**Mayushii** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['mayushii']), oshi_num.get('mayushii', 0))
+    description += '**Aichan** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['aichan']), oshi_num.get('aichan', 0))
+    description += '**Minyami** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['minyami']), oshi_num.get('minyami', 0))
+    description += '**Yoppi** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['yoppi']), oshi_num.get('yoppi', 0))
+    description += '**Nanamin** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['nanamin']), oshi_num.get('nanamin', 0))
+    description += '**Kayatan** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['kayatan']), oshi_num.get('kayatan', 0))
+    description += '**Myu** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['myu']), oshi_num.get('myu', 0))
     await bot.say(content='**Number of Users with Each WUG Member Role as Their Highest Role**', embed=create_embed(description=description))
 
 @bot.command(name='oshi-count', pass_context=True)
@@ -253,13 +253,13 @@ async def oshi_count(ctx):
             if role.id in ids_to_member:
                 oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1
 
-    description = 'Mayushii {0}\n'.format(oshi_num.get('mayushii', 0))
-    description += 'Aichan {0}\n'.format(oshi_num.get('aichan', 0))
-    description += 'Minyami {0}\n'.format(oshi_num.get('minyami', 0))
-    description += 'Yoppi {0}\n'.format(oshi_num.get('yoppi', 0))
-    description += 'Nanamin {0}\n'.format(oshi_num.get('nanamin', 0))
-    description += 'Kayatan {0}\n'.format(oshi_num.get('kayatan', 0))
-    description += 'Myu {0}\n'.format(oshi_num.get('myu', 0))
+    description = '**Mayushii** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['mayushii']), oshi_num.get('mayushii', 0))
+    description += '**Aichan** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['aichan']), oshi_num.get('aichan', 0))
+    description += '**Minyami** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['minyami']), oshi_num.get('minyami', 0))
+    description += '**Yoppi** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['yoppi']), oshi_num.get('yoppi', 0))
+    description += '**Nanamin** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['nanamin']), oshi_num.get('nanamin', 0))
+    description += '**Kayatan** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['kayatan']), oshi_num.get('kayatan', 0))
+    description += '**Myu** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['myu']), oshi_num.get('myu', 0))
     await bot.say(content='**Number of Users with Each WUG Member Role**', embed=create_embed(description=description))
 
 @bot.command()
