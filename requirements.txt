@@ -1,5 +1,6 @@
 discord.py==0.16.12
 forex-python==1.0.0
+humanfriendly==4.12.1
 pycountry==18.2.23
 python-firebase==1.2
 pytz==2018.4
