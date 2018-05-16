@@ -1,4 +1,4 @@
-## ハッカドール1号
+## ハッカドール１号
 ### Discord bot for the Wake Up, Girls! server
 
 #### Command line arguments
