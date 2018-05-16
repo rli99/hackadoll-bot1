@@ -1,3 +1,4 @@
+beautifulsoup4==4.6.0
 discord.py==0.16.12
 forex-python==1.0.0
 humanfriendly==4.12.1

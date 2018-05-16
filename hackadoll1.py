@@ -1,5 +1,6 @@
 import asyncio, discord, pycountry, pytz, requests, time
 from argparse import ArgumentParser
+from bs4 import BeautifulSoup
 from datetime import datetime
 from decimal import Decimal
 from discord.ext import commands
@@ -8,6 +9,8 @@ from forex_python.converter import CurrencyRates
 from humanfriendly import format_timespan
 from random import randrange
 from timezonefinder import TimezoneFinder
+from urllib.parse import quote
+from urllib.request import urlopen
 
 def parse_arguments():
     parser = ArgumentParser(description='Discord bot for Wake Up, Girls! server.')
@@ -73,6 +76,7 @@ async def help():
     embed_fields.append(('!tagcreate *tag_name* *content*', 'Create a tag.'))
     embed_fields.append(('!tag *tag_name*', 'Display a saved tag.'))
     embed_fields.append(('!choose *options*', 'Randomly choose from one of the provided options, e.g. **!choose** option1 option2'))
+    embed_fields.append(('!yt *query*', 'Gets the top result from YouTube based on the provided search terms.'))
     await bot.say(content='**Available Commands**', embed=create_embed(fields=embed_fields))
 
 @bot.command(pass_context=True)
@@ -287,14 +291,15 @@ async def weather(*, location : str):
     try:
         result = requests.get('http://api.openweathermap.org/data/2.5/weather', params={'q': ','.join(query), 'APPID': args.weather_api_key}).json()
         timezone = pytz.timezone(TimezoneFinder().timezone_at(lat=result['coord']['lat'], lng=result['coord']['lon']))
-        description = 'Weather: {0}\n'.format(result['weather'][0]['description'].title())
-        description += 'Temperature: {0} °C, {1} °F\n'.format('{0:.2f}'.format(float(result['main']['temp']) - 273.15), '{0:.2f}'.format(1.8 * (float(result['main']['temp']) - 273.15) + 32.0))
-        description += 'Humidity: {0}%\n'.format(result['main']['humidity'])
-        description += 'Wind Speed: {0} m/s\n'.format(result['wind']['speed'])
-        description += 'Pressure: {0} hPa\n'.format(result['main']['pressure'])
-        description += 'Sunrise: {0:%I}:{0:%M} {0:%p}\n'.format(datetime.fromtimestamp(result['sys']['sunrise'], tz=timezone))
-        description += 'Sunset: {0:%I}:{0:%M} {0:%p}'.format(datetime.fromtimestamp(result['sys']['sunset'], tz=timezone))
-        await bot.say(content='**Weather for {0}, {1}**'.format(result['name'], pycountry.countries.lookup(result['sys']['country']).name), embed=create_embed(description=description))
+        embed_fields = []
+        embed_fields.append(('Weather', '{0}'.format(result['weather'][0]['description'].title())))
+        embed_fields.append(('Temperature', '{0} °C, {1} °F\n'.format('{0:.2f}'.format(float(result['main']['temp']) - 273.15), '{0:.2f}'.format(1.8 * (float(result['main']['temp']) - 273.15) + 32.0))))
+        embed_fields.append(('Humidity', '{0}%\n'.format(result['main']['humidity'])))
+        embed_fields.append(('Wind Speed', '{0} m/s\n'.format(result['wind']['speed'])))
+        embed_fields.append(('Sunrise', '{0:%I}:{0:%M} {0:%p}\n'.format(datetime.fromtimestamp(result['sys']['sunrise'], tz=timezone))))
+        embed_fields.append(('Sunset', '{0:%I}:{0:%M} {0:%p}'.format(datetime.fromtimestamp(result['sys']['sunset'], tz=timezone))))
+        embed_fields.append(('Pressure', '{0} hPa\n'.format(result['main']['pressure'])))
+        await bot.say(content='**Weather for {0}, {1}**'.format(result['name'], pycountry.countries.lookup(result['sys']['country']).name), embed=create_embed(fields=embed_fields, inline=True))
         return
     except: pass
     await bot.say(embed=create_embed(description='Couldn\'t get weather. Please follow this format for checking the weather: **!weather** Melbourne, Australia.', colour=discord.Colour.red()))
@@ -329,6 +334,17 @@ async def choose(*options : str):
         await bot.say(embed=create_embed(description=options[randrange(len(options))]))
     else:
         await bot.say(embed=create_embed(description='Please provide 2 or more options to choose from, e.g. **!choose** option1 option2.', colour=discord.Colour.red()))
+
+@bot.command()
+async def yt(*, query : str):
+    url = 'https://www.youtube.com/results?search_query={0}'.format(quote(query))
+    html_response = urlopen(url).read()
+    soup = BeautifulSoup(html_response, 'html.parser')
+    top_result = soup.find(attrs={'class':'yt-uix-tile-link'})
+    if top_result is not None:
+        await bot.say('https://www.youtube.com{0}'.format(top_result['href']))
+    else:
+        await bot.say(embed=create_embed(title='Couldn\'t find any results.', colour=discord.Colour.red()))
 
 def create_embed(title='', description='', colour=discord.Colour.default(), url='', fields={}, inline=False):
     embed = discord.Embed(title=title, description=description, colour=colour, url=url)
