@@ -341,8 +341,9 @@ async def yt(*, query : str):
     html_response = urlopen(url).read()
     soup = BeautifulSoup(html_response, 'html.parser')
     for result in soup.findAll(attrs={'class': 'yt-uix-tile-link'}):
-        if result['href'].find('googleads.g.doubleclick.net') == -1:
-            await bot.say('https://www.youtube.com{0}'.format(result['href']))
+        link = result['href']
+        if link.find('googleads.g.doubleclick.net') == -1 and not link.startswith('/channel'):
+            await bot.say('https://www.youtube.com{0}'.format(link))
             return
     await bot.say(embed=create_embed(title='Couldn\'t find any results.', colour=discord.Colour.red()))
 
