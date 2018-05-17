@@ -83,7 +83,7 @@ async def help():
 async def kick(ctx, member : discord.Member):
     if ctx.message.channel.permissions_for(ctx.message.author).kick_members:
         try:
-            await bot.say(embed=create_embed(title='{0.username}#{0.discriminator} has been kicked.'.format(member)))
+            await bot.say(embed=create_embed(title='{0} has been kicked.'.format(member)))  
             await bot.kick(member)  
             return
         except: pass
@@ -93,7 +93,7 @@ async def kick(ctx, member : discord.Member):
 async def ban(ctx, member : discord.Member):
     if ctx.message.channel.permissions_for(ctx.message.author).ban_members:
         try:
-            await bot.say(embed=create_embed(title='{0.username}#{0.discriminator} has been banned.'.format(member)))
+            await bot.say(embed=create_embed(title='{0} has been banned.'.format(member)))
             await bot.ban(member)
             return
         except: pass
@@ -126,30 +126,31 @@ async def unmute(ctx, member : discord.Member):
         await bot.say(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
-async def userinfo(ctx):
-    user = ctx.message.author
+async def userinfo(ctx, member : discord.Member=None):
+    user = member or ctx.message.author
     embed_fields = []
-    embed_fields.append(('Name', '{0}\n'.format(user.display_name)))
-    embed_fields.append(('ID', '{0}\n'.format(user.id)))
-    embed_fields.append(('Joined server', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC\n'.format(user.joined_at)))
-    embed_fields.append(('Account created', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC\n'.format(user.created_at)))
-    embed_fields.append(('Roles', '{0}\n'.format(', '.join([r.name for r in user.roles[1:]]))))
-    embed_fields.append(('Avatar', '<{0}>'.format(user.avatar_url)))
+    embed_fields.append(('Name', '{0}'.format(user.display_name)))
+    embed_fields.append(('ID', '{0}'.format(user.id)))
+    embed_fields.append(('Joined Server', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC'.format(user.joined_at)))
+    embed_fields.append(('Account Created', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC'.format(user.created_at)))
+    embed_fields.append(('Roles', '{0}'.format(', '.join([r.name for r in user.roles[1:]]) if len(user.roles[1:]) > 0 else 'None')))
+    embed_fields.append(('Avatar', '{0}'.format('<{0}>'.format(user.avatar_url) if user.avatar_url else 'None')))
     await bot.say(content='**User Information for {0.mention}**'.format(user), embed=create_embed(fields=embed_fields, inline=True))
 
 @bot.command(pass_context=True)
 async def serverinfo(ctx):
     server = ctx.message.server
     embed_fields = []
-    embed_fields.append(('{0}', '(ID: {1})\n'.format(server.name, server.id)))
-    embed_fields.append(('Owner', '{0} (ID: {1})\n'.format(server.owner, server.owner.id)))
-    embed_fields.append(('Members', '{0}\n'.format(server.member_count)))
-    embed_fields.append(('Channels', '{0} text, {1} voice\n'.format(sum(1 if str(channel.type) == 'text' else 0 for channel in server.channels), sum(1 if str(channel.type) == 'voice' else 0 for channel in server.channels))))
-    embed_fields.append(('Roles', '{0}\n'.format(len(server.roles))))
-    embed_fields.append(('Created on', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC\n'.format(server.created_at)))
-    embed_fields.append(('Default channel', '{0}\n'.format(server.default_channel.name if server.default_channel is not None else '')))
-    embed_fields.append(('Region', '{0}\n'.format(server.region)))
-    embed_fields.append(('Icon', '<{0}>'.format(server.icon_url)))
+    embed_fields.append(('{0}'.format(server.name), '(ID: {0})'.format(server.id)))
+    embed_fields.append(('Owner', '{0} (ID: {1})'.format(server.owner, server.owner.id)))
+    embed_fields.append(('Members', '{0}'.format(server.member_count)))
+    embed_fields.append(('Channels', '{0} text, {1} voice'.format(sum(1 if str(channel.type) == 'text' else 0 for channel in server.channels), sum(1 if str(channel.type) == 'voice' else 0 for channel in server.channels))))
+    embed_fields.append(('Roles', '{0}'.format(len(server.roles))))
+    embed_fields.append(('Created On', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC'.format(server.created_at)))
+    embed_fields.append(('Default Channel', '{0}'.format(server.default_channel.name if server.default_channel is not None else 'None')))
+    embed_fields.append(('Region', '{0}'.format(server.region)))
+    embed_fields.append(('Icon', '{0}'.format('<{0}>'.format(server.icon_url) if server.icon_url else 'None')))
+    print(embed_fields)
     await bot.say(content='**Server Information**', embed=create_embed(fields=embed_fields, inline=True))
 
 @bot.command(name='seiyuu-vids')
@@ -293,12 +294,12 @@ async def weather(*, location : str):
         timezone = pytz.timezone(TimezoneFinder().timezone_at(lat=result['coord']['lat'], lng=result['coord']['lon']))
         embed_fields = []
         embed_fields.append(('Weather', '{0}'.format(result['weather'][0]['description'].title())))
-        embed_fields.append(('Temperature', '{0} °C, {1} °F\n'.format('{0:.2f}'.format(float(result['main']['temp']) - 273.15), '{0:.2f}'.format(1.8 * (float(result['main']['temp']) - 273.15) + 32.0))))
-        embed_fields.append(('Humidity', '{0}%\n'.format(result['main']['humidity'])))
-        embed_fields.append(('Wind Speed', '{0} m/s\n'.format(result['wind']['speed'])))
-        embed_fields.append(('Sunrise', '{0:%I}:{0:%M} {0:%p}\n'.format(datetime.fromtimestamp(result['sys']['sunrise'], tz=timezone))))
+        embed_fields.append(('Temperature', '{0} °C, {1} °F'.format('{0:.2f}'.format(float(result['main']['temp']) - 273.15), '{0:.2f}'.format(1.8 * (float(result['main']['temp']) - 273.15) + 32.0))))
+        embed_fields.append(('Humidity', '{0}%'.format(result['main']['humidity'])))
+        embed_fields.append(('Wind Speed', '{0} m/s'.format(result['wind']['speed'])))
+        embed_fields.append(('Sunrise', '{0:%I}:{0:%M} {0:%p}'.format(datetime.fromtimestamp(result['sys']['sunrise'], tz=timezone))))
         embed_fields.append(('Sunset', '{0:%I}:{0:%M} {0:%p}'.format(datetime.fromtimestamp(result['sys']['sunset'], tz=timezone))))
-        embed_fields.append(('Pressure', '{0} hPa\n'.format(result['main']['pressure'])))
+        embed_fields.append(('Pressure', '{0} hPa'.format(result['main']['pressure'])))
         await bot.say(content='**Weather for {0}, {1}**'.format(result['name'], pycountry.countries.lookup(result['sys']['country']).name), embed=create_embed(fields=embed_fields, inline=True))
         return
     except: pass
