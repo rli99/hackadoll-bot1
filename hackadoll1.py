@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from decimal import Decimal
 from discord.ext import commands
-from firebase import firebase
+from firebase_admin import credentials, db, initialize_app
 from forex_python.converter import CurrencyRates
 from humanfriendly import format_timespan
 from random import randrange
@@ -15,6 +15,7 @@ from urllib.request import urlopen
 def parse_arguments():
     parser = ArgumentParser(description='Discord bot for Wake Up, Girls! server.')
     parser.add_argument('--token', required=True, help='Token for the discord app bot user.')
+    parser.add_argument('--firebase_credentials', required=True, metavar='DB_CRED', help='JSON file containing the credentials for the Firebase Realtime Database.')
     parser.add_argument('--firebase_db', required=True, metavar='DB_URL', help='URL for the Firebase Realtime Database.')
     parser.add_argument('--weather_api_key', required=True, metavar='KEY', help='API key for the OpenWeatherMap API.')
     return parser.parse_args()
@@ -28,8 +29,10 @@ SERVER_ID = '280439975911096320'
 args = parse_arguments()
 bot = commands.Bot(command_prefix='!')
 bot.remove_command('help')
-firebase = firebase.FirebaseApplication(args.firebase_db, None)
-muted_members = firebase.get('/muted_members', None) or {}
+certificate = credentials.Certificate(args.firebase_credentials)
+firebase = initialize_app(certificate, {'databaseURL': args.firebase_db})
+firebase_ref = db.reference()
+muted_members = firebase_ref.get().get('muted_members', {})
 
 @bot.event
 async def on_ready():
@@ -42,7 +45,7 @@ async def check_mute_status():
         members_to_unmute = []
         for member_id in muted_members:
             if time.time() > muted_members[member_id]:
-                firebase.delete('/muted_members', member_id)
+                firebase_ref.child('muted_members/{0}'.format(member_id)).delete()
                 members_to_unmute.append(member_id)
                 server = discord.utils.get(bot.servers, id=SERVER_ID)
                 muted_role = discord.utils.get(server.roles, id=MUTED_ROLE_ID)
@@ -104,7 +107,7 @@ async def mute(ctx, member : discord.Member, duration : int):
     if ctx.message.channel.permissions_for(ctx.message.author).ban_members:
         if duration > 0:
             mute_endtime = time.time() + duration * 60
-            firebase.patch('/muted_members', {member.id : mute_endtime})
+            firebase_ref.child('muted_members/{0}'.format(member.id)).set(mute_endtime)
             muted_members[member.id] = mute_endtime
             muted_role = discord.utils.get(ctx.message.server.roles, id=MUTED_ROLE_ID)
             await bot.add_roles(member, muted_role)
@@ -117,7 +120,7 @@ async def mute(ctx, member : discord.Member, duration : int):
 @bot.command(pass_context=True)
 async def unmute(ctx, member : discord.Member):
     if ctx.message.channel.permissions_for(ctx.message.author).ban_members:
-        firebase.delete('/muted_members', member.id)
+        firebase_ref.child('muted_members/{0}'.format(member.id)).delete()
         muted_members.pop(member.id)
         muted_role = discord.utils.get(ctx.message.server.roles, id=MUTED_ROLE_ID)
         await bot.remove_roles(member, muted_role)
@@ -150,7 +153,6 @@ async def serverinfo(ctx):
     embed_fields.append(('Default Channel', '{0}'.format(server.default_channel.name if server.default_channel is not None else 'None')))
     embed_fields.append(('Region', '{0}'.format(server.region)))
     embed_fields.append(('Icon', '{0}'.format('<{0}>'.format(server.icon_url) if server.icon_url else 'None')))
-    print(embed_fields)
     await bot.say(content='**Server Information**', embed=create_embed(fields=embed_fields, inline=True))
 
 @bot.command(name='seiyuu-vids')
@@ -311,9 +313,9 @@ async def tagcreate(*, tag_to_create : str):
     if len(split_request) > 1:
         tag_name = split_request[0]
         tag_content = tag_to_create[len(tag_name) + 1:]
-        existing_tag = firebase.get('/tags', tag_name)
+        existing_tag = firebase_ref.child('tags').get().get(tag_name, '')
         if not existing_tag:
-            firebase.patch('/tags', {tag_name: tag_content})
+            firebase_ref.child('tags/{0}'.format(tag_name)).set(tag_content)
             await bot.say(content='Created Tag.', embed=create_embed(title=tag_name))
             await bot.say(tag_content)
         else:
@@ -323,7 +325,7 @@ async def tagcreate(*, tag_to_create : str):
 
 @bot.command()
 async def tag(tag_name : str):
-    tag_result = firebase.get('/tags', tag_name)
+    tag_result = firebase_ref.child('tags').get().get(tag_name, '')
     if tag_result and len(tag_result) > 0:
         await bot.say(tag_result)
     else:
