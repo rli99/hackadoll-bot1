@@ -55,8 +55,9 @@ async def check_mute_status():
             muted_members.pop(member_id)
         await asyncio.sleep(30)
 
-@bot.command()
-async def help():
+@bot.command(pass_context=True)
+async def help(ctx):
+    await bot.send_typing(ctx.message.channel)
     embed_fields = []
     embed_fields.append(('!help', 'Show this help message.'))
     embed_fields.append(('!kick *member*', 'Kick a member (mods only).'))
@@ -84,16 +85,18 @@ async def help():
 
 @bot.command(pass_context=True)
 async def kick(ctx, member : discord.Member):
+    await bot.send_typing(ctx.message.channel)
     if ctx.message.channel.permissions_for(ctx.message.author).kick_members:
         try:
             await bot.say(embed=create_embed(title='{0} has been kicked.'.format(member)))  
-            await bot.kick(member)  
+            await bot.kick(member)
             return
         except: pass
     await bot.say(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
 async def ban(ctx, member : discord.Member):
+    await bot.send_typing(ctx.message.channel)
     if ctx.message.channel.permissions_for(ctx.message.author).ban_members:
         try:
             await bot.say(embed=create_embed(title='{0} has been banned.'.format(member)))
@@ -104,6 +107,7 @@ async def ban(ctx, member : discord.Member):
 
 @bot.command(pass_context=True)
 async def mute(ctx, member : discord.Member, duration : int):
+    await bot.send_typing(ctx.message.channel)
     if ctx.message.channel.permissions_for(ctx.message.author).ban_members:
         if duration > 0:
             mute_endtime = time.time() + duration * 60
@@ -119,6 +123,7 @@ async def mute(ctx, member : discord.Member, duration : int):
 
 @bot.command(pass_context=True)
 async def unmute(ctx, member : discord.Member):
+    await bot.send_typing(ctx.message.channel)
     if ctx.message.channel.permissions_for(ctx.message.author).ban_members:
         firebase_ref.child('muted_members/{0}'.format(member.id)).delete()
         muted_members.pop(member.id)
@@ -130,6 +135,7 @@ async def unmute(ctx, member : discord.Member):
 
 @bot.command(pass_context=True)
 async def userinfo(ctx, member : discord.Member=None):
+    await bot.send_typing(ctx.message.channel)
     user = member or ctx.message.author
     embed_fields = []
     embed_fields.append(('Name', '{0}'.format(user.display_name)))
@@ -142,6 +148,7 @@ async def userinfo(ctx, member : discord.Member=None):
 
 @bot.command(pass_context=True)
 async def serverinfo(ctx):
+    await bot.send_typing(ctx.message.channel)
     server = ctx.message.server
     embed_fields = []
     embed_fields.append(('{0}'.format(server.name), '(ID: {0})'.format(server.id)))
@@ -155,110 +162,135 @@ async def serverinfo(ctx):
     embed_fields.append(('Icon', '{0}'.format('<{0}>'.format(server.icon_url) if server.icon_url else 'None')))
     await bot.say(content='**Server Information**', embed=create_embed(fields=embed_fields, inline=True))
 
-@bot.command(name='seiyuu-vids')
-async def seiyuu_vids():
+@bot.command(pass_context=True, name='seiyuu-vids')
+async def seiyuu_vids(ctx):
+    await bot.send_typing(ctx.message.channel)
     await bot.say(content='**WUG Seiyuu Videos**', embed=create_embed(title='Wake Up, Girls! Wiki - List of Seiyuu Content', url='http://wake-up-girls.wikia.com/wiki/List_of_Seiyuu_Content'))
 
 @bot.command(pass_context=True)
 async def oshihen(ctx, role_name : str):
-    role = discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[role_name.lower()])
+    await bot.send_typing(ctx.message.channel)
+    server = discord.utils.get(bot.servers, id=SERVER_ID)
+    member = discord.utils.get(server.members, id=ctx.message.author.id)
+    if member is None:
+        return
+
+    role = discord.utils.get(server.roles, id=WUG_ROLE_IDS[role_name.lower()])
     if role is None: 
         await bot.say(embed=create_embed(description='Couldn\'t find that role. Use **!roles** to show additional help on how to get roles.', colour=discord.Colour.red()))
         return
 
     roles_to_remove = []
-    for existing_role in ctx.message.author.roles:
+    for existing_role in member.roles:
         if existing_role.id in WUG_ROLE_IDS.values():
             roles_to_remove.append(existing_role)
 
     if len(roles_to_remove) == 1 and roles_to_remove[0].name == role.name:
         await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you already have that role.'.format(ctx), colour=discord.Colour.red()))
     elif len(roles_to_remove) > 0:
-        await bot.remove_roles(ctx.message.author, *roles_to_remove)
+        await bot.remove_roles(member, *roles_to_remove)
         await asyncio.sleep(1)
         
-    await bot.add_roles(ctx.message.author, role)
-    await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you have oshihened to the **{1}** role {2.mention}.'.format(ctx, role_name.title(), role), colour=role.colour))
+    role_mention = role.mention if ctx.message.channel in server.channels else role.name
+    await bot.add_roles(member, role)
+    await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you have oshihened to the **{1}** role {2}.'.format(ctx, role_name.title(), role_mention), colour=role.colour))
 
 @bot.command(pass_context=True)
 async def oshimashi(ctx, role_name : str):
-    role = discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[role_name.lower()])
+    await bot.send_typing(ctx.message.channel)
+    server = discord.utils.get(bot.servers, id=SERVER_ID)
+    member = discord.utils.get(server.members, id=ctx.message.author.id)
+    role = discord.utils.get(server.roles, id=WUG_ROLE_IDS[role_name.lower()])
     if role is None:
         await bot.say(embed=create_embed(description='Couldn\'t find that role. Use **!roles** to show additional help on how to get roles.', colour=discord.Colour.red()))
         return
 
-    if role not in ctx.message.author.roles:
-        await bot.add_roles(ctx.message.author, role)
-        await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you now have the **{1}** oshi role {2.mention}.'.format(ctx, role_name.title(), role), colour=role.colour))
+    if role not in member.roles:
+        role_mention = role.mention if ctx.message.channel in server.channels else role.name
+        await bot.add_roles(member, role)
+        await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you now have the **{1}** oshi role {2}.'.format(ctx, role_name.title(), role_mention), colour=role.colour))
     else:
         await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you already have that role.'.format(ctx), colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
 async def hakooshi(ctx):
+    await bot.send_typing(ctx.message.channel)
+    server = discord.utils.get(bot.servers, id=SERVER_ID)
+    member = discord.utils.get(server.members, id=ctx.message.author.id)
     roles_to_add = []
-    for role in ctx.message.server.roles:
-        if role not in ctx.message.author.roles and role.id in WUG_ROLE_IDS.values():
+    for role in server.roles:
+        if role not in member.roles and role.id in WUG_ROLE_IDS.values():
             roles_to_add.append(role)
 
     if len(roles_to_add) > 0:
-        await bot.add_roles(ctx.message.author, *roles_to_add)
+        await bot.add_roles(member, *roles_to_add)
         await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you now have every WUG member role.'.format(ctx), colour=discord.Colour.teal()))
     else:
         await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you already have every WUG member role.'.format(ctx), colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
 async def roles(ctx):
+    await bot.send_typing(ctx.message.channel)
+    server = discord.utils.get(bot.servers, id=SERVER_ID)
+    in_server = ctx.message.channel in server.channels
     description = 'Users can have any of the 7 WUG member roles. Use **!oshihen** *member* to get the role you want.\n\n'
-    description += '**!oshihen** Mayushii for {0.mention}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['mayushii']))
-    description += '**!oshihen** Aichan for {0.mention}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['aichan']))
-    description += '**!oshihen** Minyami for {0.mention}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['minyami']))
-    description += '**!oshihen** Yoppi for {0.mention}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['yoppi']))
-    description += '**!oshihen** Nanamin for {0.mention}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['nanamin']))
-    description += '**!oshihen** Kayatan for {0.mention}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['kayatan']))
-    description += '**!oshihen** Myu for {0.mention}\n\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['myu']))
+    description += '**!oshihen** Mayushii for {0}\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['mayushii']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['mayushii']).name)
+    description += '**!oshihen** Aichan for {0}\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['aichan']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['aichan']).name)
+    description += '**!oshihen** Minyami for {0}\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['minyami']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['minyami']).name)
+    description += '**!oshihen** Yoppi for {0}\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['yoppi']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['yoppi']).name)
+    description += '**!oshihen** Nanamin for {0}\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['nanamin']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['nanamin']).name)
+    description += '**!oshihen** Kayatan for {0}\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['kayatan']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['kayatan']).name)
+    description += '**!oshihen** Myu for {0}\n\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['myu']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['myu']).name)
     description += 'Note that using **!oshihen** will remove all of your existing member roles. To get an extra role without removing existing ones, use **!oshimashi** *member* instead. To get all 7 roles, use **!hakooshi**.'
     await bot.say(content='**How to get WUG Member Roles**', embed=create_embed(description=description))
 
 @bot.command(name='kamioshi-count', pass_context=True)
 async def kamioshi_count(ctx):
+    await bot.send_typing(ctx.message.channel)
+    server = discord.utils.get(bot.servers, id=SERVER_ID)
     ids_to_member = {v: k for k, v in WUG_ROLE_IDS.items()}
     oshi_num = {}
-    for member in ctx.message.server.members:
+    for member in server.members:
         member_roles = [r for r in member.roles if r.id in ids_to_member]
         if len(member_roles) > 0:
             role = sorted(member_roles)[-1]
             if role.id in ids_to_member:
                 oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1
  
-    description = '**Mayushii** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['mayushii']), oshi_num.get('mayushii', 0))
-    description += '**Aichan** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['aichan']), oshi_num.get('aichan', 0))
-    description += '**Minyami** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['minyami']), oshi_num.get('minyami', 0))
-    description += '**Yoppi** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['yoppi']), oshi_num.get('yoppi', 0))
-    description += '**Nanamin** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['nanamin']), oshi_num.get('nanamin', 0))
-    description += '**Kayatan** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['kayatan']), oshi_num.get('kayatan', 0))
-    description += '**Myu** ({0.mention}) - {1}'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['myu']), oshi_num.get('myu', 0))
+    in_server = ctx.message.channel in server.channels
+    description = '**Mayushii** ({0}) - {1}\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['mayushii']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['mayushii']).name, oshi_num.get('mayushii', 0))
+    description += '**Aichan** ({0}) - {1}\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['aichan']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['aichan']).name, oshi_num.get('aichan', 0))
+    description += '**Minyami** ({0}) - {1}\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['minyami']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['minyami']).name, oshi_num.get('minyami', 0))
+    description += '**Yoppi** ({0}) - {1}\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['yoppi']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['yoppi']).name, oshi_num.get('yoppi', 0))
+    description += '**Nanamin** ({0}) - {1}\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['nanamin']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['nanamin']).name, oshi_num.get('nanamin', 0))
+    description += '**Kayatan** ({0}) - {1}\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['kayatan']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['kayatan']).name, oshi_num.get('kayatan', 0))
+    description += '**Myu** ({0}) - {1}'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['myu']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['myu']).name, oshi_num.get('myu', 0))
     await bot.say(content='**Number of Users with Each WUG Member Role as Their Highest Role**', embed=create_embed(description=description))
 
 @bot.command(name='oshi-count', pass_context=True)
 async def oshi_count(ctx):
+    await bot.send_typing(ctx.message.channel)
+    server = discord.utils.get(bot.servers, id=SERVER_ID)
     ids_to_member = {v: k for k, v in WUG_ROLE_IDS.items()}
     oshi_num = {}
-    for member in ctx.message.server.members:
+    for member in server.members:
         for role in member.roles:
             if role.id in ids_to_member:
                 oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1
 
-    description = '**Mayushii** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['mayushii']), oshi_num.get('mayushii', 0))
-    description += '**Aichan** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['aichan']), oshi_num.get('aichan', 0))
-    description += '**Minyami** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['minyami']), oshi_num.get('minyami', 0))
-    description += '**Yoppi** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['yoppi']), oshi_num.get('yoppi', 0))
-    description += '**Nanamin** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['nanamin']), oshi_num.get('nanamin', 0))
-    description += '**Kayatan** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['kayatan']), oshi_num.get('kayatan', 0))
-    description += '**Myu** ({0.mention}) - {1}'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['myu']), oshi_num.get('myu', 0))
+    in_server = ctx.message.channel in server.channels
+    description = '**Mayushii** ({0}) - {1}\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['mayushii']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['mayushii']).name, oshi_num.get('mayushii', 0))
+    description += '**Aichan** ({0}) - {1}\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['aichan']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['aichan']).name, oshi_num.get('aichan', 0))
+    description += '**Minyami** ({0}) - {1}\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['minyami']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['minyami']).name, oshi_num.get('minyami', 0))
+    description += '**Yoppi** ({0}) - {1}\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['yoppi']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['yoppi']).name, oshi_num.get('yoppi', 0))
+    description += '**Nanamin** ({0}) - {1}\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['nanamin']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['nanamin']).name, oshi_num.get('nanamin', 0))
+    description += '**Kayatan** ({0}) - {1}\n'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['kayatan']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['kayatan']).name, oshi_num.get('kayatan', 0))
+    description += '**Myu** ({0}) - {1}'.format(discord.utils.get(server.roles, id=WUG_ROLE_IDS['myu']).mention if in_server else discord.utils.get(server.roles, id=WUG_ROLE_IDS['myu']).name, oshi_num.get('myu', 0))
     await bot.say(content='**Number of Users with Each WUG Member Role**', embed=create_embed(description=description))
 
-@bot.command()
-async def mv(*, song_name : str):
+@bot.command(pass_context=True)
+async def mv(ctx, *, song_name : str):
+    await bot.send_typing(ctx.message.channel)
     name_to_mv = {}
     for mv, names in list(MV_NAMES.items()):
       name_to_mv.update({name : mv for name in names})
@@ -268,14 +300,16 @@ async def mv(*, song_name : str):
     else:
         await bot.say(embed=create_embed(description='Couldn\'t find that MV. Use **!mv-list** to show the list of available MVs.', colour=discord.Colour.red()))
 
-@bot.command(name='mv-list')
-async def mv_list():
+@bot.command(name='mv-list', pass_context=True)
+async def mv_list(ctx):
+    await bot.send_typing(ctx.message.channel)
     description = '{0}\n\n'.format('\n'.join(list(MUSICVIDEOS.keys())))
     description += 'Use **!mv** *song* to show the full MV. You can also write the name of the song in English.'
     await bot.say(content='**List of Available Music Videos**', embed=create_embed(description=description))
 
-@bot.command()
-async def currency(*conversion : str):
+@bot.command(pass_context=True)
+async def currency(ctx, *conversion : str):
+    await bot.send_typing(ctx.message.channel)
     if len(conversion) == 4 and conversion[2].lower() == 'to':
         try:
             result = CurrencyRates().convert(conversion[1].upper(), conversion[3].upper(), Decimal(conversion[0]))
@@ -284,8 +318,9 @@ async def currency(*conversion : str):
         except: pass
     await bot.say(embed=create_embed(description='Couldn\'t convert. Please follow this format for converting currency: **!currency** 12.34 AUD to USD.', colour=discord.Colour.red()))
 
-@bot.command()
-async def weather(*, location : str):
+@bot.command(pass_context=True)
+async def weather(ctx, *, location : str):
+    await bot.send_typing(ctx.message.channel)
     query = location.split(',')
     if len(query) > 1:
         try:
@@ -307,8 +342,9 @@ async def weather(*, location : str):
     except: pass
     await bot.say(embed=create_embed(description='Couldn\'t get weather. Please follow this format for checking the weather: **!weather** Melbourne, Australia.', colour=discord.Colour.red()))
 
-@bot.command()
-async def tagcreate(*, tag_to_create : str):
+@bot.command(pass_context=True)
+async def tagcreate(ctx, *, tag_to_create : str):
+    await bot.send_typing(ctx.message.channel)
     split_request = tag_to_create.split()
     if len(split_request) > 1:
         tag_name = split_request[0]
@@ -323,23 +359,26 @@ async def tagcreate(*, tag_to_create : str):
         return
     await bot.say(embed=create_embed(description='Couldn\'t create tag. Please follow this format for creating a tag: **!tagcreate** NameOfTag Content of the tag.', colour=discord.Colour.red()))
 
-@bot.command()
-async def tag(tag_name : str):
+@bot.command(pass_context=True)
+async def tag(ctx, tag_name : str):
+    await bot.send_typing(ctx.message.channel)
     tag_result = firebase_ref.child('tags').get().get(tag_name, '')
     if tag_result and len(tag_result) > 0:
         await bot.say(tag_result)
     else:
         await bot.say(embed=create_embed(description='That tag doesn\'t exist. Use **!tagcreate** to create a tag.', colour=discord.Colour.red()))
 
-@bot.command()
-async def choose(*options : str):
+@bot.command(pass_context=True)
+async def choose(ctx, *options : str):
+    await bot.send_typing(ctx.message.channel)
     if len(options) > 1:
         await bot.say(embed=create_embed(description=options[randrange(len(options))]))
     else:
         await bot.say(embed=create_embed(description='Please provide 2 or more options to choose from, e.g. **!choose** option1 option2.', colour=discord.Colour.red()))
 
-@bot.command()
-async def yt(*, query : str):
+@bot.command(pass_context=True)
+async def yt(ctx, *, query : str):
+    await bot.send_typing(ctx.message.channel)
     url = 'https://www.youtube.com/results?search_query={0}'.format(quote(query))
     html_response = urlopen(url).read()
     soup = BeautifulSoup(html_response, 'html.parser')
