@@ -239,8 +239,7 @@ async def kamioshi_count(ctx):
         member_roles = [r for r in member.roles if r.id in ids_to_member]
         if len(member_roles) > 0:
             role = sorted(member_roles)[-1]
-            if role.id in ids_to_member:
-                oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1
+            oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1  
     
     description = '**Mayushii** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['mayushii']), oshi_num.get('mayushii', 0))
     description += '**Aichan** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['aichan']), oshi_num.get('aichan', 0))
