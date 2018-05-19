@@ -274,7 +274,7 @@ async def blogpics(ctx, member : str=''):
         page = 1
         entry_num = 1
         day = -1
-        html_response = urlopen('https://ameblo.jp/wakeupgirls').read()
+        html_response = urlopen('https://ameblo.jp/wakeupgirls')
         soup = BeautifulSoup(html_response, 'html.parser')
         blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
         sign_entry = strip_from_end(str(blog_entry)[:-10].strip(), '<br/>')
@@ -402,7 +402,7 @@ async def choose(ctx, *options : str):
 async def yt(ctx, *, query : str):
     await bot.send_typing(ctx.message.channel)
     url = 'https://www.youtube.com/results?search_query={0}'.format(quote(query))
-    html_response = urlopen(url).read()
+    html_response = urlopen(url)
     soup = BeautifulSoup(html_response, 'html.parser')
     for result in soup.find_all(attrs={'class': 'yt-uix-tile-link'}):
         link = result['href']
