@@ -22,7 +22,6 @@ MV_NAMES = {'7 Girls War': ['7 girls war', '7gw'], '言の葉 青葉': ['言の�
 WUG_BLOG_ORDER = ['まゆ', 'μ', 'かやたん', 'anaminn', 'よぴ', 'みにゃみ', '永野愛理']
 WUG_BLOG_SIGNS = {'mayushii': 'まゆ', 'myu': 'μ', 'kayatan': 'かやたん', 'nanamin': 'anaminn', 'yoppi': 'よぴ', 'minyami': 'みにゃみ', 'aichan': '永野愛理'}
 
-
 def parse_arguments():
     parser = ArgumentParser(description='Discord bot for Wake Up, Girls! server.')
     parser.add_argument('--token', required=True, help='Token for the discord app bot user.')
@@ -38,6 +37,11 @@ def create_embed(title='', description='', colour=discord.Colour.default(), url=
     for field in fields:
         embed.add_field(name=field[0], value=field[1], inline=inline)
     return embed
+
+def strip_from_end(text, ending):
+    if text.endswith(ending):
+        return text[:-len(ending)]
+    return text
 
 args = parse_arguments()
 bot = commands.Bot(command_prefix='!')
@@ -273,7 +277,7 @@ async def blogpics(ctx, member : str=''):
         html_response = urlopen('https://ameblo.jp/wakeupgirls').read()
         soup = BeautifulSoup(html_response, 'html.parser')
         blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
-        sign_entry = str(blog_entry)[:-10].strip()
+        sign_entry = strip_from_end(str(blog_entry)[:-10].strip(), '<br/>')
         member_sign = sign_entry[sign_entry.rfind('>') + 3:]
 
         for i, sign in enumerate(WUG_BLOG_ORDER):
