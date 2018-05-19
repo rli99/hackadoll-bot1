@@ -7,16 +7,21 @@ from discord.ext import commands
 from firebase_admin import credentials, db, initialize_app
 from forex_python.converter import CurrencyRates
 from humanfriendly import format_timespan
+from math import ceil
+from operator import itemgetter
 from random import randrange
 from timezonefinder import TimezoneFinder
 from urllib.parse import quote
 from urllib.request import urlopen
 
+SERVER_ID = '280439975911096320'
+MUTED_ROLE_ID = '445572638543446016'
 WUG_ROLE_IDS = {'mayushii': '332788311280189443', 'aichan': '333727530680844288', 'minyami': '332793887200641028', 'yoppi': '332796755399933953', 'nanamin': '333721984196411392', 'kayatan': '333721510164430848', 'myu': '333722098377818115'}
 MUSICVIDEOS = {'7 Girls War': 'https://streamable.com/1afp5', '言の葉 青葉': 'https://streamable.com/bn9mt', 'タチアガレ!': 'https://streamable.com/w85fh', '少女交響曲': 'https://streamable.com/gidqx', 'Beyond the Bottom': 'https://streamable.com/2ppw5', '僕らのフロンティア': 'https://streamable.com/pqydk', '恋?で愛?で暴君です!': 'https://streamable.com/88xas', 'One In A Billion': 'https://streamable.com/fa630', 'One In A Billion (Dance)': 'https://streamable.com/xbeeq', 'TUNAGO': 'https://streamable.com/4qjlp', '7 Senses': 'https://streamable.com/a34w9', '雫の冠': 'https://streamable.com/c6vfm', 'スキノスキル': 'https://streamable.com/w92kw'}
 MV_NAMES = {'7 Girls War': ['7 girls war', '7gw'], '言の葉 青葉': ['言の葉 青葉', 'kotonoha aoba'], 'タチアガレ!': ['tachiagare!', 'タチアガレ!', 'tachiagare', 'タチアガレ'],  '少女交響曲': ['少女交響曲', 'skkk', 'shoujokkk', 'shoujo koukyoukyoku'], 'Beyond the Bottom': ['beyond the bottom', 'btb'], '僕らのフロンティア': ['僕らのフロンティア', 'bokufuro', '僕フロ', 'bokura no frontier'], '恋?で愛?で暴君です!': ['恋?で愛?で暴君です!', 'koiai', 'koi? de ai? de boukun desu!', 'koi de ai de boukun desu', 'boukun', 'ででです'], 'One In A Billion': ['one in a billion', 'oiab', 'ワンビリ'], 'One In A Billion (Dance)': ['one in a billion (dance)', 'oiab (dance)', 'ワンビリ (dance)', 'oiab dance'], 'TUNAGO': ['tunago'], '7 Senses': ['7 senses'], '雫の冠': ['雫の冠', 'shizuku no kanmuri'], 'スキノスキル': ['スキノスキル', 'suki no skill', 'sukinoskill']}
-MUTED_ROLE_ID = '445572638543446016'
-SERVER_ID = '280439975911096320'
+WUG_BLOG_ORDER = ['まゆ', 'μ', 'かやたん', 'anaminn', 'よぴ', 'みにゃみ', '永野愛理']
+WUG_BLOG_SIGNS = {'mayushii': 'まゆ', 'myu': 'μ', 'kayatan': 'かやたん', 'nanamin': 'anaminn', 'yoppi': 'よぴ', 'minyami': 'みにゃみ', 'aichan': '永野愛理'}
+
 
 def parse_arguments():
     parser = ArgumentParser(description='Discord bot for Wake Up, Girls! server.')
@@ -26,8 +31,10 @@ def parse_arguments():
     parser.add_argument('--weather_api_key', required=True, metavar='KEY', help='API key for the OpenWeatherMap API.')
     return parser.parse_args()
 
-def create_embed(title='', description='', colour=discord.Colour.default(), url='', fields={}, inline=False):
+def create_embed(title='', description='', colour=discord.Colour.default(), url='', image='', fields={}, inline=False):
     embed = discord.Embed(title=title, description=description, colour=colour, url=url)
+    if image:
+        embed.set_image(url=image)
     for field in fields:
         embed.add_field(name=field[0], value=field[1], inline=inline)
     return embed
@@ -78,6 +85,7 @@ async def help(ctx):
     embed_fields.append(('!roles', 'Show additional help on how to get roles.'))
     embed_fields.append(('!kamioshi-count', 'Show the number of members with each WUG member role as their highest role.'))
     embed_fields.append(('!oshi-count', 'Show the number of members with each WUG member role.'))
+    embed_fields.append(('!blogpics *member*', 'Get pictures from the latest blog post of the specified WUG member (optional). If *member* not specified, gets pictures from the latest blog post.'))
     embed_fields.append(('!mv *song*', 'Show full MV of a song.'))
     embed_fields.append(('!mv-list', 'Show list of available MVs.'))
     embed_fields.append(('!seiyuu-vids', 'Show link to the wiki page with WUG seiyuu content.'))
@@ -220,14 +228,9 @@ async def hakooshi(ctx):
 async def roles(ctx):
     await bot.send_typing(ctx.message.channel)
     description = 'Users can have any of the 7 WUG member roles. Use **!oshihen** *member* to get the role you want.\n\n'
-    description += '**!oshihen** Mayushii for {0.mention}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['mayushii']))
-    description += '**!oshihen** Aichan for {0.mention}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['aichan']))
-    description += '**!oshihen** Minyami for {0.mention}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['minyami']))
-    description += '**!oshihen** Yoppi for {0.mention}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['yoppi']))
-    description += '**!oshihen** Nanamin for {0.mention}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['nanamin']))
-    description += '**!oshihen** Kayatan for {0.mention}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['kayatan']))
-    description += '**!oshihen** Myu for {0.mention}\n\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['myu']))
-    description += 'Note that using **!oshihen** will remove all of your existing member roles. To get an extra role without removing existing ones, use **!oshimashi** *member* instead. To get all 7 roles, use **!hakooshi**.'
+    for oshi in WUG_ROLE_IDS.keys():
+        description += '**!oshihen** {0} for {1.mention}\n'.format(oshi.title(), discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[oshi]))
+    description += '\nNote that using **!oshihen** will remove all of your existing member roles. To get an extra role without removing existing ones, use **!oshimashi** *member* instead. To get all 7 roles, use **!hakooshi**.'
     await bot.say(content='**How to get WUG Member Roles**', embed=create_embed(description=description))
 
 @bot.command(name='kamioshi-count', pass_context=True, no_pm=True)
@@ -241,13 +244,9 @@ async def kamioshi_count(ctx):
             role = sorted(member_roles)[-1]
             oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1  
     
-    description = '**Mayushii** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['mayushii']), oshi_num.get('mayushii', 0))
-    description += '**Aichan** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['aichan']), oshi_num.get('aichan', 0))
-    description += '**Minyami** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['minyami']), oshi_num.get('minyami', 0))
-    description += '**Yoppi** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['yoppi']), oshi_num.get('yoppi', 0))
-    description += '**Nanamin** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['nanamin']), oshi_num.get('nanamin', 0))
-    description += '**Kayatan** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['kayatan']), oshi_num.get('kayatan', 0))
-    description += '**Myu** ({0.mention}) - {1}'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['myu']), oshi_num.get('myu', 0))
+    description = ''
+    for oshi in sorted(oshi_num.items(), key=itemgetter(1), reverse=True):
+        description += '**{0}** ({1.mention}) - {2}\n'.format(oshi[0].title(), discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[oshi[0]]), oshi[1])
     await bot.say(content='**Number of Users with Each WUG Member Role as Their Highest Role**', embed=create_embed(description=description))
 
 @bot.command(name='oshi-count', pass_context=True, no_pm=True)
@@ -260,14 +259,47 @@ async def oshi_count(ctx):
             if role.id in ids_to_member:
                 oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1
 
-    description = '**Mayushii** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['mayushii']), oshi_num.get('mayushii', 0))
-    description += '**Aichan** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['aichan']), oshi_num.get('aichan', 0))
-    description += '**Minyami** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['minyami']), oshi_num.get('minyami', 0))
-    description += '**Yoppi** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['yoppi']), oshi_num.get('yoppi', 0))
-    description += '**Nanamin** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['nanamin']), oshi_num.get('nanamin', 0))
-    description += '**Kayatan** ({0.mention}) - {1}\n'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['kayatan']), oshi_num.get('kayatan', 0))
-    description += '**Myu** ({0.mention}) - {1}'.format(discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS['myu']), oshi_num.get('myu', 0))
+    description = ''
+    for oshi in sorted(oshi_num.items(), key=itemgetter(1), reverse=True):
+        description += '**{0}** ({1.mention}) - {2}\n'.format(oshi[0].title(), discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[oshi[0]]), oshi[1])
     await bot.say(content='**Number of Users with Each WUG Member Role**', embed=create_embed(description=description))
+
+@bot.command(pass_context=True)
+async def blogpics(ctx, member : str=''):
+    try:
+        page = 1
+        entry_num = 1
+        day = -1
+        html_response = urlopen('https://ameblo.jp/wakeupgirls').read()
+        soup = BeautifulSoup(html_response, 'html.parser')
+        blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
+        sign_entry = str(blog_entry)[:-10]
+        member_sign = sign_entry[sign_entry.rfind('>') + 3:]
+
+        for i, sign in enumerate(WUG_BLOG_ORDER):
+            if sign in member_sign:
+                day = i
+                if not member:
+                    member = [m for m in WUG_BLOG_SIGNS.keys() if WUG_BLOG_SIGNS[m] == sign][0]
+        if day == -1:
+            await bot.say(embed=create_embed(description='Could\'t find pictures for that member.', colour=discord.Colour.red()))
+            return
+
+        page, entry_num = map(sum, zip(divmod((WUG_BLOG_ORDER.index(WUG_BLOG_SIGNS[member.lower()]) - day) % 7, 3), (1, 1)))
+
+        if page != 1:
+            html_response = urlopen('https://ameblo.jp/wakeupgirls/page-{0}.html'.format(page))
+            soup = BeautifulSoup(html_response, 'html.parser')
+
+        if page != 1 or entry_num != 1:
+            blog_entry = soup.find_all(attrs={'class': 'skin-entryBody'}, limit=entry_num)[entry_num - 1]
+
+        role = discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[member.lower()])
+        for pic in [p['href'] for p in blog_entry.find_all('a') if p['href'][-4:] == '.jpg']:
+            await bot.say(embed=create_embed(image=pic, colour=role.colour))
+        return
+    except:
+        await bot.say(embed=create_embed(description='Couldn\'t get pictures right now. Try again a bit later.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
 async def mv(ctx, *, song_name : str):
@@ -368,7 +400,7 @@ async def yt(ctx, *, query : str):
     url = 'https://www.youtube.com/results?search_query={0}'.format(quote(query))
     html_response = urlopen(url).read()
     soup = BeautifulSoup(html_response, 'html.parser')
-    for result in soup.findAll(attrs={'class': 'yt-uix-tile-link'}):
+    for result in soup.find_all(attrs={'class': 'yt-uix-tile-link'}):
         link = result['href']
         if link.find('googleads.g.doubleclick.net') == -1 and not link.startswith('/channel'):
             await bot.say('https://www.youtube.com{0}'.format(link))
