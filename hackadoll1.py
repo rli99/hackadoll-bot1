@@ -282,7 +282,7 @@ async def blogpics(ctx, member : str=''):
                 if not member:
                     member = [m for m in WUG_BLOG_SIGNS.keys() if WUG_BLOG_SIGNS[m] == sign][0]
         if day == -1:
-            await bot.say(embed=create_embed(description='Could\'t find pictures for that member.', colour=discord.Colour.red()))
+            await bot.say(embed=create_embed(description='Couldn\'t find pictures for that member.', colour=discord.Colour.red()))
             return
 
         page, entry_num = map(sum, zip(divmod((WUG_BLOG_ORDER.index(WUG_BLOG_SIGNS[member.lower()]) - day) % 7, 3), (1, 1)))
