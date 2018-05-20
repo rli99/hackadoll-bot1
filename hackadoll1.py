@@ -241,10 +241,11 @@ async def oshi_count(ctx):
 
 @bot.command(pass_context=True)
 async def blogpics(ctx, member : str=''):
+    await bot.send_typing(ctx.message.channel)
+    page = 1
+    entry_num = 1
+    day = -1
     try:
-        page = 1
-        entry_num = 1
-        day = -1
         html_response = urlopen('https://ameblo.jp/wakeupgirls')
         soup = BeautifulSoup(html_response, 'html.parser')
         blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
