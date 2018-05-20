@@ -239,7 +239,7 @@ async def oshi_count(ctx):
         description += '**{0}** ({1.mention}) - {2}\n'.format(oshi[0].title(), get_wug_role(ctx.message.server, oshi[0]), oshi[1])
     await bot.say(content='**Number of Users with Each WUG Member Role**', embed=create_embed(description=description))
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, no_pm=True)
 async def blogpics(ctx, member : str=''):
     await bot.send_typing(ctx.message.channel)
     page = 1
