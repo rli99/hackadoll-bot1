@@ -282,7 +282,7 @@ async def mv(ctx, *, song_name : str):
     for mv, names in list(hkd.MV_NAMES.items()):
       name_to_mv.update({name : mv for name in names})
 
-    song = hkd.parse_mv_name(song_name).lower()
+    song = hkd.parse_mv_name(song_name)
     if song in name_to_mv:
         await bot.say(hkd.MUSICVIDEOS[name_to_mv[song]])
     else:

@@ -29,7 +29,7 @@ def get_role_ids():
 def parse_mv_name(name):
     for char in ' .,。、!?！？()（）':
         name = name.replace(char, '')
-    return name
+    return name.lower()
 
 def create_embed(title='', description='', colour=discord.Colour.default(), url='', image='', fields={}, inline=False):
     embed = discord.Embed(title=title, description=description, colour=colour, url=url)
