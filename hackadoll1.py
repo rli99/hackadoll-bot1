@@ -274,7 +274,7 @@ async def blogpics(ctx, member : str=''):
 
         for pic in [p['href'] for p in blog_entry.find_all('a') if p['href'][-4:] == '.jpg']:
             await bot.say(pic)
-            await asyncio.sleep(2)
+            await asyncio.sleep(1.5)
         return
     except:
         await bot.say(embed=create_embed(description='Couldn\'t get pictures right now. Try again a bit later.', colour=discord.Colour.red()))
@@ -303,6 +303,7 @@ async def events(ctx, *, date : str=''):
                 if first:
                     first = False
                     await bot.say('**Events Involving WUG Seiyuu on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date))
+                    await asyncio.sleep(1)
                 other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p != 'Wake Up, Girls!']
                 embed_fields = []
                 embed_fields.append(('Location', info[1].contents[0]))
