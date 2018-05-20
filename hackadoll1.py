@@ -169,7 +169,7 @@ async def oshihen(ctx, member : str):
         await asyncio.sleep(1)
         
     await bot.add_roles(ctx.message.author, role)
-    await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you have oshihened to the **{1}** role {2.mention}.'.format(ctx, role_name.title(), role), colour=role.colour))
+    await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you have oshihened to the **{1}** role {2.mention}.'.format(ctx, member.title(), role), colour=role.colour))
 
 @bot.command(pass_context=True, no_pm=True)
 async def oshimashi(ctx, member : str):
@@ -181,7 +181,7 @@ async def oshimashi(ctx, member : str):
 
     if role not in ctx.message.author.roles:
         await bot.add_roles(ctx.message.author, role)
-        await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you now have the **{1}** oshi role {2.mention}.'.format(ctx, role_name.title(), role), colour=role.colour))
+        await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you now have the **{1}** oshi role {2.mention}.'.format(ctx, member.title(), role), colour=role.colour))
     else:
         await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you already have that role.'.format(ctx), colour=discord.Colour.red()))
 
