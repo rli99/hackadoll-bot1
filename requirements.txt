@@ -4,5 +4,6 @@ firebase-admin==2.10.0
 forex-python==1.0.0
 humanfriendly==4.12.1
 pycountry==18.2.23
+python-dateutil==2.7.3
 pytz==2018.4
 timezonefinder==2.1.2

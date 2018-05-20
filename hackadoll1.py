@@ -2,6 +2,7 @@ import asyncio, discord, pycountry, pytz, requests, time
 import hkdhelper as hkd
 from bs4 import BeautifulSoup
 from datetime import datetime
+from dateutil import parser
 from decimal import Decimal
 from discord.ext import commands
 from firebase_admin import credentials, db, initialize_app
@@ -61,6 +62,7 @@ async def help(ctx):
     embed_fields.append(('!kamioshi-count', 'Show the number of members with each WUG member role as their highest role.'))
     embed_fields.append(('!oshi-count', 'Show the number of members with each WUG member role.'))
     embed_fields.append(('!blogpics *member*', 'Get pictures from the latest blog post of the specified WUG member (optional). If *member* not specified, gets pictures from the latest blog post.'))
+    embed_fields.append(('!events *date*', 'Get information for events involving WUG seiyuu on the specified date. If *date* not specified, finds events happening today.'))
     embed_fields.append(('!mv *song*', 'Show full MV of a song.'))
     embed_fields.append(('!mv-list', 'Show list of available MVs.'))
     embed_fields.append(('!seiyuu-vids', 'Show link to the wiki page with WUG seiyuu content.'))
@@ -275,6 +277,45 @@ async def blogpics(ctx, member : str=''):
         return
     except:
         await bot.say(embed=create_embed(description='Couldn\'t get pictures right now. Try again a bit later.', colour=discord.Colour.red()))
+
+@bot.command(pass_context=True)
+async def events(ctx, *, date : str=''):
+    await bot.send_typing(ctx.message.channel)
+    event_urls = []
+    search_date = parser.parse(date) if date else datetime.now(pytz.timezone('Japan'))
+    first = True
+
+    for member in hkd.WUG_MEMBERS:
+        html_response = urlopen('https://www.eventernote.com/events/search?keyword={0}&year={1}&month={2}&day={3}'.format(quote(member), search_date.year, search_date.month, search_date.day))
+        soup = BeautifulSoup(html_response, 'html.parser')
+        result = soup.find_all(attrs={'class': ['date', 'event', 'actor', 'note_count']})
+        event_infos = [result[i:i + 4] for i in range(0, len(result), 4)]
+
+        for event in event_infos:
+            info = event[1].find_all('a')
+            event_time = event[1].find('span')
+            event_url = info[0]['href']
+            if event_url not in event_urls:
+                performers = [p.contents[0] for p in event[2].find_all('a')]
+                wug_performers = [p for p in performers if p in hkd.WUG_MEMBERS]
+                if not wug_performers:
+                    continue
+                if first:
+                    first = False
+                    await bot.say('**Events Involving WUG Seiyuu on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date))
+                event_name = info[0].contents[0]
+                other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p != 'Wake Up, Girls!']
+                embed_fields = []
+                embed_fields.append(('Location', info[1].contents[0]))
+                embed_fields.append(('Time', event_time.contents[0] if event_time else 'To be announced'))
+                embed_fields.append(('WUG Members', ', '.join(wug_performers)))
+                embed_fields.append(('Other Performers', ', '.join(other_performers) if other_performers else 'None'))
+                embed_fields.append(('Eventernote Attendees', event[3].find('p').contents[0]))
+                event_urls.append(event_url)
+                await bot.say(embed=create_embed(title=event_name, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
+                
+    if not event_urls:
+        await bot.say(embed=create_embed(description='Couldn\'t find any events on that day.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
 async def mv(ctx, *, song_name : str):
