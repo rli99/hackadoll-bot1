@@ -62,7 +62,7 @@ async def help(ctx):
     embed_fields.append(('!kamioshi-count', 'Show the number of members with each WUG member role as their highest role.'))
     embed_fields.append(('!oshi-count', 'Show the number of members with each WUG member role.'))
     embed_fields.append(('!blogpics *member*', 'Get pictures from the latest blog post of the specified WUG member (optional). If *member* not specified, gets pictures from the latest blog post.'))
-    embed_fields.append(('!events *date*', 'Get information for events involving WUG seiyuu on the specified date. If *date* not specified, finds events happening today.'))
+    embed_fields.append(('!events *date*', 'Get information for events involving WUG members on the specified date. If *date* not specified, finds events happening today.'))
     embed_fields.append(('!mv *song*', 'Show full MV of a song.'))
     embed_fields.append(('!mv-list', 'Show list of available MVs.'))
     embed_fields.append(('!seiyuu-vids', 'Show link to the wiki page with WUG seiyuu content.'))
@@ -302,7 +302,7 @@ async def events(ctx, *, date : str=''):
                     continue
                 if first:
                     first = False
-                    await bot.say('**Events Involving WUG Seiyuu on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date))
+                    await bot.say('**Events Involving WUG Members on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date))
                     await asyncio.sleep(1)
                 other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p != 'Wake Up, Girls!']
                 embed_fields = []
