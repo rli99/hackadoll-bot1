@@ -241,7 +241,7 @@ async def oshi_count(ctx):
         description += '**{0}** ({1.mention}) - {2}\n'.format(oshi[0].title(), get_wug_role(ctx.message.server, oshi[0]), oshi[1])
     await bot.say(content='**Number of Users with Each WUG Member Role**', embed=create_embed(description=description))
 
-@bot.command(pass_context=True, no_pm=True)
+@bot.command(pass_context=True)
 async def blogpics(ctx, member : str=''):
     await bot.send_typing(ctx.message.channel)
     page = 1
@@ -273,7 +273,8 @@ async def blogpics(ctx, member : str=''):
             blog_entry = soup.find_all(attrs={'class': 'skin-entryBody'}, limit=entry_num)[entry_num - 1]
 
         for pic in [p['href'] for p in blog_entry.find_all('a') if p['href'][-4:] == '.jpg']:
-            await bot.say(embed=create_embed(image=pic, colour=get_wug_role(ctx.message.server, member).colour))
+            await bot.say(pic)
+            await asyncio.sleep(2)
         return
     except:
         await bot.say(embed=create_embed(description='Couldn\'t get pictures right now. Try again a bit later.', colour=discord.Colour.red()))
@@ -289,9 +290,8 @@ async def events(ctx, *, date : str=''):
         html_response = urlopen('https://www.eventernote.com/events/search?keyword={0}&year={1}&month={2}&day={3}'.format(quote(member), search_date.year, search_date.month, search_date.day))
         soup = BeautifulSoup(html_response, 'html.parser')
         result = soup.find_all(attrs={'class': ['date', 'event', 'actor', 'note_count']})
-        event_infos = [result[i:i + 4] for i in range(0, len(result), 4)]
 
-        for event in event_infos:
+        for event in [result[i:i + 4] for i in range(0, len(result), 4)]:
             info = event[1].find_all('a')
             event_time = event[1].find('span')
             event_url = info[0]['href']
@@ -303,7 +303,6 @@ async def events(ctx, *, date : str=''):
                 if first:
                     first = False
                     await bot.say('**Events Involving WUG Seiyuu on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date))
-                event_name = info[0].contents[0]
                 other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p != 'Wake Up, Girls!']
                 embed_fields = []
                 embed_fields.append(('Location', info[1].contents[0]))
@@ -312,7 +311,7 @@ async def events(ctx, *, date : str=''):
                 embed_fields.append(('Other Performers', ', '.join(other_performers) if other_performers else 'None'))
                 embed_fields.append(('Eventernote Attendees', event[3].find('p').contents[0]))
                 event_urls.append(event_url)
-                await bot.say(embed=create_embed(title=event_name, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
+                await bot.say(embed=create_embed(title=info[0].contents[0], url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
                 
     if not event_urls:
         await bot.say(embed=create_embed(description='Couldn\'t find any events on that day.', colour=discord.Colour.red()))
