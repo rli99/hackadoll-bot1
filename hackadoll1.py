@@ -1,11 +1,12 @@
 import asyncio, discord, pycountry, pytz, requests, time
-from argparse import ArgumentParser
+import hkdhelper as hkd
 from bs4 import BeautifulSoup
 from datetime import datetime
 from decimal import Decimal
 from discord.ext import commands
 from firebase_admin import credentials, db, initialize_app
 from forex_python.converter import CurrencyRates
+from hkdhelper import create_embed, get_muted_role, get_wug_role 
 from humanfriendly import format_timespan
 from math import ceil
 from operator import itemgetter
@@ -14,36 +15,7 @@ from timezonefinder import TimezoneFinder
 from urllib.parse import quote
 from urllib.request import urlopen
 
-SERVER_ID = '280439975911096320'
-MUTED_ROLE_ID = '445572638543446016'
-WUG_ROLE_IDS = {'mayushii': '332788311280189443', 'aichan': '333727530680844288', 'minyami': '332793887200641028', 'yoppi': '332796755399933953', 'nanamin': '333721984196411392', 'kayatan': '333721510164430848', 'myu': '333722098377818115'}
-MUSICVIDEOS = {'7 Girls War': 'https://streamable.com/1afp5', '言の葉 青葉': 'https://streamable.com/bn9mt', 'タチアガレ!': 'https://streamable.com/w85fh', '少女交響曲': 'https://streamable.com/gidqx', 'Beyond the Bottom': 'https://streamable.com/2ppw5', '僕らのフロンティア': 'https://streamable.com/pqydk', '恋?で愛?で暴君です!': 'https://streamable.com/88xas', 'One In A Billion': 'https://streamable.com/fa630', 'One In A Billion (Dance)': 'https://streamable.com/xbeeq', 'TUNAGO': 'https://streamable.com/4qjlp', '7 Senses': 'https://streamable.com/a34w9', '雫の冠': 'https://streamable.com/c6vfm', 'スキノスキル': 'https://streamable.com/w92kw'}
-MV_NAMES = {'7 Girls War': ['7 girls war', '7gw'], '言の葉 青葉': ['言の葉 青葉', 'kotonoha aoba'], 'タチアガレ!': ['tachiagare!', 'タチアガレ!', 'tachiagare', 'タチアガレ'],  '少女交響曲': ['少女交響曲', 'skkk', 'shoujokkk', 'shoujo koukyoukyoku'], 'Beyond the Bottom': ['beyond the bottom', 'btb'], '僕らのフロンティア': ['僕らのフロンティア', 'bokufuro', '僕フロ', 'bokura no frontier'], '恋?で愛?で暴君です!': ['恋?で愛?で暴君です!', 'koiai', 'koi? de ai? de boukun desu!', 'koi de ai de boukun desu', 'boukun', 'ででです'], 'One In A Billion': ['one in a billion', 'oiab', 'ワンビリ'], 'One In A Billion (Dance)': ['one in a billion (dance)', 'oiab (dance)', 'ワンビリ (dance)', 'oiab dance'], 'TUNAGO': ['tunago'], '7 Senses': ['7 senses'], '雫の冠': ['雫の冠', 'shizuku no kanmuri'], 'スキノスキル': ['スキノスキル', 'suki no skill', 'sukinoskill']}
-WUG_BLOG_ORDER = ['まゆ', 'μ', 'かやたん', 'anaminn', 'よぴ', 'みにゃみ', '永野愛理']
-WUG_BLOG_SIGNS = {'mayushii': 'まゆ', 'myu': 'μ', 'kayatan': 'かやたん', 'nanamin': 'anaminn', 'yoppi': 'よぴ', 'minyami': 'みにゃみ', 'aichan': '永野愛理'}
-
-def parse_arguments():
-    parser = ArgumentParser(description='Discord bot for Wake Up, Girls! server.')
-    parser.add_argument('--token', required=True, help='Token for the discord app bot user.')
-    parser.add_argument('--firebase_credentials', required=True, metavar='DB_CRED', help='JSON file containing the credentials for the Firebase Realtime Database.')
-    parser.add_argument('--firebase_db', required=True, metavar='DB_URL', help='URL for the Firebase Realtime Database.')
-    parser.add_argument('--weather_api_key', required=True, metavar='KEY', help='API key for the OpenWeatherMap API.')
-    return parser.parse_args()
-
-def create_embed(title='', description='', colour=discord.Colour.default(), url='', image='', fields={}, inline=False):
-    embed = discord.Embed(title=title, description=description, colour=colour, url=url)
-    if image:
-        embed.set_image(url=image)
-    for field in fields:
-        embed.add_field(name=field[0], value=field[1], inline=inline)
-    return embed
-
-def strip_from_end(text, ending):
-    if text.endswith(ending):
-        return text[:-len(ending)]
-    return text
-
-args = parse_arguments()
+args = hkd.parse_arguments()
 bot = commands.Bot(command_prefix='!')
 bot.remove_command('help')
 certificate = credentials.Certificate(args.firebase_credentials)
@@ -64,10 +36,9 @@ async def check_mute_status():
             if time.time() > muted_members[member_id]:
                 firebase_ref.child('muted_members/{0}'.format(member_id)).delete()
                 members_to_unmute.append(member_id)
-                server = discord.utils.get(bot.servers, id=SERVER_ID)
-                muted_role = discord.utils.get(server.roles, id=MUTED_ROLE_ID)
+                server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
                 member = discord.utils.get(server.members, id=member_id)
-                await bot.remove_roles(member, muted_role)
+                await bot.remove_roles(member, get_muted_role(server))
         for member_id in members_to_unmute:
             muted_members.pop(member_id)
         await asyncio.sleep(30)
@@ -131,7 +102,7 @@ async def mute(ctx, member : discord.Member, duration : int):
             mute_endtime = time.time() + duration * 60
             firebase_ref.child('muted_members/{0}'.format(member.id)).set(mute_endtime)
             muted_members[member.id] = mute_endtime
-            await bot.add_roles(member, discord.utils.get(ctx.message.server.roles, id=MUTED_ROLE_ID))
+            await bot.add_roles(member, get_muted_role(ctx.message.server))
             await bot.say(embed=create_embed(description='{0.mention} has been muted for {1}.'.format(member, format_timespan(duration * 60))))
         else:
             await bot.say(embed=create_embed(title='Please specify a duration greater than 0.', colour=discord.Colour.red()))
@@ -144,7 +115,7 @@ async def unmute(ctx, member : discord.Member):
     if ctx.message.author.server_permissions.kick_members:
         firebase_ref.child('muted_members/{0}'.format(member.id)).delete()
         muted_members.pop(member.id)
-        await bot.remove_roles(member, discord.utils.get(ctx.message.server.roles, id=MUTED_ROLE_ID))
+        await bot.remove_roles(member, get_muted_role(ctx.message.server))
         await bot.say(embed=create_embed(description='{0.mention} has been unmuted.'.format(member)))
     else:
         await bot.say(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
@@ -179,16 +150,16 @@ async def serverinfo(ctx):
     await bot.say(content='**Server Information**', embed=create_embed(fields=embed_fields, inline=True))
 
 @bot.command(pass_context=True, no_pm=True)
-async def oshihen(ctx, role_name : str):
+async def oshihen(ctx, member : str):
     await bot.send_typing(ctx.message.channel)
-    role = discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[role_name.lower()])
+    role = get_wug_role(ctx.message.server, member)
     if role is None: 
         await bot.say(embed=create_embed(description='Couldn\'t find that role. Use **!roles** to show additional help on how to get roles.', colour=discord.Colour.red()))
         return
 
     roles_to_remove = []
     for existing_role in ctx.message.author.roles:
-        if existing_role.id in WUG_ROLE_IDS.values():
+        if existing_role.id in hkd.WUG_ROLE_IDS.values():
             roles_to_remove.append(existing_role)
 
     if len(roles_to_remove) == 1 and roles_to_remove[0].name == role.name:
@@ -201,9 +172,9 @@ async def oshihen(ctx, role_name : str):
     await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you have oshihened to the **{1}** role {2.mention}.'.format(ctx, role_name.title(), role), colour=role.colour))
 
 @bot.command(pass_context=True, no_pm=True)
-async def oshimashi(ctx, role_name : str):
+async def oshimashi(ctx, member : str):
     await bot.send_typing(ctx.message.channel)
-    role = discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[role_name.lower()])
+    role = get_wug_role(ctx.message.server, member)
     if role is None:
         await bot.say(embed=create_embed(description='Couldn\'t find that role. Use **!roles** to show additional help on how to get roles.', colour=discord.Colour.red()))
         return
@@ -219,7 +190,7 @@ async def hakooshi(ctx):
     await bot.send_typing(ctx.message.channel)
     roles_to_add = []
     for role in ctx.message.server.roles:
-        if role not in ctx.message.author.roles and role.id in WUG_ROLE_IDS.values():
+        if role not in ctx.message.author.roles and role.id in hkd.WUG_ROLE_IDS.values():
             roles_to_add.append(role)
 
     if len(roles_to_add) > 0:
@@ -232,15 +203,15 @@ async def hakooshi(ctx):
 async def roles(ctx):
     await bot.send_typing(ctx.message.channel)
     description = 'Users can have any of the 7 WUG member roles. Use **!oshihen** *member* to get the role you want.\n\n'
-    for oshi in WUG_ROLE_IDS.keys():
-        description += '**!oshihen** {0} for {1.mention}\n'.format(oshi.title(), discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[oshi]))
+    for oshi in hkd.WUG_ROLE_IDS.keys():
+        description += '**!oshihen** {0} for {1.mention}\n'.format(oshi.title(), get_wug_role(ctx.message.server, oshi))
     description += '\nNote that using **!oshihen** will remove all of your existing member roles. To get an extra role without removing existing ones, use **!oshimashi** *member* instead. To get all 7 roles, use **!hakooshi**.'
     await bot.say(content='**How to get WUG Member Roles**', embed=create_embed(description=description))
 
 @bot.command(name='kamioshi-count', pass_context=True, no_pm=True)
 async def kamioshi_count(ctx):
     await bot.send_typing(ctx.message.channel)
-    ids_to_member = {v: k for k, v in WUG_ROLE_IDS.items()}
+    ids_to_member = hkd.get_role_ids()
     oshi_num = {}
     for member in ctx.message.server.members:
         member_roles = [r for r in member.roles if r.id in ids_to_member]
@@ -250,13 +221,13 @@ async def kamioshi_count(ctx):
     
     description = ''
     for oshi in sorted(oshi_num.items(), key=itemgetter(1), reverse=True):
-        description += '**{0}** ({1.mention}) - {2}\n'.format(oshi[0].title(), discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[oshi[0]]), oshi[1])
+        description += '**{0}** ({1.mention}) - {2}\n'.format(oshi[0].title(), get_wug_role(ctx.message.server, oshi[0]), oshi[1])
     await bot.say(content='**Number of Users with Each WUG Member Role as Their Highest Role**', embed=create_embed(description=description))
 
 @bot.command(name='oshi-count', pass_context=True, no_pm=True)
 async def oshi_count(ctx):
     await bot.send_typing(ctx.message.channel)
-    ids_to_member = {v: k for k, v in WUG_ROLE_IDS.items()}
+    ids_to_member = hkd.get_role_ids()
     oshi_num = {}
     for member in ctx.message.server.members:
         for role in member.roles:
@@ -265,7 +236,7 @@ async def oshi_count(ctx):
 
     description = ''
     for oshi in sorted(oshi_num.items(), key=itemgetter(1), reverse=True):
-        description += '**{0}** ({1.mention}) - {2}\n'.format(oshi[0].title(), discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[oshi[0]]), oshi[1])
+        description += '**{0}** ({1.mention}) - {2}\n'.format(oshi[0].title(), get_wug_role(ctx.message.server, oshi[0]), oshi[1])
     await bot.say(content='**Number of Users with Each WUG Member Role**', embed=create_embed(description=description))
 
 @bot.command(pass_context=True)
@@ -277,19 +248,19 @@ async def blogpics(ctx, member : str=''):
         html_response = urlopen('https://ameblo.jp/wakeupgirls')
         soup = BeautifulSoup(html_response, 'html.parser')
         blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
-        sign_entry = strip_from_end(str(blog_entry)[:-10].strip(), '<br/>')
+        sign_entry = hkd.strip_from_end(str(blog_entry)[:-10].strip(), '<br/>')
         member_sign = sign_entry[sign_entry.rfind('>') + 3:]
 
-        for i, sign in enumerate(WUG_BLOG_ORDER):
+        for i, sign in enumerate(hkd.WUG_BLOG_ORDER):
             if sign in member_sign:
                 day = i
                 if not member:
-                    member = [m for m in WUG_BLOG_SIGNS.keys() if WUG_BLOG_SIGNS[m] == sign][0]
+                    member = [m for m in hkd.WUG_BLOG_SIGNS.keys() if hkd.WUG_BLOG_SIGNS[m] == sign][0]
         if day == -1:
             await bot.say(embed=create_embed(description='Couldn\'t find pictures for that member.', colour=discord.Colour.red()))
             return
 
-        page, entry_num = map(sum, zip(divmod((WUG_BLOG_ORDER.index(WUG_BLOG_SIGNS[member.lower()]) - day) % 7, 3), (1, 1)))
+        page, entry_num = map(sum, zip(divmod((hkd.WUG_BLOG_ORDER.index(hkd.WUG_BLOG_SIGNS[member.lower()]) - day) % 7, 3), (1, 1)))
 
         if page != 1:
             html_response = urlopen('https://ameblo.jp/wakeupgirls/page-{0}.html'.format(page))
@@ -298,9 +269,8 @@ async def blogpics(ctx, member : str=''):
         if page != 1 or entry_num != 1:
             blog_entry = soup.find_all(attrs={'class': 'skin-entryBody'}, limit=entry_num)[entry_num - 1]
 
-        role = discord.utils.get(ctx.message.server.roles, id=WUG_ROLE_IDS[member.lower()])
         for pic in [p['href'] for p in blog_entry.find_all('a') if p['href'][-4:] == '.jpg']:
-            await bot.say(embed=create_embed(image=pic, colour=role.colour))
+            await bot.say(embed=create_embed(image=pic, colour=get_wug_role(ctx.message.server, member).colour))
         return
     except:
         await bot.say(embed=create_embed(description='Couldn\'t get pictures right now. Try again a bit later.', colour=discord.Colour.red()))
@@ -309,18 +279,18 @@ async def blogpics(ctx, member : str=''):
 async def mv(ctx, *, song_name : str):
     await bot.send_typing(ctx.message.channel)
     name_to_mv = {}
-    for mv, names in list(MV_NAMES.items()):
+    for mv, names in list(hkd.MV_NAMES.items()):
       name_to_mv.update({name : mv for name in names})
 
     if song_name.lower() in name_to_mv:
-        await bot.say(MUSICVIDEOS[name_to_mv[song_name.lower()]])
+        await bot.say(hkd.MUSICVIDEOS[name_to_mv[song_name.lower()]])
     else:
         await bot.say(embed=create_embed(description='Couldn\'t find that MV. Use **!mv-list** to show the list of available MVs.', colour=discord.Colour.red()))
 
 @bot.command(name='mv-list', pass_context=True)
 async def mv_list(ctx):
     await bot.send_typing(ctx.message.channel)
-    description = '{0}\n\n'.format('\n'.join(list(MUSICVIDEOS.keys())))
+    description = '{0}\n\n'.format('\n'.join(list(hkd.MUSICVIDEOS.keys())))
     description += 'Use **!mv** *song* to show the full MV. You can also write the name of the song in English.'
     await bot.say(content='**List of Available Music Videos**', embed=create_embed(description=description))
 
@@ -401,8 +371,7 @@ async def choose(ctx, *options : str):
 @bot.command(pass_context=True)
 async def yt(ctx, *, query : str):
     await bot.send_typing(ctx.message.channel)
-    url = 'https://www.youtube.com/results?search_query={0}'.format(quote(query))
-    html_response = urlopen(url)
+    html_response = urlopen('https://www.youtube.com/results?search_query={0}'.format(quote(query)))
     soup = BeautifulSoup(html_response, 'html.parser')
     for result in soup.find_all(attrs={'class': 'yt-uix-tile-link'}):
         link = result['href']
