@@ -1,4 +1,4 @@
-import asyncio, discord, pycountry, pytz, requests, time
+import asyncio, discord, pycountry, pytz, requests, time, twitter
 import hkdhelper as hkd
 from bs4 import BeautifulSoup
 from calendar import month_name
@@ -17,13 +17,14 @@ from timezonefinder import TimezoneFinder
 from urllib.parse import quote
 from urllib.request import urlopen
 
-args = hkd.parse_arguments()
+config = hkd.parse_config()
 bot = commands.Bot(command_prefix='!')
 bot.remove_command('help')
-certificate = credentials.Certificate(args.firebase_credentials)
-firebase = initialize_app(certificate, {'databaseURL': args.firebase_db})
+certificate = credentials.Certificate(config['firebase_credentials'])
+firebase = initialize_app(certificate, {'databaseURL': config['firebase_db']})
 firebase_ref = db.reference()
-muted_members = firebase_ref.get().get('muted_members', {})
+muted_members = firebase_ref.child('muted_members').get() or {}
+twitter_api = twitter.Api(consumer_key='tLY9YdBHYASAfiE2ncjT8jzjk', consumer_secret='b7SZvKJpRAcIhTSq5Lxo4NPgj3Ob0pN0ghzVBjbqvnNaepeSWc', access_token_key='2172130051-hoMzeBIa1XF8DeCdJP2huvDLpMyGvMMuSI6JJCJ', access_token_secret='oUG80VmUFGSSt5Qvycel6r40nOfFp4FRit3bGJ8SByp1T')
 
 @bot.event
 async def on_ready():
@@ -35,7 +36,7 @@ async def check_mute_status():
     while not bot.is_closed:
         members_to_unmute = []
         for member_id in muted_members:
-            if time.time() > muted_members[member_id]:
+            if time.time() > int(muted_members[member_id]):
                 firebase_ref.child('muted_members/{0}'.format(member_id)).delete()
                 members_to_unmute.append(member_id)
                 server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
@@ -44,6 +45,25 @@ async def check_mute_status():
         for member_id in members_to_unmute:
             muted_members.pop(member_id)
         await asyncio.sleep(30)
+
+@bot.event
+async def check_tweets():
+    await bot.wait_until_ready()
+    while not bot.is_closed:
+        server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
+        channel = discord.utils.get(server.channels, id=hkd.GENERAL_CHANNEL_ID)
+        last_tweet_id = int(firebase_ref.child('last_tweet_id').get())
+        posted_tweets = []
+        for status in twitter_api.GetUserTimeline(screen_name='wakeupgirls_PR', since_id=last_tweet_id, include_rts=False):
+            tweet = status.AsDict()
+            tweet_id = tweet['id']
+            if tweet_id > last_tweet_id:
+                posted_tweets.append(tweet_id)
+                await bot.send_message(channel, 'https://twitter.com/wakeupgirls_PR/status/{0}'.format(tweet_id))
+                await asyncio.sleep(1)
+        if posted_tweets:
+            firebase_ref.child('last_tweet_id').set(str(max(posted_tweets)))
+        await asyncio.sleep(20)
 
 @bot.command(pass_context=True)
 async def help(ctx):
@@ -64,7 +84,7 @@ async def help(ctx):
     embed_fields.append(('!oshi-count', 'Show the number of members with each WUG member role.'))
     embed_fields.append(('!blogpics *member*', 'Get pictures from the latest blog post of the specified WUG member (optional). If *member* not specified, gets pictures from the latest blog post.'))
     embed_fields.append(('!events *date*', 'Get information for events involving WUG members on the specified date. If *date* not specified, finds events happening today.'))
-    embed_fields.append(('!eventsin *month* *member*', 'Get information for events involving WUG members in the specified month and member, e.g. **!eventsin** April Mayushii. Searches events from this month onwards only.'))
+    embed_fields.append(('!eventsin *month* *member*', 'Get information for events involving WUG members for the specified month and member, e.g. **!eventsin** April Mayushii. Searches events from this month onwards only.'))
     embed_fields.append(('!mv *song*', 'Show full MV of a song.'))
     embed_fields.append(('!mv-list', 'Show list of available MVs.'))
     embed_fields.append(('!seiyuu-vids', 'Show link to the wiki page with WUG seiyuu content.'))
@@ -104,7 +124,7 @@ async def mute(ctx, member : discord.Member, duration : int):
     if ctx.message.author.server_permissions.kick_members:
         if duration > 0:
             mute_endtime = time.time() + duration * 60
-            firebase_ref.child('muted_members/{0}'.format(member.id)).set(mute_endtime)
+            firebase_ref.child('muted_members/{0}'.format(member.id)).set(str(mute_endtime))
             muted_members[member.id] = mute_endtime
             await bot.add_roles(member, get_muted_role(ctx.message.server))
             await bot.say(embed=create_embed(description='{0.mention} has been muted for {1}.'.format(member, format_timespan(duration * 60))))
@@ -426,7 +446,7 @@ async def weather(ctx, *, location : str):
             query[1] = pycountry.countries.get(name=query[1].strip().title()).alpha_2
         except: pass
     try:
-        result = requests.get('http://api.openweathermap.org/data/2.5/weather', params={'q': ','.join(query), 'APPID': args.weather_api_key}).json()
+        result = requests.get('http://api.openweathermap.org/data/2.5/weather', params={'q': ','.join(query), 'APPID': config['weather_api_key']}).json()
         timezone = pytz.timezone(TimezoneFinder().timezone_at(lat=result['coord']['lat'], lng=result['coord']['lon']))
         embed_fields = []
         embed_fields.append(('Weather', '{0}'.format(result['weather'][0]['description'].title())))
@@ -488,4 +508,5 @@ async def yt(ctx, *, query : str):
     await bot.say(embed=create_embed(title='Couldn\'t find any results.', colour=discord.Colour.red()))
 
 bot.loop.create_task(check_mute_status())
-bot.run(args.token)
+bot.loop.create_task(check_tweets())
+bot.run(config['token'])
