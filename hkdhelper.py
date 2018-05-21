@@ -1,5 +1,6 @@
 import discord
 from argparse import ArgumentParser
+from dateutil import parser
 
 SERVER_ID = '280439975911096320'
 MUTED_ROLE_ID = '445572638543446016'
@@ -9,6 +10,7 @@ MV_NAMES = {'7 Girls War': ['7girlswar', '7gw'], '言の葉 青葉': ['言の葉
 WUG_BLOG_ORDER = ['まゆ', 'μ', 'かやたん', 'anaminn', 'よぴ', 'みにゃみ', '永野愛理']
 WUG_BLOG_SIGNS = {'mayushii': 'まゆ', 'myu': 'μ', 'kayatan': 'かやたん', 'nanamin': 'anaminn', 'yoppi': 'よぴ', 'minyami': 'みにゃみ', 'aichan': '永野愛理'}
 WUG_MEMBERS = ['Wake Up, Girls', '吉岡茉祐', '永野愛理', '田中美海', '青山吉能', '山下七海', '奥野香耶', '高木美佑']
+WUG_EVENTERNOTE_IDS = [6988, 3774, 6984, 6983, 6985, 6982, 6986, 6987]
 
 def parse_arguments():
     argparser = ArgumentParser(description='Discord bot for Wake Up, Girls! server.')
@@ -31,6 +33,13 @@ def parse_mv_name(name):
     for char in ' .,。、!?！？()（）':
         name = name.replace(char, '')
     return name.lower()
+
+def parse_month(month):
+    month_query = month.title()
+    for i, month_group in enumerate(parser.parserinfo.MONTHS):
+        if month_query in month_group:
+            return str(i + 1) if i > 8 else '0{0}'.format(i + 1)
+    return 'None'
 
 def create_embed(title='', description='', colour=discord.Colour.default(), url='', image='', thumbnail='', fields={}, inline=False):
     embed = discord.Embed(title=title, description=description, colour=colour, url=url)

@@ -1,6 +1,7 @@
 import asyncio, discord, pycountry, pytz, requests, time
 import hkdhelper as hkd
 from bs4 import BeautifulSoup
+from calendar import month_name
 from datetime import datetime
 from dateutil import parser
 from decimal import Decimal
@@ -63,6 +64,7 @@ async def help(ctx):
     embed_fields.append(('!oshi-count', 'Show the number of members with each WUG member role.'))
     embed_fields.append(('!blogpics *member*', 'Get pictures from the latest blog post of the specified WUG member (optional). If *member* not specified, gets pictures from the latest blog post.'))
     embed_fields.append(('!events *date*', 'Get information for events involving WUG members on the specified date. If *date* not specified, finds events happening today.'))
+    embed_fields.append(('!eventsin *month* *member*', 'Get information for events involving WUG members in the specified month and member, e.g. **!eventsin** April Mayushii. Searches events from this month onwards only.'))
     embed_fields.append(('!mv *song*', 'Show full MV of a song.'))
     embed_fields.append(('!mv-list', 'Show list of available MVs.'))
     embed_fields.append(('!seiyuu-vids', 'Show link to the wiki page with WUG seiyuu content.'))
@@ -313,9 +315,71 @@ async def events(ctx, *, date : str=''):
                 embed_fields.append(('Eventernote Attendees', event[3].find('p').contents[0]))
                 event_urls.append(event_url)
                 await bot.say(embed=create_embed(title=info[0].contents[0], url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
-                
+                await asyncio.sleep(0.5)
+
     if not event_urls:
         await bot.say(embed=create_embed(description='Couldn\'t find any events on that day.', colour=discord.Colour.red()))
+
+@bot.command(pass_context=True)
+async def eventsin(ctx, month : str, member : str=''):
+    await bot.send_typing(ctx.message.channel)
+    search_month = hkd.parse_month(month)
+    if search_month == 'None':
+        await bot.say(embed=create_embed(description='Couldn\'t find any events. Please follow this format for searching for events: **!eventsin** April Mayushii.', colour=discord.Colour.red()))
+        return
+
+    current_time = datetime.now(pytz.timezone('Japan'))
+    search_year = str(current_time.year if current_time.month <= int(search_month) else current_time.year + 1)
+    search_index = [0]
+    wug_names = list(hkd.WUG_ROLE_IDS.keys())
+    if member:
+        if member.lower() not in wug_names:
+            await bot.say(embed=create_embed(description='Couldn\'t find any events. Please follow this format for searching for events: **!eventsin** April Mayushii.', colour=discord.Colour.red()))
+            return
+        search_index = [wug_names.index(member.lower()) + 1]
+
+    first = True
+    search_start = False
+    event_urls = []
+    for i in search_index:
+        html_response = urlopen('https://www.eventernote.com/actors/{0}/{1}/events?actor_id={1}&limit=5000'.format(quote(hkd.WUG_MEMBERS[i]), hkd.WUG_EVENTERNOTE_IDS[i]))
+        soup = BeautifulSoup(html_response, 'html.parser')
+        result = soup.find_all(attrs={'class': ['date', 'event', 'actor', 'note_count']})
+        for event in [result[i:i + 4] for i in range(0, len(result), 4)]:
+            event_date = event[0].find('p').contents[0][:10]
+            if event_date[:4] == search_year and event_date[5:7] == search_month:
+                search_start = True
+            else:
+                if search_start:
+                    break
+                else:
+                    continue
+            info = event[1].find_all('a')
+            event_time = event[1].find('span')
+            event_url = info[0]['href']
+            if event_url not in event_urls:
+                performers = [p.contents[0] for p in event[2].find_all('a')]
+                wug_performers = [p for p in performers if p in hkd.WUG_MEMBERS]
+                if not wug_performers:
+                    continue
+                if first:
+                    first = False
+                    await bot.say('**Events for {0} in {1} {2}**'.format(member.title() if member else 'Wake Up, Girls!', month_name[int(search_month)], search_year))
+                    await asyncio.sleep(1)
+                other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p != 'Wake Up, Girls!']
+                embed_fields = []
+                embed_fields.append(('Location', info[1].contents[0]))
+                embed_fields.append(('Date', '{0} ({1:%A})'.format(event_date, parser.parse(event_date))))
+                embed_fields.append(('Time', event_time.contents[0] if event_time else 'To be announced'))
+                embed_fields.append(('WUG Members', ', '.join(wug_performers)))
+                embed_fields.append(('Other Performers', ', '.join(other_performers) if other_performers else 'None'))
+                embed_fields.append(('Eventernote Attendees', event[3].find('p').contents[0]))
+                event_urls.append(event_url)
+                await bot.say(embed=create_embed(title=info[0].contents[0], url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
+                await asyncio.sleep(0.5)
+
+    if not event_urls:
+        await bot.say(embed=create_embed(description='Couldn\'t find any events during that month.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
 async def mv(ctx, *, song_name : str):
@@ -392,7 +456,7 @@ async def tagcreate(ctx, *, tag_to_create : str):
         else:
             await bot.say(embed=create_embed(title='That tag already exists. Please choose a different tag name.', colour=discord.Colour.red()))
         return
-    await bot.say(embed=create_embed(description='Couldn\'t create tag. Please follow this format for creating a tag: **!tagcreate** NameOfTag Content of the tag.', colour=discord.Colour.red()))
+    await bot.say(embed=create_embed(description='Couldn\'t create tag. Please follow this format for creating a tag: **!tagcreate** *NameOfTag* *Content of the tag*.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
 async def tag(ctx, tag_name : str):
@@ -409,7 +473,7 @@ async def choose(ctx, *options : str):
     if len(options) > 1:
         await bot.say(embed=create_embed(description=options[randrange(len(options))]))
     else:
-        await bot.say(embed=create_embed(description='Please provide 2 or more options to choose from, e.g. **!choose** option1 option2.', colour=discord.Colour.red()))
+        await bot.say(embed=create_embed(description='Please provide 2 or more options to choose from, e.g. **!choose** *option1* *option2*.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
 async def yt(ctx, *, query : str):
