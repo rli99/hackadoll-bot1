@@ -63,7 +63,7 @@ async def check_tweets():
                 await asyncio.sleep(1)
         if posted_tweets:
             firebase_ref.child('last_tweet_id').set(str(max(posted_tweets)))
-        await asyncio.sleep(65)
+        await asyncio.sleep(20)
 
 @bot.command(pass_context=True)
 async def help(ctx):
