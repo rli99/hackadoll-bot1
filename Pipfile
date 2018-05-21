@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+"beautifulsoup4" = "*"
+"discord.py" = "*"
+firebase-admin = "*"
+forex-python = "*"
+googletrans = "*"
+humanfriendly = "*"
+pycountry = "*"
+python-dateutil = "*"
+python-twitter = "*"
+pytz = "*"
+timezonefinder = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.6"
