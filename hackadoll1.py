@@ -54,7 +54,7 @@ async def check_tweets():
         channel = discord.utils.get(server.channels, id=hkd.GENERAL_CHANNEL_ID)
         last_tweet_id = int(firebase_ref.child('last_tweet_id').get())
         posted_tweets = []
-        for status in twitter_api.GetUserTimeline(screen_name='wakeupgirls_PR', since_id=last_tweet_id, include_rts=False):
+        for status in twitter_api.GetUserTimeline(screen_name='wakeupgirls_PR', since_id=last_tweet_id, count=30, include_rts=False):
             tweet = status.AsDict()
             tweet_id = tweet['id']
             if tweet_id > last_tweet_id:
@@ -63,7 +63,7 @@ async def check_tweets():
                 await asyncio.sleep(1)
         if posted_tweets:
             firebase_ref.child('last_tweet_id').set(str(max(posted_tweets)))
-        await asyncio.sleep(20)
+        await asyncio.sleep(65)
 
 @bot.command(pass_context=True)
 async def help(ctx):
