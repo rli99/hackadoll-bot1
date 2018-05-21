@@ -24,7 +24,7 @@ certificate = credentials.Certificate(config['firebase_credentials'])
 firebase = initialize_app(certificate, {'databaseURL': config['firebase_db']})
 firebase_ref = db.reference()
 muted_members = firebase_ref.child('muted_members').get() or {}
-twitter_api = twitter.Api(consumer_key='tLY9YdBHYASAfiE2ncjT8jzjk', consumer_secret='b7SZvKJpRAcIhTSq5Lxo4NPgj3Ob0pN0ghzVBjbqvnNaepeSWc', access_token_key='2172130051-hoMzeBIa1XF8DeCdJP2huvDLpMyGvMMuSI6JJCJ', access_token_secret='oUG80VmUFGSSt5Qvycel6r40nOfFp4FRit3bGJ8SByp1T')
+twitter_api = twitter.Api(consumer_key=config['consumer_key'], consumer_secret=config['consumer_secret'], access_token_key=config['access_token_key'], access_token_secret=config['access_token_secret'])
 
 @bot.event
 async def on_ready():
