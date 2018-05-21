@@ -1,12 +1,14 @@
 ## ハッカドール１号
 ### Discord bot for the Wake Up, Girls! server
 
-#### Command line arguments
+#### Config file 'config.ini' containing following values needed
 
-  Argument                        | Description
-  ------------------------------- | -------------------------------------
-  -h, --help                      | Show this help message and exit.  
-  --token TOKEN                   | Token for the discord app bot user.  
-  --firebase_credentials DB_CRED  | JSON file containing the credentials for the Firebase Realtime Database.
-  --firebase_db DB_URL            | URL for the Firebase Realtime Database.
-  --weather_api_key KEY 	        | API key for the OpenWeatherMap API.
+[DEFAULT]  
+token = Token for the discord app bot user.  
+firebase_credentials = JSON file containing the credentials for the Firebase Realtime Database.  
+firebase_db = URL for the Firebase Realtime Database.  
+weather_api_key = API key for the OpenWeatherMap API.  
+consumer_key = Consumer key for the Twitter app.   
+consumer_secret = Consumer secret for the Twitter app.   
+access_token_key = Access token for the Twitter app.  
+access_token_secret = Access token secret for the Twitter app.   
