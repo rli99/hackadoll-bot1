@@ -296,12 +296,12 @@ async def blogpics(ctx, member : str=''):
 
         for pic in [p['href'] for p in blog_entry.find_all('a') if p['href'][-4:] == '.jpg']:
             await bot.say(pic)
-            await asyncio.sleep(1.5)
+            await asyncio.sleep(2)
         return
     except:
         await bot.say(embed=create_embed(description='Couldn\'t get pictures right now. Try again a bit later.', colour=discord.Colour.red()))
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, no_pm=True)
 async def events(ctx, *, date : str=''):
     await bot.send_typing(ctx.message.channel)
     event_urls = []
@@ -341,7 +341,7 @@ async def events(ctx, *, date : str=''):
     if not event_urls:
         await bot.say(embed=create_embed(description='Couldn\'t find any events on that day.', colour=discord.Colour.red()))
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, no_pm=True)
 async def eventsin(ctx, month : str, member : str=''):
     await bot.send_typing(ctx.message.channel)
     search_month = hkd.parse_month(month)
