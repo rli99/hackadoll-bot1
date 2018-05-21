@@ -322,6 +322,7 @@ async def events(ctx, *, date : str=''):
                 wug_performers = [p for p in performers if p in hkd.WUG_MEMBERS]
                 if not wug_performers:
                     continue
+                colour = get_wug_role(ctx.message.server, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]).colour if len(wug_performers) == 1 else discord.Colour.default()
                 if first:
                     first = False
                     await bot.say('**Events Involving WUG Members on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date))
@@ -334,7 +335,7 @@ async def events(ctx, *, date : str=''):
                 embed_fields.append(('Other Performers', ', '.join(other_performers) if other_performers else 'None'))
                 embed_fields.append(('Eventernote Attendees', event[3].find('p').contents[0]))
                 event_urls.append(event_url)
-                await bot.say(embed=create_embed(title=info[0].contents[0], url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
+                await bot.say(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
                 await asyncio.sleep(0.5)
 
     if not event_urls:
@@ -382,6 +383,7 @@ async def eventsin(ctx, month : str, member : str=''):
                 wug_performers = [p for p in performers if p in hkd.WUG_MEMBERS]
                 if not wug_performers:
                     continue
+                colour = get_wug_role(ctx.message.server, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]).colour if len(wug_performers) == 1 else discord.Colour.default()
                 if first:
                     first = False
                     await bot.say('**Events for {0} in {1} {2}**'.format(member.title() if member else 'Wake Up, Girls!', month_name[int(search_month)], search_year))
@@ -395,7 +397,7 @@ async def eventsin(ctx, month : str, member : str=''):
                 embed_fields.append(('Other Performers', ', '.join(other_performers) if other_performers else 'None'))
                 embed_fields.append(('Eventernote Attendees', event[3].find('p').contents[0]))
                 event_urls.append(event_url)
-                await bot.say(embed=create_embed(title=info[0].contents[0], url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
+                await bot.say(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
                 await asyncio.sleep(0.5)
 
     if not event_urls:
