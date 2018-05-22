@@ -8,6 +8,7 @@ from decimal import Decimal
 from discord.ext import commands
 from firebase_admin import credentials, db, initialize_app
 from forex_python.converter import CurrencyRates
+from googletrans import Translator
 from hkdhelper import create_embed, get_muted_role, get_wug_role 
 from humanfriendly import format_timespan
 from math import ceil
@@ -88,6 +89,7 @@ async def help(ctx):
     embed_fields.append(('!mv *song*', 'Show full MV of a song.'))
     embed_fields.append(('!mv-list', 'Show list of available MVs.'))
     embed_fields.append(('!seiyuu-vids', 'Show link to the wiki page with WUG seiyuu content.'))
+    embed_fields.append(('!tl *japanese text*', 'Translate the provided Japanese text into English via Google Translate.'))
     embed_fields.append(('!currency *amount* *x* to *y*', 'Convert *amount* of *x* currency to *y* currency, e.g. **!currency** 12.34 AUD to USD'))
     embed_fields.append(('!weather *city*, *country*', 'Show weather information for *city*, *country* (optional), e.g. **!weather** Melbourne, Australia'))
     embed_fields.append(('!tagcreate *tag_name* *content*', 'Create a tag.'))
@@ -301,7 +303,7 @@ async def blogpics(ctx, member : str=''):
     except:
         await bot.say(embed=create_embed(description='Couldn\'t get pictures right now. Try again a bit later.', colour=discord.Colour.red()))
 
-@bot.command(pass_context=True, no_pm=True)
+@bot.command(pass_context=True)
 async def events(ctx, *, date : str=''):
     await bot.send_typing(ctx.message.channel)
     event_urls = []
@@ -341,7 +343,7 @@ async def events(ctx, *, date : str=''):
     if not event_urls:
         await bot.say(embed=create_embed(description='Couldn\'t find any events on that day.', colour=discord.Colour.red()))
 
-@bot.command(pass_context=True, no_pm=True)
+@bot.command(pass_context=True)
 async def eventsin(ctx, month : str, member : str=''):
     await bot.send_typing(ctx.message.channel)
     search_month = hkd.parse_month(month)
@@ -427,6 +429,11 @@ async def mv_list(ctx):
 async def seiyuu_vids(ctx):
     await bot.send_typing(ctx.message.channel)
     await bot.say(content='**WUG Seiyuu Videos**', embed=create_embed(title='Wake Up, Girls! Wiki - List of Seiyuu Content', url='http://wake-up-girls.wikia.com/wiki/List_of_Seiyuu_Content'))
+
+@bot.command(pass_context=True)
+async def tl(ctx, *, text : str):
+    await bot.send_typing(ctx.message.channel)
+    await bot.say(embed=create_embed(description=Translator().translate(text, src='ja', dest='en').text))
 
 @bot.command(pass_context=True)
 async def currency(ctx, *conversion : str):
