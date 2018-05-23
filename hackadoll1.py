@@ -10,6 +10,7 @@ from firebase_admin import credentials, db, initialize_app
 from forex_python.converter import CurrencyRates
 from googletrans import Translator
 from hkdhelper import create_embed, get_muted_role, get_wug_role 
+from html import unescape
 from humanfriendly import format_timespan
 from math import ceil
 from operator import itemgetter
@@ -25,7 +26,7 @@ certificate = credentials.Certificate(config['firebase_credentials'])
 firebase = initialize_app(certificate, {'databaseURL': config['firebase_db']})
 firebase_ref = db.reference()
 muted_members = firebase_ref.child('muted_members').get() or {}
-twitter_api = twitter.Api(consumer_key=config['consumer_key'], consumer_secret=config['consumer_secret'], access_token_key=config['access_token_key'], access_token_secret=config['access_token_secret'])
+twitter_api = twitter.Api(consumer_key=config['consumer_key'], consumer_secret=config['consumer_secret'], access_token_key=config['access_token_key'], access_token_secret=config['access_token_secret'], tweet_mode='extended')
 
 @bot.event
 async def on_ready():
@@ -57,13 +58,20 @@ async def check_tweets():
             last_tweet_id = int(firebase_ref.child('last_tweet_ids/{0}'.format(name)).get())
             posted_tweets = []
             for status in twitter_api.GetUserTimeline(screen_name=name, since_id=last_tweet_id, count=40, include_rts=False):
+                await bot.send_typing(channel)
+                await asyncio.sleep(1)
                 tweet = status.AsDict()
                 tweet_id = tweet['id']
-                if tweet_id > last_tweet_id:
-                    await bot.send_typing(channel)
-                    posted_tweets.append(tweet_id)
-                    await asyncio.sleep(1)
-                    await bot.send_message(channel, 'https://twitter.com/{0}/status/{1}'.format(name, tweet_id))
+                posted_tweets.append(tweet_id)
+                author = {}
+                author['name'] = '{0} (@{1})'.format(tweet['user']['name'], tweet['user']['screen_name'])
+                author['url'] = 'https://twitter.com/{0}'.format(name)
+                author['icon_url'] = tweet['user']['profile_image_url_https']
+                image = ''
+                media = tweet.get('media', '')
+                if media:
+                    image = media[0].get('media_url_https', '')
+                await bot.send_message(channel, embed=create_embed(author=author, title='Tweet', description=unescape(tweet['full_text']), url='https://twitter.com/{0}/status/{1}'.format(name, tweet_id), image=image))
             if posted_tweets:
                 firebase_ref.child('last_tweet_ids/{0}'.format(name)).set(str(max(posted_tweets)))
         await asyncio.sleep(20)

@@ -44,8 +44,10 @@ def strip_from_end(text, ending):
         return text[:-len(ending)]
     return text
 
-def create_embed(title='', description='', colour=discord.Colour.default(), url='', image='', thumbnail='', fields={}, inline=False):
+def create_embed(author = {}, title='', description='', colour=discord.Colour.default(), url='', image='', thumbnail='', fields=[], inline=False):
     embed = discord.Embed(title=title, description=description, colour=colour, url=url)
+    if author:
+        embed.set_author(name=author['name'], url=author['url'], icon_url=author['icon_url'])
     if image:
         embed.set_image(url=image)
     if thumbnail:
