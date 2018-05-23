@@ -52,19 +52,21 @@ async def check_tweets():
     await bot.wait_until_ready()
     while not bot.is_closed:
         server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
-        channel = discord.utils.get(server.channels, id=hkd.GENERAL_CHANNEL_ID)
-        last_tweet_id = int(firebase_ref.child('last_tweet_id').get())
-        posted_tweets = []
-        for status in twitter_api.GetUserTimeline(screen_name='wakeupgirls_PR', since_id=last_tweet_id, count=30, include_rts=False):
-            tweet = status.AsDict()
-            tweet_id = tweet['id']
-            if tweet_id > last_tweet_id:
-                posted_tweets.append(tweet_id)
-                await bot.send_message(channel, 'https://twitter.com/wakeupgirls_PR/status/{0}'.format(tweet_id))
-                await asyncio.sleep(1)
-        if posted_tweets:
-            firebase_ref.child('last_tweet_id').set(str(max(posted_tweets)))
-        await asyncio.sleep(20)
+        channel = discord.utils.get(server.channels, id=hkd.TWITTER_CHANNEL_ID)
+        for name in hkd.WUG_TWITTER_NAMES:
+            last_tweet_id = int(firebase_ref.child('last_tweet_ids/{0}'.format(name)).get())
+            posted_tweets = []
+            for status in twitter_api.GetUserTimeline(screen_name=name, since_id=last_tweet_id, count=40, include_rts=False):
+                tweet = status.AsDict()
+                tweet_id = tweet['id']
+                if tweet_id > last_tweet_id:
+                    await bot.send_typing(channel)
+                    posted_tweets.append(tweet_id)
+                    await asyncio.sleep(1)
+                    await bot.send_message(channel, 'https://twitter.com/{0}/status/{1}'.format(name, tweet_id))
+            if posted_tweets:
+                firebase_ref.child('last_tweet_ids/{0}'.format(name)).set(str(max(posted_tweets)))
+            await asyncio.sleep(20)
 
 @bot.command(pass_context=True)
 async def help(ctx):
@@ -297,8 +299,9 @@ async def blogpics(ctx, member : str=''):
             blog_entry = soup.find_all(attrs={'class': 'skin-entryBody'}, limit=entry_num)[entry_num - 1]
 
         for pic in [p['href'] for p in blog_entry.find_all('a') if p['href'][-4:] == '.jpg']:
-            await bot.say(pic)
+            await bot.send_typing(ctx.message.channel)
             await asyncio.sleep(2)
+            await bot.say(pic)
         return
     except:
         await bot.say(embed=create_embed(description='Couldn\'t get pictures right now. Try again a bit later.', colour=discord.Colour.red()))
@@ -324,11 +327,13 @@ async def events(ctx, *, date : str=''):
                 wug_performers = [p for p in performers if p in hkd.WUG_MEMBERS]
                 if not wug_performers:
                     continue
+                await bot.send_typing(ctx.message.channel)
                 colour = get_wug_role(ctx.message.server, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]).colour if len(wug_performers) == 1 else discord.Colour.default()
                 if first:
                     first = False
                     await bot.say('**Events Involving WUG Members on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date))
-                    await asyncio.sleep(1)
+                    await bot.send_typing(ctx.message.channel)
+                    await asyncio.sleep(0.5)
                 other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p != 'Wake Up, Girls!']
                 embed_fields = []
                 embed_fields.append(('Location', info[1].contents[0]))
@@ -337,8 +342,8 @@ async def events(ctx, *, date : str=''):
                 embed_fields.append(('Other Performers', ', '.join(other_performers) if other_performers else 'None'))
                 embed_fields.append(('Eventernote Attendees', event[3].find('p').contents[0]))
                 event_urls.append(event_url)
-                await bot.say(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
                 await asyncio.sleep(0.5)
+                await bot.say(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
 
     if not event_urls:
         await bot.say(embed=create_embed(description='Couldn\'t find any events on that day.', colour=discord.Colour.red()))
@@ -385,11 +390,12 @@ async def eventsin(ctx, month : str, member : str=''):
                 wug_performers = [p for p in performers if p in hkd.WUG_MEMBERS]
                 if not wug_performers:
                     continue
+                await bot.send_typing(ctx.message.channel)
                 colour = get_wug_role(ctx.message.server, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]).colour if len(wug_performers) == 1 else discord.Colour.default()
                 if first:
                     first = False
                     await bot.say('**Events for {0} in {1} {2}**'.format(member.title() if member else 'Wake Up, Girls!', month_name[int(search_month)], search_year))
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(0.5)
                 other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p != 'Wake Up, Girls!']
                 embed_fields = []
                 embed_fields.append(('Location', info[1].contents[0]))
@@ -399,8 +405,8 @@ async def eventsin(ctx, month : str, member : str=''):
                 embed_fields.append(('Other Performers', ', '.join(other_performers) if other_performers else 'None'))
                 embed_fields.append(('Eventernote Attendees', event[3].find('p').contents[0]))
                 event_urls.append(event_url)
-                await bot.say(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
                 await asyncio.sleep(0.5)
+                await bot.say(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
 
     if not event_urls:
         await bot.say(embed=create_embed(description='Couldn\'t find any events during that month.', colour=discord.Colour.red()))
@@ -477,7 +483,7 @@ async def tagcreate(ctx, *, tag_to_create : str):
     if len(split_request) > 1:
         tag_name = split_request[0]
         tag_content = tag_to_create[len(tag_name) + 1:]
-        existing_tag = firebase_ref.child('tags').get().get(tag_name, '')
+        existing_tag = firebase_ref.child('tags/{0}'.format(tag_name)).get()
         if not existing_tag:
             firebase_ref.child('tags/{0}'.format(tag_name)).set(tag_content)
             await bot.say(content='Created Tag.', embed=create_embed(title=tag_name))
@@ -490,7 +496,7 @@ async def tagcreate(ctx, *, tag_to_create : str):
 @bot.command(pass_context=True)
 async def tag(ctx, tag_name : str):
     await bot.send_typing(ctx.message.channel)
-    tag_result = firebase_ref.child('tags').get().get(tag_name, '')
+    tag_result = firebase_ref.child('tags/{0}'.format(tag_name)).get()
     if tag_result and len(tag_result) > 0:
         await bot.say(tag_result)
     else:
