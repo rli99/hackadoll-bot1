@@ -66,7 +66,7 @@ async def check_tweets():
                     await bot.send_message(channel, 'https://twitter.com/{0}/status/{1}'.format(name, tweet_id))
             if posted_tweets:
                 firebase_ref.child('last_tweet_ids/{0}'.format(name)).set(str(max(posted_tweets)))
-            await asyncio.sleep(20)
+        await asyncio.sleep(20)
 
 @bot.command(pass_context=True)
 async def help(ctx):
