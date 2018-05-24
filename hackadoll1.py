@@ -63,15 +63,30 @@ async def check_tweets():
                 tweet = status.AsDict()
                 tweet_id = tweet['id']
                 posted_tweets.append(tweet_id)
+                user = tweet['user']
+                tweet_content = unescape(tweet['full_text'])
+                role = None
+                if '公式ブログを更新しました' in tweet_content:
+                    for i, sign in enumerate(hkd.WUG_TWITTER_BLOG_SIGNS):
+                        if sign in tweet_content:
+                            role = get_wug_role(server, list(hkd.WUG_ROLE_IDS.keys())[i])
+                colour = role.colour if role else discord.Colour.light_grey()
                 author = {}
-                author['name'] = '{0} (@{1})'.format(tweet['user']['name'], tweet['user']['screen_name'])
+                author['name'] = '{0} (@{1})'.format(user['name'], user['screen_name'])
                 author['url'] = 'https://twitter.com/{0}'.format(name)
-                author['icon_url'] = tweet['user']['profile_image_url_https']
+                author['icon_url'] = user['profile_image_url_https']
                 image = ''
                 media = tweet.get('media', '')
                 if media:
                     image = media[0].get('media_url_https', '')
-                await bot.send_message(channel, embed=create_embed(author=author, title='Tweet', description=unescape(tweet['full_text']), url='https://twitter.com/{0}/status/{1}'.format(name, tweet_id), image=image))
+                if role:
+                        html_response = urlopen('https://ameblo.jp/wakeupgirls/')
+                        soup = BeautifulSoup(html_response, 'html.parser')
+                        blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
+                        blog_images = [p['href'] for p in blog_entry.find_all('a') if p['href'][-4:] == '.jpg']
+                        if blog_images:
+                            image = blog_images[0]
+                await bot.send_message(channel, embed=create_embed(author=author, title='Tweet by {0}'.format(user['name']), description=tweet_content, colour=colour, url='https://twitter.com/{0}/status/{1}'.format(name, tweet_id), image=image))
             if posted_tweets:
                 firebase_ref.child('last_tweet_ids/{0}'.format(name)).set(str(max(posted_tweets)))
         await asyncio.sleep(20)
