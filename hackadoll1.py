@@ -332,7 +332,6 @@ async def blogpics(ctx, member : str=''):
             await bot.send_typing(ctx.message.channel)
             await asyncio.sleep(2)
             await bot.say(pic)
-        return
     except:
         await bot.say(embed=create_embed(description='Couldn\'t get pictures right now. Try again a bit later.', colour=discord.Colour.red()))
 
