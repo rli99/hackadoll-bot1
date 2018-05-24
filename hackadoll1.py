@@ -84,9 +84,9 @@ async def check_tweets():
                         html_response = urlopen('https://ameblo.jp/wakeupgirls/')
                         soup = BeautifulSoup(html_response, 'html.parser')
                         blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
-                        blog_images = [p['href'] for p in blog_entry.find_all('a') if p['href'][-4:] == '.jpg']
+                        blog_images = [p['src'] for p in blog_entry.find_all('img') if '?caw=' in p['src'][-9:]]
                         if blog_images:
-                            image = blog_images[0]
+                            image = blog_images[-1]
                     except:
                         continue
                 await bot.send_message(channel, embed=create_embed(author=author, title='Tweet by {0}'.format(user['name']), description=tweet_content, colour=colour, url='https://twitter.com/{0}/status/{1}'.format(name, tweet_id), image=image))
