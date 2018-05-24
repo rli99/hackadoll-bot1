@@ -80,12 +80,15 @@ async def check_tweets():
                 if media:
                     image = media[0].get('media_url_https', '')
                 if role:
+                    try:
                         html_response = urlopen('https://ameblo.jp/wakeupgirls/')
                         soup = BeautifulSoup(html_response, 'html.parser')
                         blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
                         blog_images = [p['href'] for p in blog_entry.find_all('a') if p['href'][-4:] == '.jpg']
                         if blog_images:
                             image = blog_images[0]
+                    except:
+                        continue
                 await bot.send_message(channel, embed=create_embed(author=author, title='Tweet by {0}'.format(user['name']), description=tweet_content, colour=colour, url='https://twitter.com/{0}/status/{1}'.format(name, tweet_id), image=image))
             if posted_tweets:
                 firebase_ref.child('last_tweet_ids/{0}'.format(name)).set(str(max(posted_tweets)))
@@ -109,6 +112,10 @@ async def help(ctx):
     embed_fields.append(('!kamioshi-count', 'Show the number of members with each WUG member role as their highest role.'))
     embed_fields.append(('!oshi-count', 'Show the number of members with each WUG member role.'))
     embed_fields.append(('!blogpics *member*', 'Get pictures from the latest blog post of the specified WUG member (optional). If *member* not specified, gets pictures from the latest blog post.'))
+    await bot.say(content='**Available Commands**', embed=create_embed(fields=embed_fields))
+    await asyncio.sleep(0.5)
+
+    embed_fields = []
     embed_fields.append(('!events *date*', 'Get information for events involving WUG members on the specified date. If *date* not specified, finds events happening today.'))
     embed_fields.append(('!eventsin *month* *member*', 'Get information for events involving WUG members for the specified month and member, e.g. **!eventsin** April Mayushii. Searches events from this month onwards only.'))
     embed_fields.append(('!mv *song*', 'Show full MV of a song.'))
@@ -121,7 +128,7 @@ async def help(ctx):
     embed_fields.append(('!tag *tag_name*', 'Display a saved tag.'))
     embed_fields.append(('!choose *options*', 'Randomly choose from one of the provided options, e.g. **!choose** option1 option2'))
     embed_fields.append(('!yt *query*', 'Gets the top result from YouTube based on the provided search terms.'))
-    await bot.say(content='**Available Commands**', embed=create_embed(fields=embed_fields))
+    await bot.say(embed=create_embed(fields=embed_fields))
 
 @bot.command(pass_context=True, no_pm=True)
 async def kick(ctx, member : discord.Member):
@@ -335,41 +342,42 @@ async def events(ctx, *, date : str=''):
     event_urls = []
     search_date = parser.parse(date) if date else datetime.now(pytz.timezone('Japan'))
     first = True
+    try:
+        for member in hkd.WUG_MEMBERS:
+            html_response = urlopen('https://www.eventernote.com/events/search?keyword={0}&year={1}&month={2}&day={3}'.format(quote(member), search_date.year, search_date.month, search_date.day))
+            soup = BeautifulSoup(html_response, 'html.parser')
+            result = soup.find_all(attrs={'class': ['date', 'event', 'actor', 'note_count']})
 
-    for member in hkd.WUG_MEMBERS:
-        html_response = urlopen('https://www.eventernote.com/events/search?keyword={0}&year={1}&month={2}&day={3}'.format(quote(member), search_date.year, search_date.month, search_date.day))
-        soup = BeautifulSoup(html_response, 'html.parser')
-        result = soup.find_all(attrs={'class': ['date', 'event', 'actor', 'note_count']})
-
-        for event in [result[i:i + 4] for i in range(0, len(result), 4)]:
-            info = event[1].find_all('a')
-            event_time = event[1].find('span')
-            event_url = info[0]['href']
-            if event_url not in event_urls:
-                performers = [p.contents[0] for p in event[2].find_all('a')]
-                wug_performers = [p for p in performers if p in hkd.WUG_MEMBERS]
-                if not wug_performers:
-                    continue
-                await bot.send_typing(ctx.message.channel)
-                colour = get_wug_role(ctx.message.server, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]).colour if len(wug_performers) == 1 else discord.Colour.default()
-                if first:
-                    first = False
-                    await bot.say('**Events Involving WUG Members on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date))
+            for event in [result[i:i + 4] for i in range(0, len(result), 4)]:
+                info = event[1].find_all('a')
+                event_time = event[1].find('span')
+                event_url = info[0]['href']
+                if event_url not in event_urls:
+                    performers = [p.contents[0] for p in event[2].find_all('a')]
+                    wug_performers = [p for p in performers if p in hkd.WUG_MEMBERS]
+                    if not wug_performers:
+                        continue
                     await bot.send_typing(ctx.message.channel)
+                    colour = get_wug_role(ctx.message.server, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]).colour if len(wug_performers) == 1 else discord.Colour.default()
+                    if first:
+                        first = False
+                        await bot.say('**Events Involving WUG Members on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date))
+                        await bot.send_typing(ctx.message.channel)
+                        await asyncio.sleep(0.5)
+                    other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p != 'Wake Up, Girls!']
+                    embed_fields = []
+                    embed_fields.append(('Location', info[1].contents[0]))
+                    embed_fields.append(('Time', event_time.contents[0] if event_time else 'To be announced'))
+                    embed_fields.append(('WUG Members', ', '.join(wug_performers)))
+                    embed_fields.append(('Other Performers', ', '.join(other_performers) if other_performers else 'None'))
+                    embed_fields.append(('Eventernote Attendees', event[3].find('p').contents[0]))
+                    event_urls.append(event_url)
                     await asyncio.sleep(0.5)
-                other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p != 'Wake Up, Girls!']
-                embed_fields = []
-                embed_fields.append(('Location', info[1].contents[0]))
-                embed_fields.append(('Time', event_time.contents[0] if event_time else 'To be announced'))
-                embed_fields.append(('WUG Members', ', '.join(wug_performers)))
-                embed_fields.append(('Other Performers', ', '.join(other_performers) if other_performers else 'None'))
-                embed_fields.append(('Eventernote Attendees', event[3].find('p').contents[0]))
-                event_urls.append(event_url)
-                await asyncio.sleep(0.5)
-                await bot.say(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
-
-    if not event_urls:
-        await bot.say(embed=create_embed(description='Couldn\'t find any events on that day.', colour=discord.Colour.red()))
+                    await bot.say(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
+        if not event_urls:
+            await bot.say(embed=create_embed(description='Couldn\'t find any events on that day.', colour=discord.Colour.red()))
+    except:
+        await bot.say(embed=create_embed(description='Couldn\'t get all events right now. Try again a bit later.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True, no_pm=True)
 async def eventsin(ctx, month : str, member : str=''):
@@ -378,7 +386,6 @@ async def eventsin(ctx, month : str, member : str=''):
     if search_month == 'None':
         await bot.say(embed=create_embed(description='Couldn\'t find any events. Please follow this format for searching for events: **!eventsin** April Mayushii.', colour=discord.Colour.red()))
         return
-
     current_time = datetime.now(pytz.timezone('Japan'))
     search_year = str(current_time.year if current_time.month <= int(search_month) else current_time.year + 1)
     search_index = [0]
@@ -392,54 +399,56 @@ async def eventsin(ctx, month : str, member : str=''):
     first = True
     search_start = False
     event_urls = []
-    for i in search_index:
-        html_response = urlopen('https://www.eventernote.com/actors/{0}/{1}/events?actor_id={1}&limit=5000'.format(quote(hkd.WUG_MEMBERS[i]), hkd.WUG_EVENTERNOTE_IDS[i]))
-        soup = BeautifulSoup(html_response, 'html.parser')
-        result = soup.find_all(attrs={'class': ['date', 'event', 'actor', 'note_count']})
-        for event in [result[i:i + 4] for i in range(0, len(result), 4)]:
-            event_date = event[0].find('p').contents[0][:10]
-            if event_date[:4] == search_year and event_date[5:7] == search_month:
-                search_start = True
-            else:
-                if search_start:
-                    break
+    try:
+        for i in search_index:
+            html_response = urlopen('https://www.eventernote.com/actors/{0}/{1}/events?actor_id={1}&limit=5000'.format(quote(hkd.WUG_MEMBERS[i]), hkd.WUG_EVENTERNOTE_IDS[i]))
+            soup = BeautifulSoup(html_response, 'html.parser')
+            result = soup.find_all(attrs={'class': ['date', 'event', 'actor', 'note_count']})
+            for event in [result[i:i + 4] for i in range(0, len(result), 4)]:
+                event_date = event[0].find('p').contents[0][:10]
+                if event_date[:4] == search_year and event_date[5:7] == search_month:
+                    search_start = True
                 else:
-                    continue
-            info = event[1].find_all('a')
-            event_time = event[1].find('span')
-            event_url = info[0]['href']
-            if event_url not in event_urls:
-                performers = [p.contents[0] for p in event[2].find_all('a')]
-                wug_performers = [p for p in performers if p in hkd.WUG_MEMBERS]
-                if not wug_performers:
-                    continue
-                await bot.send_typing(ctx.message.channel)
-                colour = get_wug_role(ctx.message.server, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]).colour if len(wug_performers) == 1 else discord.Colour.default()
-                if first:
-                    first = False
-                    await bot.say('**Events for {0} in {1} {2}**'.format(member.title() if member else 'Wake Up, Girls!', month_name[int(search_month)], search_year))
+                    if search_start:
+                        break
+                    else:
+                        continue
+                info = event[1].find_all('a')
+                event_time = event[1].find('span')
+                event_url = info[0]['href']
+                if event_url not in event_urls:
+                    performers = [p.contents[0] for p in event[2].find_all('a')]
+                    wug_performers = [p for p in performers if p in hkd.WUG_MEMBERS]
+                    if not wug_performers:
+                        continue
+                    await bot.send_typing(ctx.message.channel)
+                    colour = get_wug_role(ctx.message.server, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]).colour if len(wug_performers) == 1 else discord.Colour.default()
+                    if first:
+                        first = False
+                        await bot.say('**Events for {0} in {1} {2}**'.format(member.title() if member else 'Wake Up, Girls!', month_name[int(search_month)], search_year))
+                        await asyncio.sleep(0.5)
+                    other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p != 'Wake Up, Girls!']
+                    embed_fields = []
+                    embed_fields.append(('Location', info[1].contents[0]))
+                    embed_fields.append(('Date', '{0} ({1:%A})'.format(event_date, parser.parse(event_date))))
+                    embed_fields.append(('Time', event_time.contents[0] if event_time else 'To be announced'))
+                    embed_fields.append(('WUG Members', ', '.join(wug_performers)))
+                    embed_fields.append(('Other Performers', ', '.join(other_performers) if other_performers else 'None'))
+                    embed_fields.append(('Eventernote Attendees', event[3].find('p').contents[0]))
+                    event_urls.append(event_url)
                     await asyncio.sleep(0.5)
-                other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p != 'Wake Up, Girls!']
-                embed_fields = []
-                embed_fields.append(('Location', info[1].contents[0]))
-                embed_fields.append(('Date', '{0} ({1:%A})'.format(event_date, parser.parse(event_date))))
-                embed_fields.append(('Time', event_time.contents[0] if event_time else 'To be announced'))
-                embed_fields.append(('WUG Members', ', '.join(wug_performers)))
-                embed_fields.append(('Other Performers', ', '.join(other_performers) if other_performers else 'None'))
-                embed_fields.append(('Eventernote Attendees', event[3].find('p').contents[0]))
-                event_urls.append(event_url)
-                await asyncio.sleep(0.5)
-                await bot.say(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
-
-    if not event_urls:
-        await bot.say(embed=create_embed(description='Couldn\'t find any events during that month.', colour=discord.Colour.red()))
+                    await bot.say(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
+        if not event_urls:
+            await bot.say(embed=create_embed(description='Couldn\'t find any events during that month.', colour=discord.Colour.red()))
+    except:
+        await bot.say(embed=create_embed(description='Couldn\'t get all events right now. Try again a bit later.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
 async def mv(ctx, *, song_name : str):
     await bot.send_typing(ctx.message.channel)
     name_to_mv = {}
     for mv, names in list(hkd.MV_NAMES.items()):
-      name_to_mv.update({name : mv for name in names})
+        name_to_mv.update({name : mv for name in names})
 
     song = hkd.parse_mv_name(song_name)
     if song in name_to_mv:
