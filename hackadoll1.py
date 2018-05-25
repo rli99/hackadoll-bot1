@@ -80,15 +80,17 @@ async def check_tweets():
                 if media:
                     image = media[0].get('media_url_https', '')
                 if role:
-                    try:
-                        html_response = urlopen('https://ameblo.jp/wakeupgirls/')
-                        soup = BeautifulSoup(html_response, 'html.parser')
-                        blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
-                        blog_images = [p['src'] for p in blog_entry.find_all('img') if '?caw=' in p['src'][-9:]]
-                        if blog_images:
-                            image = blog_images[-1]
-                    except:
-                        continue
+                    retry = True
+                    while retry:
+                        try:
+                            html_response = urlopen('https://ameblo.jp/wakeupgirls/')
+                            soup = BeautifulSoup(html_response, 'html.parser')
+                            blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
+                            blog_images = [p['src'] for p in blog_entry.find_all('img') if '?caw=' in p['src'][-9:]]
+                            if blog_images:
+                                image = blog_images[-1]
+                            retry = False
+                        except: pass
                 await bot.send_message(channel, embed=create_embed(author=author, title='Tweet by {0}'.format(user['name']), description=tweet_content, colour=colour, url='https://twitter.com/{0}/status/{1}'.format(name, tweet_id), image=image))
             if posted_tweets:
                 firebase_ref.child('last_tweet_ids/{0}'.format(name)).set(str(max(posted_tweets)))
@@ -303,37 +305,42 @@ async def blogpics(ctx, member : str=''):
     page = 1
     entry_num = 1
     day = -1
-    try:
-        html_response = urlopen('https://ameblo.jp/wakeupgirls')
-        soup = BeautifulSoup(html_response, 'html.parser')
-        blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
-        sign_entry = hkd.strip_from_end(str(blog_entry)[:-10].strip(), '<br/>')
-        member_sign = sign_entry[sign_entry.rfind('>') + 3:]
-
-        for i, sign in enumerate(hkd.WUG_BLOG_ORDER):
-            if sign in member_sign:
-                day = i
-                if not member:
-                    member = [m for m in hkd.WUG_BLOG_SIGNS.keys() if hkd.WUG_BLOG_SIGNS[m] == sign][0]
-        if day == -1:
-            await bot.say(embed=create_embed(description='Couldn\'t find pictures for that member.', colour=discord.Colour.red()))
-            return
-
-        page, entry_num = map(sum, zip(divmod((hkd.WUG_BLOG_ORDER.index(hkd.WUG_BLOG_SIGNS[member.lower()]) - day) % 7, 3), (1, 1)))
-
-        if page != 1:
-            html_response = urlopen('https://ameblo.jp/wakeupgirls/page-{0}.html'.format(page))
+    retry = True
+    while retry:
+        try:
+            html_response = urlopen('https://ameblo.jp/wakeupgirls')
             soup = BeautifulSoup(html_response, 'html.parser')
+            blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
+            sign_entry = hkd.strip_from_end(str(blog_entry)[:-10].strip(), '<br/>')
+            member_sign = sign_entry[sign_entry.rfind('>') + 3:]
 
-        if page != 1 or entry_num != 1:
-            blog_entry = soup.find_all(attrs={'class': 'skin-entryBody'}, limit=entry_num)[entry_num - 1]
+            for i, sign in enumerate(hkd.WUG_BLOG_ORDER):
+                if sign in member_sign:
+                    day = i
+                    if not member:
+                        member = [m for m in hkd.WUG_BLOG_SIGNS.keys() if hkd.WUG_BLOG_SIGNS[m] == sign][0]
+            if day == -1:
+                await bot.say(embed=create_embed(description='Couldn\'t find pictures for that member.', colour=discord.Colour.red()))
+                return
 
-        for pic in [p['href'] for p in blog_entry.find_all('a') if p['href'][-4:] == '.jpg']:
-            await bot.send_typing(ctx.message.channel)
-            await asyncio.sleep(2)
-            await bot.say(pic)
-    except:
-        await bot.say(embed=create_embed(description='Couldn\'t get pictures right now. Try again a bit later.', colour=discord.Colour.red()))
+            page, entry_num = map(sum, zip(divmod((hkd.WUG_BLOG_ORDER.index(hkd.WUG_BLOG_SIGNS[member.lower()]) - day) % 7, 3), (1, 1)))
+
+            if page != 1:
+                html_response = urlopen('https://ameblo.jp/wakeupgirls/page-{0}.html'.format(page))
+                soup = BeautifulSoup(html_response, 'html.parser')
+
+            if page != 1 or entry_num != 1:
+                blog_entry = soup.find_all(attrs={'class': 'skin-entryBody'}, limit=entry_num)[entry_num - 1]
+
+            pics = [p['href'] for p in blog_entry.find_all('a') if p['href'][-4:] == '.jpg']
+            for pic in pics:
+                await bot.send_typing(ctx.message.channel)
+                await asyncio.sleep(2)
+                await bot.say(pic)
+            if len(pics) == 0:
+                await bot.say(embed=create_embed(description='Couldn\'t find any pictures.', colour=discord.Colour.red()))
+            retry = False
+        except: pass
 
 @bot.command(pass_context=True, no_pm=True)
 async def events(ctx, *, date : str=''):
@@ -341,42 +348,44 @@ async def events(ctx, *, date : str=''):
     event_urls = []
     search_date = parser.parse(date) if date else datetime.now(pytz.timezone('Japan'))
     first = True
-    try:
-        for member in hkd.WUG_MEMBERS:
-            html_response = urlopen('https://www.eventernote.com/events/search?keyword={0}&year={1}&month={2}&day={3}'.format(quote(member), search_date.year, search_date.month, search_date.day))
-            soup = BeautifulSoup(html_response, 'html.parser')
-            result = soup.find_all(attrs={'class': ['date', 'event', 'actor', 'note_count']})
+    retry = True
+    while retry:
+        try:
+            for member in hkd.WUG_MEMBERS:
+                html_response = urlopen('https://www.eventernote.com/events/search?keyword={0}&year={1}&month={2}&day={3}'.format(quote(member), search_date.year, search_date.month, search_date.day))
+                soup = BeautifulSoup(html_response, 'html.parser')
+                result = soup.find_all(attrs={'class': ['date', 'event', 'actor', 'note_count']})
 
-            for event in [result[i:i + 4] for i in range(0, len(result), 4)]:
-                info = event[1].find_all('a')
-                event_time = event[1].find('span')
-                event_url = info[0]['href']
-                if event_url not in event_urls:
-                    performers = [p.contents[0] for p in event[2].find_all('a')]
-                    wug_performers = [p for p in performers if p in hkd.WUG_MEMBERS]
-                    if not wug_performers:
-                        continue
-                    await bot.send_typing(ctx.message.channel)
-                    colour = get_wug_role(ctx.message.server, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]).colour if len(wug_performers) == 1 else discord.Colour.default()
-                    if first:
-                        first = False
-                        await bot.say('**Events Involving WUG Members on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date))
+                for event in [result[i:i + 4] for i in range(0, len(result), 4)]:
+                    info = event[1].find_all('a')
+                    event_time = event[1].find('span')
+                    event_url = info[0]['href']
+                    if event_url not in event_urls:
+                        performers = [p.contents[0] for p in event[2].find_all('a')]
+                        wug_performers = [p for p in performers if p in hkd.WUG_MEMBERS]
+                        if not wug_performers:
+                            continue
                         await bot.send_typing(ctx.message.channel)
+                        colour = get_wug_role(ctx.message.server, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]).colour if len(wug_performers) == 1 else discord.Colour.light_grey()
+                        if first:
+                            first = False
+                            await bot.say('**Events Involving WUG Members on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date))
+                            await bot.send_typing(ctx.message.channel)
+                            await asyncio.sleep(0.5)
+                        other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p != 'Wake Up, Girls!']
+                        embed_fields = []
+                        embed_fields.append(('Location', info[1].contents[0]))
+                        embed_fields.append(('Time', event_time.contents[0] if event_time else 'To be announced'))
+                        embed_fields.append(('WUG Members', ', '.join(wug_performers)))
+                        embed_fields.append(('Other Performers', ', '.join(other_performers) if other_performers else 'None'))
+                        embed_fields.append(('Eventernote Attendees', event[3].find('p').contents[0]))
+                        event_urls.append(event_url)
                         await asyncio.sleep(0.5)
-                    other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p != 'Wake Up, Girls!']
-                    embed_fields = []
-                    embed_fields.append(('Location', info[1].contents[0]))
-                    embed_fields.append(('Time', event_time.contents[0] if event_time else 'To be announced'))
-                    embed_fields.append(('WUG Members', ', '.join(wug_performers)))
-                    embed_fields.append(('Other Performers', ', '.join(other_performers) if other_performers else 'None'))
-                    embed_fields.append(('Eventernote Attendees', event[3].find('p').contents[0]))
-                    event_urls.append(event_url)
-                    await asyncio.sleep(0.5)
-                    await bot.say(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
-        if not event_urls:
-            await bot.say(embed=create_embed(description='Couldn\'t find any events on that day.', colour=discord.Colour.red()))
-    except:
-        await bot.say(embed=create_embed(description='Couldn\'t get all events right now. Try again a bit later.', colour=discord.Colour.red()))
+                        await bot.say(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
+            if not event_urls:
+                await bot.say(embed=create_embed(description='Couldn\'t find any events on that day.', colour=discord.Colour.red()))
+            retry = False
+        except: pass
 
 @bot.command(pass_context=True, no_pm=True)
 async def eventsin(ctx, month : str, member : str=''):
@@ -395,52 +404,54 @@ async def eventsin(ctx, month : str, member : str=''):
             return
         search_index = [wug_names.index(member.lower()) + 1]
 
+    event_urls = []
     first = True
     search_start = False
-    event_urls = []
-    try:
-        for i in search_index:
-            html_response = urlopen('https://www.eventernote.com/actors/{0}/{1}/events?actor_id={1}&limit=5000'.format(quote(hkd.WUG_MEMBERS[i]), hkd.WUG_EVENTERNOTE_IDS[i]))
-            soup = BeautifulSoup(html_response, 'html.parser')
-            result = soup.find_all(attrs={'class': ['date', 'event', 'actor', 'note_count']})
-            for event in [result[i:i + 4] for i in range(0, len(result), 4)]:
-                event_date = event[0].find('p').contents[0][:10]
-                if event_date[:4] == search_year and event_date[5:7] == search_month:
-                    search_start = True
-                else:
-                    if search_start:
-                        break
+    retry = True
+    while retry:
+        try:
+            for i in search_index:
+                html_response = urlopen('https://www.eventernote.com/actors/{0}/{1}/events?actor_id={1}&limit=5000'.format(quote(hkd.WUG_MEMBERS[i]), hkd.WUG_EVENTERNOTE_IDS[i]))
+                soup = BeautifulSoup(html_response, 'html.parser')
+                result = soup.find_all(attrs={'class': ['date', 'event', 'actor', 'note_count']})
+                for event in [result[i:i + 4] for i in range(0, len(result), 4)]:
+                    event_date = event[0].find('p').contents[0][:10]
+                    if event_date[:4] == search_year and event_date[5:7] == search_month:
+                        search_start = True
                     else:
-                        continue
-                info = event[1].find_all('a')
-                event_time = event[1].find('span')
-                event_url = info[0]['href']
-                if event_url not in event_urls:
-                    performers = [p.contents[0] for p in event[2].find_all('a')]
-                    wug_performers = [p for p in performers if p in hkd.WUG_MEMBERS]
-                    if not wug_performers:
-                        continue
-                    await bot.send_typing(ctx.message.channel)
-                    colour = get_wug_role(ctx.message.server, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]).colour if len(wug_performers) == 1 else discord.Colour.default()
-                    if first:
-                        first = False
-                        await bot.say('**Events for {0} in {1} {2}**'.format(member.title() if member else 'Wake Up, Girls!', month_name[int(search_month)], search_year))
+                        if search_start:
+                            break
+                        else:
+                            continue
+                    info = event[1].find_all('a')
+                    event_time = event[1].find('span')
+                    event_url = info[0]['href']
+                    if event_url not in event_urls:
+                        performers = [p.contents[0] for p in event[2].find_all('a')]
+                        wug_performers = [p for p in performers if p in hkd.WUG_MEMBERS]
+                        if not wug_performers:
+                            continue
+                        await bot.send_typing(ctx.message.channel)
+                        colour = get_wug_role(ctx.message.server, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]).colour if len(wug_performers) == 1 else discord.Colour.light_grey()
+                        if first:
+                            first = False
+                            await bot.say('**Events for {0} in {1} {2}**'.format(member.title() if member else 'Wake Up, Girls!', month_name[int(search_month)], search_year))
+                            await asyncio.sleep(0.5)
+                        other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p != 'Wake Up, Girls!']
+                        embed_fields = []
+                        embed_fields.append(('Location', info[1].contents[0]))
+                        embed_fields.append(('Date', '{0} ({1:%A})'.format(event_date, parser.parse(event_date))))
+                        embed_fields.append(('Time', event_time.contents[0] if event_time else 'To be announced'))
+                        embed_fields.append(('WUG Members', ', '.join(wug_performers)))
+                        embed_fields.append(('Other Performers', ', '.join(other_performers) if other_performers else 'None'))
+                        embed_fields.append(('Eventernote Attendees', event[3].find('p').contents[0]))
+                        event_urls.append(event_url)
                         await asyncio.sleep(0.5)
-                    other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p != 'Wake Up, Girls!']
-                    embed_fields = []
-                    embed_fields.append(('Location', info[1].contents[0]))
-                    embed_fields.append(('Date', '{0} ({1:%A})'.format(event_date, parser.parse(event_date))))
-                    embed_fields.append(('Time', event_time.contents[0] if event_time else 'To be announced'))
-                    embed_fields.append(('WUG Members', ', '.join(wug_performers)))
-                    embed_fields.append(('Other Performers', ', '.join(other_performers) if other_performers else 'None'))
-                    embed_fields.append(('Eventernote Attendees', event[3].find('p').contents[0]))
-                    event_urls.append(event_url)
-                    await asyncio.sleep(0.5)
-                    await bot.say(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
-        if not event_urls:
-            await bot.say(embed=create_embed(description='Couldn\'t find any events during that month.', colour=discord.Colour.red()))
-    except:
-        await bot.say(embed=create_embed(description='Couldn\'t get all events right now. Try again a bit later.', colour=discord.Colour.red()))
+                        await bot.say(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
+            if not event_urls:
+                await bot.say(embed=create_embed(description='Couldn\'t find any events during that month.', colour=discord.Colour.red()))
+            retry = False
+        except: pass
 
 @bot.command(pass_context=True)
 async def mv(ctx, *, song_name : str):
@@ -544,13 +555,18 @@ async def choose(ctx, *options : str):
 @bot.command(pass_context=True)
 async def yt(ctx, *, query : str):
     await bot.send_typing(ctx.message.channel)
-    html_response = urlopen('https://www.youtube.com/results?search_query={0}'.format(quote(query)))
-    soup = BeautifulSoup(html_response, 'html.parser')
-    for result in soup.find_all(attrs={'class': 'yt-uix-tile-link'}):
-        link = result['href']
-        if link.find('googleads.g.doubleclick.net') == -1 and not link.startswith('/channel'):
-            await bot.say('https://www.youtube.com{0}'.format(link))
-            return
+    retry = True
+    while retry:
+        try:
+            html_response = urlopen('https://www.youtube.com/results?search_query={0}'.format(quote(query)))
+            soup = BeautifulSoup(html_response, 'html.parser')
+            for result in soup.find_all(attrs={'class': 'yt-uix-tile-link'}):
+                link = result['href']
+                if link.find('googleads.g.doubleclick.net') == -1 and not link.startswith('/channel'):
+                    await bot.say('https://www.youtube.com{0}'.format(link))
+                    return
+            retry = False
+        except: pass
     await bot.say(embed=create_embed(title='Couldn\'t find any results.', colour=discord.Colour.red()))
 
 bot.loop.create_task(check_mute_status())
