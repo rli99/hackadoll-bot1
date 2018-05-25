@@ -539,7 +539,7 @@ async def tagcreate(ctx, *, tag_to_create : str):
 async def tag(ctx, tag_name : str):
     await bot.send_typing(ctx.message.channel)
     tag_result = firebase_ref.child('tags/{0}'.format(tag_name)).get()
-    if tag_result and len(tag_result) > 0:
+    if tag_result:
         await bot.say(tag_result)
     else:
         await bot.say(embed=create_embed(description='That tag doesn\'t exist. Use **!tagcreate** to create a tag.', colour=discord.Colour.red()))
