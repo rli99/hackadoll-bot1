@@ -28,6 +28,14 @@ firebase_ref = db.reference()
 muted_members = firebase_ref.child('muted_members').get() or {}
 twitter_api = twitter.Api(consumer_key=config['consumer_key'], consumer_secret=config['consumer_secret'], access_token_key=config['access_token_key'], access_token_secret=config['access_token_secret'], tweet_mode='extended')
 
+poll_topic = ''
+poll_owner = -1
+poll_duration = -1
+poll_end_time = -1
+poll_channel_id = -1
+poll_options = []
+poll_votes = {}
+
 @bot.event
 async def on_ready():
     print('\n-------------\nLogged in as: {0} ({1})\n-------------\n'.format(bot.user.name, bot.user.id))
@@ -96,6 +104,32 @@ async def check_tweets():
                 firebase_ref.child('last_tweet_ids/{0}'.format(name)).set(str(max(posted_tweets)))
         await asyncio.sleep(20)
 
+@bot.event
+async def check_poll_status():
+    await bot.wait_until_ready()
+    global poll_topic, poll_owner, poll_duration, poll_end_time, poll_channel_id, poll_options, poll_votes
+    while not bot.is_closed:
+        if poll_options and time.time() > poll_end_time:
+            server = discord.utils.get(bot.servers, id='439669047978622977')
+            channel = discord.utils.get(server.channels, id=poll_channel_id)
+            results = {}
+            for i, option in enumerate(poll_options):
+                results[option] = len(poll_votes.get(i + 1, []))
+            description = ''
+            for result in sorted(results.items(), key=itemgetter(1), reverse=True):
+                description += '{0} - {1} vote{2}\n'.format(result[0], result[1], '' if result[1] == 1 else 's')
+            await bot.send_message(channel, content='Poll ended.', embed=create_embed(title=poll_topic, description=description))
+
+            poll_topic = ''
+            poll_owner = -1
+            poll_duration = -1
+            poll_end_time = -1
+            poll_channel_id = -1
+            poll_options = []
+            poll_votes = {}
+
+        await asyncio.sleep(10)
+
 @bot.group(pass_context=True)
 async def help(ctx):
     await bot.send_typing(ctx.message.channel)
@@ -106,6 +140,7 @@ async def help(ctx):
         embed_fields.append(('!help roles', 'Show help for role commands.'))
         embed_fields.append(('!help events', 'Show help for event commands.'))
         embed_fields.append(('!help tags', 'Show help for tag commands.'))
+        embed_fields.append(('!help polls', 'Show help for poll commands.'))
         embed_fields.append(('!mv *song*', 'Show full MV of a song.'))
         embed_fields.append(('!mv-list', 'Show list of available MVs.'))
         embed_fields.append(('!userinfo', 'Show your user information.'))
@@ -154,6 +189,16 @@ async def tags():
     embed_fields.append(('!tag *tag_name*', 'Display a saved tag.'))
     await bot.say(content='**Commands for Using Tags**', embed=create_embed(fields=embed_fields))
 
+@help.command()
+async def polls():
+    embed_fields = []
+    embed_fields.append(('!pollcreate *duration* *topic*', 'Create a poll for the specified topic, lasting for *duration* minutes.'))
+    embed_fields.append(('!polloptions *options*', 'Specify the options for a created poll.'))
+    embed_fields.append(('!polldetails', 'See the options for the currently running poll.'))
+    embed_fields.append(('!pollend', 'Immediately end an ongoing poll.'))
+    embed_fields.append(('!vote *number*', 'Vote for an option in a poll.'))
+    await bot.say(content='**Commands for Making Polls**', embed=create_embed(fields=embed_fields))
+
 @bot.command(pass_context=True, no_pm=True)
 async def kick(ctx, member : discord.Member):
     await bot.send_typing(ctx.message.channel)
@@ -201,35 +246,6 @@ async def unmute(ctx, member : discord.Member):
         await bot.say(embed=create_embed(description='{0.mention} has been unmuted.'.format(member)))
     else:
         await bot.say(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
-
-@bot.command(pass_context=True, no_pm=True)
-async def userinfo(ctx, member : discord.Member=None):
-    await bot.send_typing(ctx.message.channel)
-    user = member or ctx.message.author
-    embed_fields = []
-    embed_fields.append(('Name', '{0}'.format(user.display_name)))
-    embed_fields.append(('ID', '{0}'.format(user.id)))
-    embed_fields.append(('Joined Server', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC'.format(user.joined_at)))
-    embed_fields.append(('Account Created', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC'.format(user.created_at)))
-    embed_fields.append(('Roles', '{0}'.format(', '.join([r.name for r in user.roles[1:]]) if len(user.roles[1:]) > 0 else 'None')))
-    embed_fields.append(('Avatar', '{0}'.format('<{0}>'.format(user.avatar_url) if user.avatar_url else 'None')))
-    await bot.say(content='**User Information for {0.mention}**'.format(user), embed=create_embed(fields=embed_fields, inline=True))
-
-@bot.command(pass_context=True, no_pm=True)
-async def serverinfo(ctx):
-    await bot.send_typing(ctx.message.channel)
-    server = ctx.message.server
-    embed_fields = []
-    embed_fields.append(('{0}'.format(server.name), '(ID: {0})'.format(server.id)))
-    embed_fields.append(('Owner', '{0} (ID: {1})'.format(server.owner, server.owner.id)))
-    embed_fields.append(('Members', '{0}'.format(server.member_count)))
-    embed_fields.append(('Channels', '{0} text, {1} voice'.format(sum(1 if str(channel.type) == 'text' else 0 for channel in server.channels), sum(1 if str(channel.type) == 'voice' else 0 for channel in server.channels))))
-    embed_fields.append(('Roles', '{0}'.format(len(server.roles))))
-    embed_fields.append(('Created On', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC'.format(server.created_at)))
-    embed_fields.append(('Default Channel', '{0}'.format(server.default_channel.name if server.default_channel is not None else 'None')))
-    embed_fields.append(('Region', '{0}'.format(server.region)))
-    embed_fields.append(('Icon', '{0}'.format('<{0}>'.format(server.icon_url) if server.icon_url else 'None')))
-    await bot.say(content='**Server Information**', embed=create_embed(fields=embed_fields, inline=True))
 
 @bot.command(pass_context=True, no_pm=True)
 async def oshihen(ctx, member : str):
@@ -311,49 +327,6 @@ async def oshi_count(ctx):
     for oshi in sorted(oshi_num.items(), key=itemgetter(1), reverse=True):
         description += '**{0}** ({1.mention}) - {2}\n'.format(oshi[0].title(), get_wug_role(ctx.message.server, oshi[0]), oshi[1])
     await bot.say(content='**Number of Users with Each WUG Member Role**', embed=create_embed(description=description))
-
-@bot.command(pass_context=True)
-async def blogpics(ctx, member : str=''):
-    await bot.send_typing(ctx.message.channel)
-    page = 1
-    entry_num = 1
-    day = -1
-    retry = True
-    while retry:
-        try:
-            html_response = urlopen('https://ameblo.jp/wakeupgirls')
-            soup = BeautifulSoup(html_response, 'html.parser')
-            blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
-            sign_entry = hkd.strip_from_end(str(blog_entry)[:-10].strip(), '<br/>')
-            member_sign = sign_entry[sign_entry.rfind('>') + 3:]
-
-            for i, sign in enumerate(hkd.WUG_BLOG_ORDER):
-                if sign in member_sign:
-                    day = i
-                    if not member:
-                        member = [m for m in hkd.WUG_BLOG_SIGNS.keys() if hkd.WUG_BLOG_SIGNS[m] == sign][0]
-            if day == -1:
-                await bot.say(embed=create_embed(description='Couldn\'t find pictures for that member.', colour=discord.Colour.red()))
-                return
-
-            page, entry_num = map(sum, zip(divmod((hkd.WUG_BLOG_ORDER.index(hkd.WUG_BLOG_SIGNS[member.lower()]) - day) % 7, 3), (1, 1)))
-
-            if page != 1:
-                html_response = urlopen('https://ameblo.jp/wakeupgirls/page-{0}.html'.format(page))
-                soup = BeautifulSoup(html_response, 'html.parser')
-
-            if page != 1 or entry_num != 1:
-                blog_entry = soup.find_all(attrs={'class': 'skin-entryBody'}, limit=entry_num)[entry_num - 1]
-
-            pics = [p['href'] for p in blog_entry.find_all('a') if p['href'][-4:] == '.jpg']
-            for pic in pics:
-                await bot.send_typing(ctx.message.channel)
-                await asyncio.sleep(2)
-                await bot.say(pic)
-            if len(pics) == 0:
-                await bot.say(embed=create_embed(description='Couldn\'t find any pictures.', colour=discord.Colour.red()))
-            retry = False
-        except: pass
 
 @bot.command(pass_context=True, no_pm=True)
 async def events(ctx, *, date : str=''):
@@ -467,6 +440,232 @@ async def eventsin(ctx, month : str, member : str=''):
         except: pass
 
 @bot.command(pass_context=True)
+async def tagcreate(ctx, *, tag_to_create : str):
+    await bot.send_typing(ctx.message.channel)
+    split_request = tag_to_create.split()
+    if len(split_request) > 1:
+        tag_name = split_request[0]
+        tag_content = tag_to_create[len(tag_name) + 1:]
+        if tag_name not in firebase_ref.child('tags').get():
+            firebase_ref.child('tags/{0}'.format(tag_name)).set(tag_content)
+            await bot.say(embed=create_embed(title='Successfully created tag - {0}'.format(tag_name)))
+        else:
+            await bot.say(embed=create_embed(title='That tag already exists. Please choose a different tag name.', colour=discord.Colour.red()))
+        return
+    await bot.say(embed=create_embed(description='Couldn\'t create tag. Please follow this format for creating a tag: **!tagcreate** *NameOfTag* *Content of the tag*.', colour=discord.Colour.red()))
+
+@bot.command(pass_context=True)
+async def tagupdate(ctx, *, tag_to_update : str):
+    await bot.send_typing(ctx.message.channel)
+    split_update = tag_to_update.split()
+    if len(split_update) > 1:
+        tag_name = split_update[0]
+        updated_content = tag_to_update[len(tag_name) + 1:]
+        if tag_name in firebase_ref.child('tags').get():
+            firebase_ref.child('tags/{0}'.format(tag_name)).set(updated_content)
+            await bot.say(embed=create_embed(title='Successfully updated tag - {0}.'.format(tag_name)))
+        else:
+            await bot.say(embed=create_embed(title='That tag doesn\'t exist.'.format(tag_name)))
+        return
+    await bot.say(embed=create_embed(description='Couldn\'t update tag. Please follow this format for updating a tag: **!tagupdate** *NameOfTag* *Updated content of the tag*.', colour=discord.Colour.red()))
+
+@bot.command(pass_context=True)
+async def tagdelete(ctx, tag_name : str):
+    await bot.send_typing(ctx.message.channel)
+    if firebase_ref.child('tags/{0}'.format(tag_name)).get():
+        firebase_ref.child('tags/{0}'.format(tag_name)).delete()
+        await bot.say(embed=create_embed(title='Successfully removed tag - {0}.'.format(tag_name)))
+    else:
+        await bot.say(embed=create_embed(title='That tag doesn\'t exist.', colour=discord.Colour.red()))
+
+@bot.command(pass_context=True)
+async def tagsearch(ctx):
+    await bot.send_typing(ctx.message.channel)
+    tag_list = firebase_ref.child('tags').get()
+    await bot.say(content='Existing Tags', embed=create_embed(title=', '.join(list(tag_list.keys()))))
+
+@bot.command(pass_context=True)
+async def tag(ctx, tag_name : str):
+    await bot.send_typing(ctx.message.channel)
+    tag_result = firebase_ref.child('tags/{0}'.format(tag_name)).get()
+    if tag_result:
+        await bot.say(tag_result)
+    else:
+        await bot.say(embed=create_embed(description='That tag doesn\'t exist. Use **!tagcreate** *tag_name* *Content of the tag* to create a tag.', colour=discord.Colour.red()))
+
+@bot.command(pass_context=True, no_pm=True)
+async def pollcreate(ctx, duration : int, *, topic : str):
+    await bot.send_typing(ctx.message.channel)
+    global poll_topic, poll_owner, poll_duration, poll_channel_id 
+    if duration > 120:
+        await bot.say(embed=create_embed(title='Please specify a duration of less than 2 hours.', colour=discord.Colour.red()))
+        return
+    elif duration < 1:
+        await bot.say(embed=create_embed(title='Please specify a duration of at least 1 minute.', colour=discord.COlour.red()))
+        return
+
+    if not poll_topic:
+        poll_topic = topic
+        poll_owner = ctx.message.author.id
+        poll_duration = duration
+        poll_channel_id = ctx.message.channel.id
+        await bot.say(embed=create_embed(description='Poll successfully created. Please specify the options for the poll with **!polloptions** *options*, e.g. **!polloptions** first option, second option, third option.'))
+    else:
+        await bot.say(embed=create_embed(description='There is already an ongoing poll. Please wait for the current poll to end, or if you are the creator of the current poll, you can end it with **!pollend**.', colour=discord.Colour.red()))
+
+@bot.command(pass_context=True, no_pm=True)
+async def polloptions(ctx, *, options : str):
+    await bot.send_typing(ctx.message.channel)
+    global poll_end_time, poll_options
+    if not poll_topic:
+        await bot.say(embed=create_embed(description='There is no created poll to provide options for. You can create a poll with **!pollcreate** *duration* *topic*.', colour=discord.Colour.red()))
+        return
+    if ctx.message.author.id != poll_owner:
+        await bot.say(embed=create_embed(title='Only the creator of the poll can specify the options.', colour=discord.Colour.red()))
+        return
+    if poll_options:
+        await bot.say(embed=create_embed(description='The options for this poll have already been specified. Please wait for the current poll to end, or if you are the creator of the current poll, you can end it with **!pollend**.', colour=discord.Colour.red()))
+        return
+
+    poll_options = [p.strip() for p in options.split(',')]
+    if len(poll_options) < 2:
+        poll_options = []
+        await bot.say(embed=create_embed(title='Please specify more than one option for the poll.', colour=discord.Colour.red()))
+        return
+    poll_end_time = time.time() + poll_duration * 60
+    description = 'Vote for an option with **!vote** *number*, e.g. **!vote** 1 for option 1.\n\n'
+    for i, option in enumerate(poll_options):
+        description += '**{0}**   {1}{2}\n'.format(i + 1, ' ' if len(poll_options) < 10 else '', option)
+    await bot.say(content='Poll created. This poll will last for {0}. The creator of the poll may end it early with **!pollend**.'.format(format_timespan(poll_duration * 60)), embed=create_embed(title=poll_topic, description=description))
+
+@bot.command(pass_context=True, no_pm=True)
+async def polldetails(ctx):
+    await bot.send_typing(ctx.message.channel)
+    if not poll_options:
+        await bot.say(embed=create_embed(description='There is no poll currently ongoing. You can create a poll with **!pollcreate** *duration* *topic*.', colour=discord.Colour.red()))
+        return
+    description = 'Vote for an option with **!vote** *number*, e.g. **!vote** 1 for option 1.\n\n'
+    for i, option in enumerate(poll_options):
+        description += '**{0}**   {1}{2}\n'.format(i + 1, ' ' if i < 9 else '', option)
+    await bot.say(content='Details of the currently running poll.', embed=create_embed(title=poll_topic, description=description))
+
+@bot.command(pass_context=True, no_pm=True)
+async def pollend(ctx):
+    await bot.send_typing(ctx.message.channel)
+    global poll_topic, poll_owner, poll_duration, poll_end_time, poll_channel_id, poll_options, poll_votes
+    if not poll_topic:
+        await bot.say(embed=create_embed(description='There is no poll currently ongoing. You can create a poll with **!pollcreate** *duration* *topic*.', colour=discord.Colour.red()))
+        return
+    if not poll_options:
+        await bot.say(embed=create_embed(description='A poll was created but no options provided. The poll has been cancelled.'))
+        return
+    if ctx.message.author.id != poll_owner:
+        await bot.say(embed=create_embed(title='Only the creator of the poll can end it.', colour=discord.Colour.red()))
+        return
+
+    results = {}
+    for i, option in enumerate(poll_options):
+        results[option] = len(poll_votes.get(i + 1, []))
+    description = ''
+    for result in sorted(results.items(), key=itemgetter(1), reverse=True):
+        description += '{0} - {1} vote{2}\n'.format(result[0], result[1], '' if result[1] == 1 else 's')
+    await bot.say(content='Poll ended.', embed=create_embed(title=poll_topic, description=description))
+
+    poll_topic = ''
+    poll_owner = -1
+    poll_duration = -1
+    poll_end_time = -1
+    poll_channel_id = -1
+    poll_options = []
+    poll_votes = {}
+
+@bot.command(pass_context=True, no_pm=True)
+async def vote(ctx, option : int):
+    if not poll_options:
+        await bot.say(embed=create_embed(title='There is no currently ongoing poll.', colour=discord.Colour.red()))
+        return
+    if option > len(poll_options):
+        await bot.say(embed=create_embed(title='The currently running poll does not have that many options. Use **!polldetails** to see the options.', colour=discord.Colour.red()))
+        return
+
+    current_votes = poll_votes.get(option, [])
+    if ctx.message.author.id not in current_votes:
+        current_votes.append(ctx.message.author.id)
+        poll_votes[option] = current_votes
+
+@bot.command(pass_context=True, no_pm=True)
+async def userinfo(ctx, member : discord.Member=None):
+    await bot.send_typing(ctx.message.channel)
+    user = member or ctx.message.author
+    embed_fields = []
+    embed_fields.append(('Name', '{0}'.format(user.display_name)))
+    embed_fields.append(('ID', '{0}'.format(user.id)))
+    embed_fields.append(('Joined Server', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC'.format(user.joined_at)))
+    embed_fields.append(('Account Created', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC'.format(user.created_at)))
+    embed_fields.append(('Roles', '{0}'.format(', '.join([r.name for r in user.roles[1:]]) if len(user.roles[1:]) > 0 else 'None')))
+    embed_fields.append(('Avatar', '{0}'.format('<{0}>'.format(user.avatar_url) if user.avatar_url else 'None')))
+    await bot.say(content='**User Information for {0.mention}**'.format(user), embed=create_embed(fields=embed_fields, inline=True))
+
+@bot.command(pass_context=True, no_pm=True)
+async def serverinfo(ctx):
+    await bot.send_typing(ctx.message.channel)
+    server = ctx.message.server
+    embed_fields = []
+    embed_fields.append(('{0}'.format(server.name), '(ID: {0})'.format(server.id)))
+    embed_fields.append(('Owner', '{0} (ID: {1})'.format(server.owner, server.owner.id)))
+    embed_fields.append(('Members', '{0}'.format(server.member_count)))
+    embed_fields.append(('Channels', '{0} text, {1} voice'.format(sum(1 if str(channel.type) == 'text' else 0 for channel in server.channels), sum(1 if str(channel.type) == 'voice' else 0 for channel in server.channels))))
+    embed_fields.append(('Roles', '{0}'.format(len(server.roles))))
+    embed_fields.append(('Created On', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC'.format(server.created_at)))
+    embed_fields.append(('Default Channel', '{0}'.format(server.default_channel.name if server.default_channel is not None else 'None')))
+    embed_fields.append(('Region', '{0}'.format(server.region)))
+    embed_fields.append(('Icon', '{0}'.format('<{0}>'.format(server.icon_url) if server.icon_url else 'None')))
+    await bot.say(content='**Server Information**', embed=create_embed(fields=embed_fields, inline=True))
+
+@bot.command(pass_context=True)
+async def blogpics(ctx, member : str=''):
+    await bot.send_typing(ctx.message.channel)
+    page = 1
+    entry_num = 1
+    day = -1
+    retry = True
+    while retry:
+        try:
+            html_response = urlopen('https://ameblo.jp/wakeupgirls')
+            soup = BeautifulSoup(html_response, 'html.parser')
+            blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
+            sign_entry = hkd.strip_from_end(str(blog_entry)[:-10].strip(), '<br/>')
+            member_sign = sign_entry[sign_entry.rfind('>') + 3:]
+
+            for i, sign in enumerate(hkd.WUG_BLOG_ORDER):
+                if sign in member_sign:
+                    day = i
+                    if not member:
+                        member = [m for m in hkd.WUG_BLOG_SIGNS.keys() if hkd.WUG_BLOG_SIGNS[m] == sign][0]
+            if day == -1:
+                await bot.say(embed=create_embed(description='Couldn\'t find pictures for that member.', colour=discord.Colour.red()))
+                return
+
+            page, entry_num = map(sum, zip(divmod((hkd.WUG_BLOG_ORDER.index(hkd.WUG_BLOG_SIGNS[member.lower()]) - day) % 7, 3), (1, 1)))
+
+            if page != 1:
+                html_response = urlopen('https://ameblo.jp/wakeupgirls/page-{0}.html'.format(page))
+                soup = BeautifulSoup(html_response, 'html.parser')
+
+            if page != 1 or entry_num != 1:
+                blog_entry = soup.find_all(attrs={'class': 'skin-entryBody'}, limit=entry_num)[entry_num - 1]
+
+            pics = [p['href'] for p in blog_entry.find_all('a') if p['href'][-4:] == '.jpg']
+            for pic in pics:
+                await bot.send_typing(ctx.message.channel)
+                await asyncio.sleep(2)
+                await bot.say(pic)
+            if len(pics) == 0:
+                await bot.say(embed=create_embed(description='Couldn\'t find any pictures.', colour=discord.Colour.red()))
+            retry = False
+        except: pass
+
+@bot.command(pass_context=True)
 async def mv(ctx, *, song_name : str):
     await bot.send_typing(ctx.message.channel)
     name_to_mv = {}
@@ -532,60 +731,6 @@ async def weather(ctx, *, location : str):
     await bot.say(embed=create_embed(description='Couldn\'t get weather. Please follow this format for checking the weather: **!weather** Melbourne, Australia.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
-async def tagcreate(ctx, *, tag_to_create : str):
-    await bot.send_typing(ctx.message.channel)
-    split_request = tag_to_create.split()
-    if len(split_request) > 1:
-        tag_name = split_request[0]
-        tag_content = tag_to_create[len(tag_name) + 1:]
-        if tag_name not in firebase_ref.child('tags').get():
-            firebase_ref.child('tags/{0}'.format(tag_name)).set(tag_content)
-            await bot.say(embed=create_embed(title='Successfully created tag - {0}'.format(tag_name)))
-        else:
-            await bot.say(embed=create_embed(title='That tag already exists. Please choose a different tag name.', colour=discord.Colour.red()))
-        return
-    await bot.say(embed=create_embed(description='Couldn\'t create tag. Please follow this format for creating a tag: **!tagcreate** *NameOfTag* *Content of the tag*.', colour=discord.Colour.red()))
-
-@bot.command(pass_context=True)
-async def tagupdate(ctx, *, tag_to_update : str):
-    await bot.send_typing(ctx.message.channel)
-    split_update = tag_to_update.split()
-    if len(split_update) > 1:
-        tag_name = split_update[0]
-        updated_content = tag_to_update[len(tag_name) + 1:]
-        if tag_name in firebase_ref.child('tags').get():
-            firebase_ref.child('tags/{0}'.format(tag_name)).set(updated_content)
-            await bot.say(embed=create_embed(title='Successfully updated tag - {0}.'.format(tag_name)))
-        else:
-            await bot.say(embed=create_embed(title='That tag doesn\'t exist.'.format(tag_name)))
-        return
-    await bot.say(embed=create_embed(description='Couldn\'t update tag. Please follow this format for updating a tag: **!tagupdate** *NameOfTag* *Updated content of the tag*.', colour=discord.Colour.red()))
-
-@bot.command(pass_context=True)
-async def tagdelete(ctx, tag_name : str):
-    await bot.send_typing(ctx.message.channel)
-    if firebase_ref.child('tags/{0}'.format(tag_name)).get():
-        firebase_ref.child('tags/{0}'.format(tag_name)).delete()
-        await bot.say(embed=create_embed(title='Successfully removed tag - {0}.'.format(tag_name)))
-    else:
-        await bot.say(embed=create_embed(title='That tag doesn\'t exist.', colour=discord.Colour.red()))
-
-@bot.command(pass_context=True)
-async def tagsearch(ctx):
-    await bot.send_typing(ctx.message.channel)
-    tag_list = firebase_ref.child('tags').get()
-    await bot.say(content='Existing Tags', embed=create_embed(title=', '.join(list(tag_list.keys()))))
-
-@bot.command(pass_context=True)
-async def tag(ctx, tag_name : str):
-    await bot.send_typing(ctx.message.channel)
-    tag_result = firebase_ref.child('tags/{0}'.format(tag_name)).get()
-    if tag_result:
-        await bot.say(tag_result)
-    else:
-        await bot.say(embed=create_embed(description='That tag doesn\'t exist. Use **!tagcreate** *tag_name* *Content of the tag* to create a tag.', colour=discord.Colour.red()))
-
-@bot.command(pass_context=True)
 async def choose(ctx, *options : str):
     await bot.send_typing(ctx.message.channel)
     if len(options) > 1:
@@ -612,4 +757,5 @@ async def yt(ctx, *, query : str):
 
 bot.loop.create_task(check_mute_status())
 bot.loop.create_task(check_tweets())
+bot.loop.create_task(check_poll_status())
 bot.run(config['token'])
