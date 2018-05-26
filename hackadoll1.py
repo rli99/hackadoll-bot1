@@ -128,15 +128,6 @@ async def mod_commands():
     embed_fields.append(('!unmute *member*', 'Unmute a member.'))
     await bot.say(content='**Commands for Moderators**', embed=create_embed(fields=embed_fields))
 
-@help.command(pass_context=True)
-async def roles(ctx):
-    description = 'Users can have any of the 7 WUG member roles. Use **!oshihen** *member* to get the role you want.\n\n'
-    for oshi in hkd.WUG_ROLE_IDS.keys():
-        description += '**!oshihen** {0} for {1.mention}\n'.format(oshi.title(), get_wug_role(ctx.message.server, oshi))
-    description += '\nNote that using **!oshihen** will remove all of your existing member roles. To get an extra role without removing existing ones, use **!oshimashi** *member* instead. To get all 7 roles, use **!hakooshi**.\n\n'
-    description += 'Use **!oshi-count** to show the number of members with each WUG member role, or **!kamioshi-count** to show the number of members with each WUG member role as their highest role.\n'
-    await bot.say(content='**Commands for Roles**', embed=create_embed(description=description))
-
 @help.command()
 async def events():
     embed_fields = []
