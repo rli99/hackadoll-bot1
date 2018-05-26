@@ -586,6 +586,37 @@ async def tag(ctx, tag_name : str):
         await bot.say(embed=create_embed(description='That tag doesn\'t exist. Use **!tagcreate** *tag_name* *Content of the tag* to create a tag.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
+async def tagsearch(ctx):
+    await bot.send_typing(ctx.message.channel)
+    tag_list = list(firebase_ref.child('tags').get())
+    await bot.say("Existing Tag(s): ")
+    await bot.say(tag_list)
+
+@bot.command(pass_context=True)
+async def tagremove(ctx, tag_to_be_removed : str):
+    await bot.send_typing(ctx.message.channel)
+    if tag_to_be_removed != None:
+        firebase_ref.child('tags/{0}'.format(tag_to_be_removed)).delete()
+        await bot.say("Tag {0} is now removed successfully! ".format(tag_to_be_removed))
+    else:
+        await bot.say("Cannot remove tag! ")
+
+@bot.command(pass_context=True)
+async def tagupdate(ctx, *, tag_to_be_updated : str):
+    await bot.send_typing(ctx.message.channel)
+    tag_string = tag_to_be_updated.split()
+    if len(tag_string) > 1:
+        tag_name = tag_string[0]
+        updated_content = tag_to_be_updated[len(tag_name) + 1:]
+        if tag_name in firebase_ref.child('tags').get():
+            firebase_ref.child('tags/{0}'.format(tag_name)).set(updated_content)
+            await bot.say("Tag {0} is now updated successfully! ".format(tag_name))
+        else:
+            await bot.say("Tag {0} does not exist! ".format(tag_name))
+        return
+    await bot.say("Please use the format: **!tagupdate** *NameOfTag* *Updated Content of the tag*")
+
+@bot.command(pass_context=True)
 async def choose(ctx, *options : str):
     await bot.send_typing(ctx.message.channel)
     if len(options) > 1:
