@@ -96,41 +96,63 @@ async def check_tweets():
                 firebase_ref.child('last_tweet_ids/{0}'.format(name)).set(str(max(posted_tweets)))
         await asyncio.sleep(20)
 
-@bot.command(pass_context=True)
+@bot.group(pass_context=True)
 async def help(ctx):
     await bot.send_typing(ctx.message.channel)
-    embed_fields = []
-    embed_fields.append(('!help', 'Show this help message.'))
-    embed_fields.append(('!kick *member*', 'Kick a member (mods only).'))
-    embed_fields.append(('!ban *member*', 'Ban a member (mods only).'))
-    embed_fields.append(('!mute *member* *duration*', 'Mute a member for *duration* minutes (mods only).'))
-    embed_fields.append(('!unmute *member*', 'Unmute a member (mods only).'))
-    embed_fields.append(('!userinfo', 'Show your user information.'))
-    embed_fields.append(('!serverinfo', 'Show server information.'))
-    embed_fields.append(('!oshihen *member*', 'Change your oshi role.'))
-    embed_fields.append(('!oshimashi *member*', 'Get an additional oshi role.'))
-    embed_fields.append(('!hakooshi', 'Get all 7 WUG member roles.'))
-    embed_fields.append(('!roles', 'Show additional help on how to get roles.'))
-    embed_fields.append(('!kamioshi-count', 'Show the number of members with each WUG member role as their highest role.'))
-    embed_fields.append(('!oshi-count', 'Show the number of members with each WUG member role.'))
-    embed_fields.append(('!blogpics *member*', 'Get pictures from the latest blog post of the specified WUG member (optional). If *member* not specified, gets pictures from the latest blog post.'))
-    await bot.say(content='**Available Commands**', embed=create_embed(fields=embed_fields))
-    await asyncio.sleep(0.5)
+    if ctx.invoked_subcommand is None:
+        embed_fields = []
+        embed_fields.append(('!help', 'Show this help message.'))
+        embed_fields.append(('!help mod-commands', 'Show help for moderator-only commands.'))
+        embed_fields.append(('!help roles', 'Show help for role commands.'))
+        embed_fields.append(('!help events', 'Show help for event commands.'))
+        embed_fields.append(('!help tags', 'Show help for tag commands.'))
+        embed_fields.append(('!mv *song*', 'Show full MV of a song.'))
+        embed_fields.append(('!mv-list', 'Show list of available MVs.'))
+        embed_fields.append(('!userinfo', 'Show your user information.'))
+        embed_fields.append(('!serverinfo', 'Show server information.'))
+        embed_fields.append(('!blogpics *member*', 'Get pictures from the latest blog post of the specified WUG member (optional). If *member* not specified, gets pictures from the latest blog post.'))
+        embed_fields.append(('!seiyuu-vids', 'Show link to the wiki page with WUG seiyuu content.'))
+        embed_fields.append(('!tl *japanese text*', 'Translate the provided Japanese text into English via Google Translate.'))
+        embed_fields.append(('!currency *amount* *x* to *y*', 'Convert *amount* of *x* currency to *y* currency, e.g. **!currency** 12.34 AUD to USD'))
+        embed_fields.append(('!weather *city*, *country*', 'Show weather information for *city*, *country* (optional), e.g. **!weather** Melbourne, Australia'))
+        embed_fields.append(('!choose *options*', 'Randomly choose from one of the provided options, e.g. **!choose** option1 option2'))
+        embed_fields.append(('!yt *query*', 'Gets the top result from YouTube based on the provided search terms.'))
+        await bot.say(content='**Available Commands**', embed=create_embed(fields=embed_fields))
 
+@help.command(name='mod-commands')
+async def mod_commands():
     embed_fields = []
-    embed_fields.append(('!events *date*', 'Get information for events involving WUG members on the specified date. If *date* not specified, finds events happening today.'))
-    embed_fields.append(('!eventsin *month* *member*', 'Get information for events involving WUG members for the specified month and member, e.g. **!eventsin** April Mayushii. Searches events from this month onwards only.'))
-    embed_fields.append(('!mv *song*', 'Show full MV of a song.'))
-    embed_fields.append(('!mv-list', 'Show list of available MVs.'))
-    embed_fields.append(('!seiyuu-vids', 'Show link to the wiki page with WUG seiyuu content.'))
-    embed_fields.append(('!tl *japanese text*', 'Translate the provided Japanese text into English via Google Translate.'))
-    embed_fields.append(('!currency *amount* *x* to *y*', 'Convert *amount* of *x* currency to *y* currency, e.g. **!currency** 12.34 AUD to USD'))
-    embed_fields.append(('!weather *city*, *country*', 'Show weather information for *city*, *country* (optional), e.g. **!weather** Melbourne, Australia'))
-    embed_fields.append(('!tagcreate *tag_name* *content*', 'Create a tag.'))
+    embed_fields.append(('!kick *member*', 'Kick a member.'))
+    embed_fields.append(('!ban *member*', 'Ban a member.'))
+    embed_fields.append(('!mute *member* *duration*', 'Mute a member for *duration* minutes.'))
+    embed_fields.append(('!unmute *member*', 'Unmute a member.'))
+    await bot.say(content='**Commands for Moderators**', embed=create_embed(fields=embed_fields))
+
+@help.command(pass_context=True)
+async def roles(ctx):
+    description = 'Users can have any of the 7 WUG member roles. Use **!oshihen** *member* to get the role you want.\n\n'
+    for oshi in hkd.WUG_ROLE_IDS.keys():
+        description += '**!oshihen** {0} for {1.mention}\n'.format(oshi.title(), get_wug_role(ctx.message.server, oshi))
+    description += '\nNote that using **!oshihen** will remove all of your existing member roles. To get an extra role without removing existing ones, use **!oshimashi** *member* instead. To get all 7 roles, use **!hakooshi**.\n\n'
+    description += 'Use **!oshi-count** to show the number of members with each WUG member role, or **!kamioshi-count** to show the number of members with each WUG member role as their highest role.\n'
+    await bot.say(content='**Commands for Roles**', embed=create_embed(description=description))
+
+@help.command()
+async def events():
+    embed_fields = []
+    embed_fields.append(('!events *date*', 'Get information for events involving WUG members on the specified date, e.g. **!events** apr 1. If *date* not specified, finds events happening today.'))
+    embed_fields.append(('!eventsin *month* *member*', 'Get information for events involving WUG members for the specified month and member, e.g. **!eventsin** April Mayushii. If *member* not specified, searches for Wake, Up Girls! related events instead. Searches events from this month onwards only.'))
+    await bot.say(content='**Commands for Searching Events**', embed=create_embed(fields=embed_fields))
+
+@help.command()
+async def tags():
+    embed_fields = []
+    embed_fields.append(('!tagcreate *tag_name* *content*', 'Create a tag. Use one word (no spaces) for tag names.'))
+    embed_fields.append(('!tagupdate *tag_name* *updated_content*', 'Update an existing tag.'))
+    embed_fields.append(('!tagdelete *tag_name*', 'Delete an existing tag.'))
+    embed_fields.append(('!tagsearch', 'Shows a list of all existing tags.'))
     embed_fields.append(('!tag *tag_name*', 'Display a saved tag.'))
-    embed_fields.append(('!choose *options*', 'Randomly choose from one of the provided options, e.g. **!choose** option1 option2'))
-    embed_fields.append(('!yt *query*', 'Gets the top result from YouTube based on the provided search terms.'))
-    await bot.say(embed=create_embed(fields=embed_fields))
+    await bot.say(content='**Commands for Using Tags**', embed=create_embed(fields=embed_fields))
 
 @bot.command(pass_context=True, no_pm=True)
 async def kick(ctx, member : discord.Member):
@@ -525,15 +547,43 @@ async def tagcreate(ctx, *, tag_to_create : str):
     if len(split_request) > 1:
         tag_name = split_request[0]
         tag_content = tag_to_create[len(tag_name) + 1:]
-        existing_tag = firebase_ref.child('tags/{0}'.format(tag_name)).get()
-        if not existing_tag:
+        if tag_name not in firebase_ref.child('tags').get():
             firebase_ref.child('tags/{0}'.format(tag_name)).set(tag_content)
-            await bot.say(content='Created Tag.', embed=create_embed(title=tag_name))
-            await bot.say(tag_content)
+            await bot.say(embed=create_embed(title='Successfully created tag - {0}'.format(tag_name)))
         else:
             await bot.say(embed=create_embed(title='That tag already exists. Please choose a different tag name.', colour=discord.Colour.red()))
         return
     await bot.say(embed=create_embed(description='Couldn\'t create tag. Please follow this format for creating a tag: **!tagcreate** *NameOfTag* *Content of the tag*.', colour=discord.Colour.red()))
+
+@bot.command(pass_context=True)
+async def tagupdate(ctx, *, tag_to_update : str):
+    await bot.send_typing(ctx.message.channel)
+    split_update = tag_to_update.split()
+    if len(split_update) > 1:
+        tag_name = split_update[0]
+        updated_content = tag_to_update[len(tag_name) + 1:]
+        if tag_name in firebase_ref.child('tags').get():
+            firebase_ref.child('tags/{0}'.format(tag_name)).set(updated_content)
+            await bot.say(embed=create_embed(title='Successfully updated tag - {0}.'.format(tag_name)))
+        else:
+            await bot.say(embed=create_embed(title='That tag doesn\'t exist.'.format(tag_name)))
+        return
+    await bot.say(embed=create_embed(description='Couldn\'t update tag. Please follow this format for updating a tag: **!tagupdate** *NameOfTag* *Updated content of the tag*.', colour=discord.Colour.red()))
+
+@bot.command(pass_context=True)
+async def tagdelete(ctx, tag_name : str):
+    await bot.send_typing(ctx.message.channel)
+    if firebase_ref.child('tags/{0}'.format(tag_name)).get():
+        firebase_ref.child('tags/{0}'.format(tag_name)).delete()
+        await bot.say(embed=create_embed(title='Successfully removed tag - {0}.'.format(tag_name)))
+    else:
+        await bot.say(embed=create_embed(title='That tag doesn\'t exist.', colour=discord.Colour.red()))
+
+@bot.command(pass_context=True)
+async def tagsearch(ctx):
+    await bot.send_typing(ctx.message.channel)
+    tag_list = firebase_ref.child('tags').get()
+    await bot.say(content='Existing Tags', embed=create_embed(title=', '.join(list(tag_list.keys()))))
 
 @bot.command(pass_context=True)
 async def tag(ctx, tag_name : str):
@@ -542,7 +592,7 @@ async def tag(ctx, tag_name : str):
     if tag_result:
         await bot.say(tag_result)
     else:
-        await bot.say(embed=create_embed(description='That tag doesn\'t exist. Use **!tagcreate** to create a tag.', colour=discord.Colour.red()))
+        await bot.say(embed=create_embed(description='That tag doesn\'t exist. Use **!tagcreate** *tag_name* *Content of the tag* to create a tag.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
 async def choose(ctx, *options : str):
