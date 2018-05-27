@@ -163,7 +163,7 @@ async def mod_commands():
     embed_fields.append(('!unmute *member*', 'Unmute a member.'))
     await bot.say(content='**Commands for Moderators**', embed=create_embed(fields=embed_fields))
 
-@help.command(pass_context=True)
+@help.command(pass_context=True, no_pm=True)
 async def roles(ctx):
     description = 'Users can have any of the 7 WUG member roles. Use **!oshihen** *member* to get the role you want.\n\n'
     for oshi in hkd.WUG_ROLE_IDS.keys():
@@ -439,7 +439,7 @@ async def eventsin(ctx, month : str, member : str=''):
             retry = False
         except: pass
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, no_pm=True)
 async def tagcreate(ctx, *, tag_to_create : str):
     await bot.send_typing(ctx.message.channel)
     split_request = tag_to_create.split()
@@ -454,7 +454,7 @@ async def tagcreate(ctx, *, tag_to_create : str):
         return
     await bot.say(embed=create_embed(description='Couldn\'t create tag. Please follow this format for creating a tag: **!tagcreate** *NameOfTag* *Content of the tag*.', colour=discord.Colour.red()))
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, no_pm=True)
 async def tagupdate(ctx, *, tag_to_update : str):
     await bot.send_typing(ctx.message.channel)
     split_update = tag_to_update.split()
@@ -469,7 +469,7 @@ async def tagupdate(ctx, *, tag_to_update : str):
         return
     await bot.say(embed=create_embed(description='Couldn\'t update tag. Please follow this format for updating a tag: **!tagupdate** *NameOfTag* *Updated content of the tag*.', colour=discord.Colour.red()))
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, no_pm=True)
 async def tagdelete(ctx, tag_name : str):
     await bot.send_typing(ctx.message.channel)
     if firebase_ref.child('tags/{0}'.format(tag_name)).get():
@@ -478,13 +478,13 @@ async def tagdelete(ctx, tag_name : str):
     else:
         await bot.say(embed=create_embed(title='That tag doesn\'t exist.', colour=discord.Colour.red()))
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, no_pm=True)
 async def tagsearch(ctx):
     await bot.send_typing(ctx.message.channel)
     tag_list = firebase_ref.child('tags').get()
     await bot.say(content='Existing Tags', embed=create_embed(title=', '.join(list(tag_list.keys()))))
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, no_pm=True)
 async def tag(ctx, tag_name : str):
     await bot.send_typing(ctx.message.channel)
     tag_result = firebase_ref.child('tags/{0}'.format(tag_name)).get()
