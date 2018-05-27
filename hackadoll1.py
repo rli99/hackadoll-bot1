@@ -110,7 +110,7 @@ async def check_poll_status():
     global poll_topic, poll_owner, poll_duration, poll_end_time, poll_channel_id, poll_options, poll_votes
     while not bot.is_closed:
         if poll_options and time.time() > poll_end_time:
-            server = discord.utils.get(bot.servers, id='439669047978622977')
+            server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
             channel = discord.utils.get(server.channels, id=poll_channel_id)
             results = {}
             for i, option in enumerate(poll_options):
