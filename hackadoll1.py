@@ -628,6 +628,7 @@ async def blogpics(ctx, member : str=''):
     page = 1
     entry_num = 1
     day = -1
+    num_pics = 0
     retry = True
     while retry:
         try:
@@ -656,14 +657,25 @@ async def blogpics(ctx, member : str=''):
                 blog_entry = soup.find_all(attrs={'class': 'skin-entryBody'}, limit=entry_num)[entry_num - 1]
 
             pics = [p['href'] for p in blog_entry.find_all('a') if p['href'][-4:] == '.jpg']
+            num_pics = len(pics)
             for pic in pics:
                 await bot.send_typing(ctx.message.channel)
-                await asyncio.sleep(2)
+                await asyncio.sleep(1)
                 await bot.say(pic)
-            if len(pics) == 0:
-                await bot.say(embed=create_embed(description='Couldn\'t find any pictures.', colour=discord.Colour.red()))
             retry = False
         except: pass
+
+    if num_pics == 0:
+        await bot.say(embed=create_embed(description='Couldn\'t find any pictures.', colour=discord.Colour.red()))
+        return
+
+    await asyncio.sleep(3)
+    async for message in bot.logs_from(ctx.message.channel, after=ctx.message):
+        if message.author == bot.user and message.content.endswith('.jpg') and not message.embeds:
+            image_url = message.content
+            await bot.edit_message(message, 'Reposting picture...')
+            await asyncio.sleep(1)
+            await bot.edit_message(message, image_url)
 
 @bot.command(pass_context=True)
 async def mv(ctx, *, song_name : str):
