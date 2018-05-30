@@ -2,6 +2,7 @@ import asyncio, discord, pycountry, pytz, requests, time, twitter
 import hkdhelper as hkd
 from bs4 import BeautifulSoup
 from calendar import month_name
+from contextlib import suppress
 from datetime import datetime
 from dateutil import parser
 from decimal import Decimal
@@ -63,45 +64,44 @@ async def check_tweets():
         server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
         channel = discord.utils.get(server.channels, id=hkd.TWITTER_CHANNEL_ID)
         for name in hkd.WUG_TWITTER_NAMES:
-            last_tweet_id = int(firebase_ref.child('last_tweet_ids/{0}'.format(name)).get())
-            posted_tweets = []
-            for status in twitter_api.GetUserTimeline(screen_name=name, since_id=last_tweet_id, count=40, include_rts=False):
-                await bot.send_typing(channel)
-                await asyncio.sleep(1)
-                tweet = status.AsDict()
-                tweet_id = tweet['id']
-                posted_tweets.append(tweet_id)
-                user = tweet['user']
-                tweet_content = unescape(tweet['full_text'])
-                role = None
-                if '公式ブログを更新しました' in tweet_content:
-                    for i, sign in enumerate(hkd.WUG_TWITTER_BLOG_SIGNS):
-                        if sign in tweet_content:
-                            role = get_wug_role(server, list(hkd.WUG_ROLE_IDS.keys())[i])
-                colour = role.colour if role else discord.Colour.light_grey()
-                author = {}
-                author['name'] = '{0} (@{1})'.format(user['name'], user['screen_name'])
-                author['url'] = 'https://twitter.com/{0}'.format(name)
-                author['icon_url'] = user['profile_image_url_https']
-                image = ''
-                media = tweet.get('media', '')
-                if media:
-                    image = media[0].get('media_url_https', '')
-                if role:
-                    retry = True
-                    while retry:
-                        try:
+            retry = True
+            while retry:
+                with suppress(Exception):
+                    last_tweet_id = int(firebase_ref.child('last_tweet_ids/{0}'.format(name)).get())
+                    posted_tweets = []
+                    for status in twitter_api.GetUserTimeline(screen_name=name, since_id=last_tweet_id, count=40, include_rts=False):
+                        await bot.send_typing(channel)
+                        await asyncio.sleep(1)
+                        tweet = status.AsDict()
+                        tweet_id = tweet['id']
+                        posted_tweets.append(tweet_id)
+                        user = tweet['user']
+                        tweet_content = unescape(tweet['full_text'])
+                        role = None
+                        if '公式ブログを更新しました' in tweet_content:
+                            for i, sign in enumerate(hkd.WUG_TWITTER_BLOG_SIGNS):
+                                if sign in tweet_content:
+                                    role = get_wug_role(server, list(hkd.WUG_ROLE_IDS.keys())[i])
+                        colour = role.colour if role else discord.Colour.light_grey()
+                        author = {}
+                        author['name'] = '{0} (@{1})'.format(user['name'], user['screen_name'])
+                        author['url'] = 'https://twitter.com/{0}'.format(name)
+                        author['icon_url'] = user['profile_image_url_https']
+                        image = ''
+                        media = tweet.get('media', '')
+                        if media:
+                            image = media[0].get('media_url_https', '')
+                        if role:
                             html_response = urlopen('https://ameblo.jp/wakeupgirls/')
                             soup = BeautifulSoup(html_response, 'html.parser')
                             blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
                             blog_images = [p['src'] for p in blog_entry.find_all('img') if '?caw=' in p['src'][-9:]]
                             if blog_images:
                                 image = blog_images[-1]
-                            retry = False
-                        except: pass
-                await bot.send_message(channel, embed=create_embed(author=author, title='Tweet by {0}'.format(user['name']), description=tweet_content, colour=colour, url='https://twitter.com/{0}/status/{1}'.format(name, tweet_id), image=image))
-            if posted_tweets:
-                firebase_ref.child('last_tweet_ids/{0}'.format(name)).set(str(max(posted_tweets)))
+                        await bot.send_message(channel, embed=create_embed(author=author, title='Tweet by {0}'.format(user['name']), description=tweet_content, colour=colour, url='https://twitter.com/{0}/status/{1}'.format(name, tweet_id), image=image))
+                    if posted_tweets:
+                        firebase_ref.child('last_tweet_ids/{0}'.format(name)).set(str(max(posted_tweets)))
+                    retry = False
         await asyncio.sleep(20)
 
 @bot.event
@@ -203,22 +203,20 @@ async def polls():
 async def kick(ctx, member : discord.Member):
     await bot.send_typing(ctx.message.channel)
     if ctx.message.author.server_permissions.kick_members:
-        try:
+        with suppress(Exception):
             await bot.say(embed=create_embed(title='{0} has been kicked.'.format(member)))  
             await bot.kick(member)
             return
-        except: pass
     await bot.say(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True, no_pm=True)
 async def ban(ctx, member : discord.Member):
     await bot.send_typing(ctx.message.channel)
     if ctx.message.author.server_permissions.ban_members:
-        try:
+        with suppress(Exception):
             await bot.say(embed=create_embed(title='{0} has been banned.'.format(member)))
             await bot.ban(member)
             return
-        except: pass
     await bot.say(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True, no_pm=True)
@@ -334,10 +332,10 @@ async def events(ctx, *, date : str=''):
     event_urls = []
     search_date = parser.parse(date) if date else datetime.now(pytz.timezone('Japan'))
     first = True
-    retry = True
-    while retry:
-        try:
-            for member in hkd.WUG_MEMBERS:
+    for member in hkd.WUG_MEMBERS:
+        retry = True
+        while retry:
+            with suppress(Exception):
                 html_response = urlopen('https://www.eventernote.com/events/search?keyword={0}&year={1}&month={2}&day={3}'.format(quote(member), search_date.year, search_date.month, search_date.day))
                 soup = BeautifulSoup(html_response, 'html.parser')
                 result = soup.find_all(attrs={'class': ['date', 'event', 'actor', 'note_count']})
@@ -368,10 +366,10 @@ async def events(ctx, *, date : str=''):
                         event_urls.append(event_url)
                         await asyncio.sleep(0.5)
                         await bot.say(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
-            if not event_urls:
-                await bot.say(embed=create_embed(description='Couldn\'t find any events on that day.', colour=discord.Colour.red()))
-            retry = False
-        except: pass
+                retry = False
+
+    if not event_urls:
+        await bot.say(embed=create_embed(description='Couldn\'t find any events on that day.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True, no_pm=True)
 async def eventsin(ctx, month : str, member : str=''):
@@ -393,10 +391,10 @@ async def eventsin(ctx, month : str, member : str=''):
     event_urls = []
     first = True
     search_start = False
-    retry = True
-    while retry:
-        try:
-            for i in search_index:
+    for i in search_index:
+        retry = True
+        while retry:
+            with suppress(Exception):
                 html_response = urlopen('https://www.eventernote.com/actors/{0}/{1}/events?actor_id={1}&limit=5000'.format(quote(hkd.WUG_MEMBERS[i]), hkd.WUG_EVENTERNOTE_IDS[i]))
                 soup = BeautifulSoup(html_response, 'html.parser')
                 result = soup.find_all(attrs={'class': ['date', 'event', 'actor', 'note_count']})
@@ -434,10 +432,10 @@ async def eventsin(ctx, month : str, member : str=''):
                         event_urls.append(event_url)
                         await asyncio.sleep(0.5)
                         await bot.say(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
-            if not event_urls:
-                await bot.say(embed=create_embed(description='Couldn\'t find any events during that month.', colour=discord.Colour.red()))
-            retry = False
-        except: pass
+                retry = False
+
+    if not event_urls:
+        await bot.say(embed=create_embed(description='Couldn\'t find any events during that month.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True, no_pm=True)
 async def tagcreate(ctx, *, tag_to_create : str):
@@ -631,16 +629,12 @@ async def blogpics(ctx, member : str=''):
     num_pics = 0
     retry = True
     while retry:
-        try:
+        with suppress(Exception):
             html_response = urlopen('https://ameblo.jp/wakeupgirls')
             soup = BeautifulSoup(html_response, 'html.parser')
             blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
-            print(str(blog_entry)[:-10])
             sign_entry = hkd.strip_from_end(str(blog_entry)[:-10], [' ', '<br/>'])
-            print('------------------')
-            print(sign_entry)
             member_sign = sign_entry[sign_entry.rfind('>') + 3:]
-            print(member_sign)
 
             for i, sign in enumerate(hkd.WUG_BLOG_ORDER):
                 if sign in member_sign:
@@ -667,7 +661,6 @@ async def blogpics(ctx, member : str=''):
                 await asyncio.sleep(1)
                 await bot.say(pic)
             retry = False
-        except: pass
 
     if num_pics == 0:
         await bot.say(embed=create_embed(description='Couldn\'t find any pictures.', colour=discord.Colour.red()))
@@ -715,11 +708,10 @@ async def tl(ctx, *, text : str):
 async def currency(ctx, *conversion : str):
     await bot.send_typing(ctx.message.channel)
     if len(conversion) == 4 and conversion[2].lower() == 'to':
-        try:
+        with suppress(Exception):
             result = CurrencyRates().convert(conversion[1].upper(), conversion[3].upper(), Decimal(conversion[0]))
             await bot.say(embed=create_embed(title='{0} {1}'.format(('{:f}'.format(result)).rstrip('0').rstrip('.'), conversion[3].upper())))
             return
-        except: pass
     await bot.say(embed=create_embed(description='Couldn\'t convert. Please follow this format for converting currency: **!currency** 12.34 AUD to USD.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
@@ -727,10 +719,9 @@ async def weather(ctx, *, location : str):
     await bot.send_typing(ctx.message.channel)
     query = location.split(',')
     if len(query) > 1:
-        try:
+        with suppress(Exception):
             query[1] = pycountry.countries.get(name=query[1].strip().title()).alpha_2
-        except: pass
-    try:
+    with suppress(Exception):
         result = requests.get('http://api.openweathermap.org/data/2.5/weather', params={'q': ','.join(query), 'APPID': config['weather_api_key']}).json()
         timezone = pytz.timezone(TimezoneFinder().timezone_at(lat=result['coord']['lat'], lng=result['coord']['lon']))
         embed_fields = []
@@ -743,7 +734,6 @@ async def weather(ctx, *, location : str):
         embed_fields.append(('Pressure', '{0} hPa'.format(result['main']['pressure'])))
         await bot.say(content='**Weather for {0}, {1}**'.format(result['name'], pycountry.countries.lookup(result['sys']['country']).name), embed=create_embed(fields=embed_fields, inline=True))
         return
-    except: pass
     await bot.say(embed=create_embed(description='Couldn\'t get weather. Please follow this format for checking the weather: **!weather** Melbourne, Australia.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True)
@@ -759,7 +749,7 @@ async def yt(ctx, *, query : str):
     await bot.send_typing(ctx.message.channel)
     retry = True
     while retry:
-        try:
+        with suppress(Exception):
             html_response = urlopen('https://www.youtube.com/results?search_query={0}'.format(quote(query)))
             soup = BeautifulSoup(html_response, 'html.parser')
             for result in soup.find_all(attrs={'class': 'yt-uix-tile-link'}):
@@ -768,7 +758,6 @@ async def yt(ctx, *, query : str):
                     await bot.say('https://www.youtube.com{0}'.format(link))
                     return
             retry = False
-        except: pass
     await bot.say(embed=create_embed(title='Couldn\'t find any results.', colour=discord.Colour.red()))
 
 bot.loop.create_task(check_mute_status())
