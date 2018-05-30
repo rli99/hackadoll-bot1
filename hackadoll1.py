@@ -635,8 +635,12 @@ async def blogpics(ctx, member : str=''):
             html_response = urlopen('https://ameblo.jp/wakeupgirls')
             soup = BeautifulSoup(html_response, 'html.parser')
             blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
-            sign_entry = hkd.strip_from_end(str(blog_entry)[:-10].strip(), '<br/>')
+            print(str(blog_entry)[:-10])
+            sign_entry = hkd.strip_from_end(str(blog_entry)[:-10], [' ', '<br/>'])
+            print('------------------')
+            print(sign_entry)
             member_sign = sign_entry[sign_entry.rfind('>') + 3:]
+            print(member_sign)
 
             for i, sign in enumerate(hkd.WUG_BLOG_ORDER):
                 if sign in member_sign:

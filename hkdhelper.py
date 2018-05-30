@@ -40,9 +40,15 @@ def parse_month(month):
             return str(i + 1) if i > 8 else '0{0}'.format(i + 1)
     return 'None'
 
-def strip_from_end(text, ending):
-    if text.endswith(ending):
-        return text[:-len(ending)]
+def strip_from_end(text, endings):
+    removing = True
+    while removing:
+        text = text.strip()
+        removing = False
+        for ending in endings:
+            while text.endswith(ending):
+                removing = True
+                text = text[:-len(ending)]
     return text
 
 def create_embed(author = {}, title='', description='', colour=discord.Colour.light_grey(), url='', image='', thumbnail='', fields=[], inline=False):
