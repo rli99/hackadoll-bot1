@@ -1,5 +1,6 @@
-import configparser, discord
+import configparser, discord, time
 from dateutil import parser
+from operator import itemgetter
 
 SERVER_ID = '280439975911096320'
 TWITTER_CHANNEL_ID = '448716340816248832'
@@ -62,3 +63,66 @@ def create_embed(author = {}, title='', description='', colour=discord.Colour.li
     for field in fields:
         embed.add_field(name=field[0], value=field[1], inline=inline)
     return embed
+
+class Poll:
+    def __init__(self):
+        self.topic = ''
+        self.owner = -1
+        self.duration = -1
+        self.topic_set_time = -1
+        self.end_time = -1
+        self.channel_id = -1
+        self.options = []
+        self.votes = {}
+
+    def create(self, topic, owner, duration, channel_id):
+        self.topic = topic
+        self.owner = owner
+        self.duration = duration
+        self.channel_id = channel_id
+        self.topic_set_time = time.time()
+
+    def set_options(self, options, end_time):
+        self.options = options
+        self.end_time = end_time
+
+    def get_details(self):
+        details = ''
+        for i, option in enumerate(self.options):
+            details += '**{0}**   {1}{2}\n'.format(i + 1, ' ' if i < 9 else '', option)
+        return details
+
+    def end(self):
+        results = {}
+        for i, option in enumerate(self.options):
+            results[option] = len(self.votes.get(i + 1, []))
+        result_string = ''
+        for result in sorted(results.items(), key=itemgetter(1), reverse=True):
+            result_string += '{0} - {1} vote{2}\n'.format(result[0], result[1], '' if result[1] == 1 else 's')
+        self.reset()
+        return result_string
+
+    def vote(self, option, voter_id):
+        current_votes = self.votes.get(option, [])
+        if voter_id not in current_votes:
+            current_votes.append(voter_id)
+            self.votes[option] = current_votes
+
+    def check_status(self):
+        topic = self.topic
+        channel = self.channel_id
+        if self.options and time.time() > self.end_time:
+            return (topic, channel, self.end())
+        if self.topic and not self.options and time.time() > self.topic_set_time + 60:
+            self.reset()
+            return ('', channel, '')
+        return ('', '', '')
+
+    def reset(self):
+        self.topic = ''
+        self.owner = -1
+        self.duration = -1
+        self.end_time = -1
+        self.channel_id = -1
+        self.options = []
+        self.votes = {}

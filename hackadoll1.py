@@ -10,7 +10,7 @@ from discord.ext import commands
 from firebase_admin import credentials, db, initialize_app
 from forex_python.converter import CurrencyRates
 from googletrans import Translator
-from hkdhelper import create_embed, get_muted_role, get_wug_role 
+from hkdhelper import create_embed, get_muted_role, get_wug_role, Poll
 from html import unescape
 from humanfriendly import format_timespan
 from math import ceil
@@ -28,14 +28,7 @@ firebase = initialize_app(certificate, {'databaseURL': config['firebase_db']})
 firebase_ref = db.reference()
 muted_members = firebase_ref.child('muted_members').get() or {}
 twitter_api = twitter.Api(consumer_key=config['consumer_key'], consumer_secret=config['consumer_secret'], access_token_key=config['access_token_key'], access_token_secret=config['access_token_secret'], tweet_mode='extended')
-
-poll_topic = ''
-poll_owner = -1
-poll_duration = -1
-poll_end_time = -1
-poll_channel_id = -1
-poll_options = []
-poll_votes = {}
+poll = Poll()
 
 @bot.event
 async def on_ready():
@@ -107,27 +100,15 @@ async def check_tweets():
 @bot.event
 async def check_poll_status():
     await bot.wait_until_ready()
-    global poll_topic, poll_owner, poll_duration, poll_end_time, poll_channel_id, poll_options, poll_votes
     while not bot.is_closed:
-        if poll_options and time.time() > poll_end_time:
+        topic, channel_id, results = poll.check_status()
+        if channel_id:
             server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
-            channel = discord.utils.get(server.channels, id=poll_channel_id)
-            results = {}
-            for i, option in enumerate(poll_options):
-                results[option] = len(poll_votes.get(i + 1, []))
-            description = ''
-            for result in sorted(results.items(), key=itemgetter(1), reverse=True):
-                description += '{0} - {1} vote{2}\n'.format(result[0], result[1], '' if result[1] == 1 else 's')
-            await bot.send_message(channel, content='Poll ended.', embed=create_embed(title=poll_topic, description=description))
-
-            poll_topic = ''
-            poll_owner = -1
-            poll_duration = -1
-            poll_end_time = -1
-            poll_channel_id = -1
-            poll_options = []
-            poll_votes = {}
-
+            channel = discord.utils.get(server.channels, id=channel_id)
+            if topic:
+                await bot.send_message(channel, content='Poll ended.', embed=create_embed(title=topic, description=results))
+            else:
+                await bot.send_message(channel, embed=create_embed(title='The creator of the poll took too long to specify the options. The poll has been cancelled.', colour=discord.Colour.red()))
         await asyncio.sleep(10)
 
 @bot.group(pass_context=True)
@@ -494,7 +475,6 @@ async def tag(ctx, tag_name : str):
 @bot.command(pass_context=True, no_pm=True)
 async def pollcreate(ctx, duration : int, *, topic : str):
     await bot.send_typing(ctx.message.channel)
-    global poll_topic, poll_owner, poll_duration, poll_channel_id 
     if duration > 120:
         await bot.say(embed=create_embed(title='Please specify a duration of less than 2 hours.', colour=discord.Colour.red()))
         return
@@ -502,11 +482,8 @@ async def pollcreate(ctx, duration : int, *, topic : str):
         await bot.say(embed=create_embed(title='Please specify a duration of at least 1 minute.', colour=discord.COlour.red()))
         return
 
-    if not poll_topic:
-        poll_topic = topic
-        poll_owner = ctx.message.author.id
-        poll_duration = duration
-        poll_channel_id = ctx.message.channel.id
+    if not poll.topic:
+        poll.create(topic, ctx.message.author.id, duration, ctx.message.channel.id)
         await bot.say(embed=create_embed(description='Poll successfully created. Please specify the options for the poll with **!polloptions** *options*, e.g. **!polloptions** first option, second option, third option.'))
     else:
         await bot.say(embed=create_embed(description='There is already an ongoing poll. Please wait for the current poll to end, or if you are the creator of the current poll, you can end it with **!pollend**.', colour=discord.Colour.red()))
@@ -514,82 +491,59 @@ async def pollcreate(ctx, duration : int, *, topic : str):
 @bot.command(pass_context=True, no_pm=True)
 async def polloptions(ctx, *, options : str):
     await bot.send_typing(ctx.message.channel)
-    global poll_end_time, poll_options
-    if not poll_topic:
+    if not poll.topic:
         await bot.say(embed=create_embed(description='There is no created poll to provide options for. You can create a poll with **!pollcreate** *duration* *topic*.', colour=discord.Colour.red()))
         return
-    if ctx.message.author.id != poll_owner:
+    if ctx.message.author.id != poll.owner:
         await bot.say(embed=create_embed(title='Only the creator of the poll can specify the options.', colour=discord.Colour.red()))
         return
-    if poll_options:
+    if poll.options:
         await bot.say(embed=create_embed(description='The options for this poll have already been specified. Please wait for the current poll to end, or if you are the creator of the current poll, you can end it with **!pollend**.', colour=discord.Colour.red()))
         return
 
     poll_options = [p.strip() for p in options.split(',')]
     if len(poll_options) < 2:
-        poll_options = []
         await bot.say(embed=create_embed(title='Please specify more than one option for the poll.', colour=discord.Colour.red()))
         return
-    poll_end_time = time.time() + poll_duration * 60
+    poll.set_options(poll_options, time.time() + poll.duration * 60)
     description = 'Vote for an option with **!vote** *number*, e.g. **!vote** 1 for option 1.\n\n'
-    for i, option in enumerate(poll_options):
-        description += '**{0}**   {1}{2}\n'.format(i + 1, ' ' if len(poll_options) < 10 else '', option)
-    await bot.say(content='Poll created. This poll will last for {0}. The creator of the poll may end it early with **!pollend**.'.format(format_timespan(poll_duration * 60)), embed=create_embed(title=poll_topic, description=description))
+    description += poll.get_details()
+    await bot.say(content='Poll created. This poll will last for {0}. The creator of the poll may end it early with **!pollend**.'.format(format_timespan(poll.duration * 60)), embed=create_embed(title=poll.topic, description=description))
 
 @bot.command(pass_context=True, no_pm=True)
 async def polldetails(ctx):
     await bot.send_typing(ctx.message.channel)
-    if not poll_options:
+    if not poll.options:
         await bot.say(embed=create_embed(description='There is no poll currently ongoing. You can create a poll with **!pollcreate** *duration* *topic*.', colour=discord.Colour.red()))
         return
     description = 'Vote for an option with **!vote** *number*, e.g. **!vote** 1 for option 1.\n\n'
-    for i, option in enumerate(poll_options):
-        description += '**{0}**   {1}{2}\n'.format(i + 1, ' ' if i < 9 else '', option)
-    await bot.say(content='Details of the currently running poll.', embed=create_embed(title=poll_topic, description=description))
+    description += poll.get_details()
+    await bot.say(content='Details of the currently running poll.', embed=create_embed(title=poll.topic, description=description))
 
 @bot.command(pass_context=True, no_pm=True)
 async def pollend(ctx):
     await bot.send_typing(ctx.message.channel)
-    global poll_topic, poll_owner, poll_duration, poll_end_time, poll_channel_id, poll_options, poll_votes
-    if not poll_topic:
+    if not poll.topic:
         await bot.say(embed=create_embed(description='There is no poll currently ongoing. You can create a poll with **!pollcreate** *duration* *topic*.', colour=discord.Colour.red()))
         return
-    if not poll_options:
+    if not poll.options:
         await bot.say(embed=create_embed(description='A poll was created but no options provided. The poll has been cancelled.'))
         return
-    if ctx.message.author.id != poll_owner:
+    if ctx.message.author.id != poll.owner:
         await bot.say(embed=create_embed(title='Only the creator of the poll can end it.', colour=discord.Colour.red()))
         return
-
-    results = {}
-    for i, option in enumerate(poll_options):
-        results[option] = len(poll_votes.get(i + 1, []))
-    description = ''
-    for result in sorted(results.items(), key=itemgetter(1), reverse=True):
-        description += '{0} - {1} vote{2}\n'.format(result[0], result[1], '' if result[1] == 1 else 's')
-    await bot.say(content='Poll ended.', embed=create_embed(title=poll_topic, description=description))
-
-    poll_topic = ''
-    poll_owner = -1
-    poll_duration = -1
-    poll_end_time = -1
-    poll_channel_id = -1
-    poll_options = []
-    poll_votes = {}
+    topic = poll.topic
+    await bot.say(content='Poll ended.', embed=create_embed(title=topic, description=poll.end()))
 
 @bot.command(pass_context=True, no_pm=True)
 async def vote(ctx, option : int):
-    if not poll_options:
+    if not poll.options:
         await bot.say(embed=create_embed(title='There is no currently ongoing poll.', colour=discord.Colour.red()))
         return
-    if option > len(poll_options):
+    if option > len(poll.options):
         await bot.say(embed=create_embed(title='The currently running poll does not have that many options. Use **!polldetails** to see the options.', colour=discord.Colour.red()))
         return
-
-    current_votes = poll_votes.get(option, [])
-    if ctx.message.author.id not in current_votes:
-        current_votes.append(ctx.message.author.id)
-        poll_votes[option] = current_votes
+    poll.vote(option, ctx.message.author.id)
 
 @bot.command(pass_context=True, no_pm=True)
 async def userinfo(ctx, member : discord.Member=None):
