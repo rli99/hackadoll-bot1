@@ -113,16 +113,12 @@ class Poll:
         channel = self.channel_id
         if self.options and time.time() > self.end_time:
             return (topic, channel, self.end())
-        if self.topic and not self.options and time.time() > self.topic_set_time + 60:
+        if self.topic and not self.options and time.time() > self.topic_set_time + 240:
             self.reset()
             return ('', channel, '')
         return ('', '', '')
 
     def reset(self):
         self.topic = ''
-        self.owner = -1
-        self.duration = -1
-        self.end_time = -1
-        self.channel_id = -1
         self.options = []
         self.votes = {}
