@@ -1,4 +1,4 @@
-import asyncio, discord, os, pycountry, pytz, requests, subprocess, time, twitter
+import asyncio, discord, pycountry, pytz, requests, subprocess, time, twitter
 import hkdhelper as hkd
 from bs4 import BeautifulSoup
 from calendar import month_name
@@ -15,8 +15,6 @@ from html import unescape
 from humanfriendly import format_timespan
 from math import ceil
 from operator import itemgetter
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
 from random import randrange
 from timezonefinder import TimezoneFinder
 from urllib.parse import quote
@@ -31,9 +29,6 @@ firebase_ref = db.reference()
 muted_members = firebase_ref.child('muted_members').get() or {}
 twitter_api = twitter.Api(consumer_key=config['consumer_key'], consumer_secret=config['consumer_secret'], access_token_key=config['access_token_key'], access_token_secret=config['access_token_secret'], tweet_mode='extended')
 poll = Poll()
-gauth = GoogleAuth()
-gauth.LocalWebserverAuth()
-gdrive = GoogleDrive(gauth)
 
 @bot.event
 async def on_ready():
@@ -720,27 +715,30 @@ async def yt(ctx, *, query : str):
             retry = False
     await bot.say(embed=create_embed(title='Couldn\'t find any results.', colour=discord.Colour.red()))
 
-@bot.command(name='dl-vid', pass_context=True)
+@bot.command(name='dl-vid', pass_context=True, no_pm=True)
 async def dl_vid(ctx, url : str):
     await bot.send_typing(ctx.message.channel)
     await bot.say('Attempting to download the video using youtube-dl. Please wait.')
     proc = subprocess.run(args=['youtube-dl', '--get-filename', url], universal_newlines=True, stdout=subprocess.PIPE)
     vid_filename = proc.stdout.strip()
-    proc = subprocess.Popen(args=['youtube-dl', '-o', vid_filename, url])
 
+    proc = subprocess.Popen(args=['youtube-dl', '-o', vid_filename, url])
     while proc.poll() is None:
-        await asyncio.sleep(5)
+        await asyncio.sleep(2)
 
     if proc.returncode != 0:
         await bot.say(embed=create_embed(title='Failed to download video.', colour=discord.Colour.red()))
         return
 
-    await bot.say('Now uploading video to Google Drive. Please wait. If your video is very large, this will fail with no error message. Too bad. A workaround for this is in progress.')
+    await bot.say('Download complete. Now uploading video to Google Drive. Please wait.')
 
-    video_file = gdrive.CreateFile({'parents': [{'kind': 'drive#fileLink', 'id': '1-PF_5XjUZCyzbNTgBdNnwAiQrM3Zp72T'}]})
-    video_file.SetContentFile(vid_filename)
-    video_file.Upload()
-    os.remove(vid_filename)
+    proc = subprocess.Popen(args=['python', 'gdrive_upload.py', vid_filename])
+    while proc.poll() is None:
+        await asyncio.sleep(1)
+
+    if proc.returncode != 0:
+        await bot.say(embed=create_embed(title='Failed to upload video to Google Drive.', colour=discord.Colour.red()))
+        return
 
     await bot.say(embed=create_embed(description='Upload complete. Your video is available here: https://drive.google.com/open?id=1-PF_5XjUZCyzbNTgBdNnwAiQrM3Zp72T. The Google Drive folder has limited space so it will be purged from time to time.'))
 
