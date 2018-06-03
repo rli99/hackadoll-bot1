@@ -1,4 +1,4 @@
-import asyncio, discord, pycountry, pytz, requests, subprocess, time, twitter
+import asyncio, discord, os, pycountry, pytz, requests, subprocess, time, twitter
 import hkdhelper as hkd
 from bs4 import BeautifulSoup
 from calendar import month_name
@@ -733,6 +733,8 @@ async def dl_vid(ctx, url : str):
 
     if proc.returncode != 0:
         await bot.say(embed=create_embed(title='Failed to download video.', colour=discord.Colour.red()))
+        with suppress(Exception):
+            os.remove('{0}.part'.format(vid_filename))
         return
 
     await bot.say('Download complete. Now uploading video to Google Drive. Please wait.')
