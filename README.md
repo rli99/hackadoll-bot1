@@ -12,3 +12,5 @@ consumer_key = Consumer key for the Twitter app.
 consumer_secret = Consumer secret for the Twitter app.   
 access_token_key = Access token for the Twitter app.  
 access_token_secret = Access token secret for the Twitter app.   
+nicovideo_user = Username for the Niconico user.
+nicovideo_pw = Password for the Niconico user.
