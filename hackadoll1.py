@@ -722,7 +722,12 @@ async def dl_vid(ctx, url : str):
     proc = subprocess.run(args=['youtube-dl', '--get-filename', url], universal_newlines=True, stdout=subprocess.PIPE)
     vid_filename = proc.stdout.strip()
 
-    proc = subprocess.Popen(args=['youtube-dl', '-o', vid_filename, url])
+    ytdl_args = ['youtube-dl', '-o', vid_filename]
+    if 'nicovideo.jp' in url:
+        ytdl_args += ['-u', config['nicovideo_user'], '-p', config['nicovideo_pw']]
+    ytdl_args.append(url)
+
+    proc = subprocess.Popen(args=ytdl_args)
     while proc.poll() is None:
         await asyncio.sleep(2)
 

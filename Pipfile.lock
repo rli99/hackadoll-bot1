@@ -111,10 +111,10 @@
         },
         "google-api-python-client": {
             "hashes": [
-                "sha256:5623c5b8c067da7ed4dd7e70a83338040c082e8d071b539a49bb57166f09a7a2",
-                "sha256:5dcd2b3f2dcdf69d6bcf0c215ca8730fa6363ed0177ba2083e2e6f614e7682e9"
+                "sha256:1d303e554c5635e6a659c6a1648234399fec4747f5d79490bb5c21a68f1d087c",
+                "sha256:5dca1818565c5400cc8106a0b1a6216c58ab3d1fc4fe911794a27d41e925bea4"
             ],
-            "version": "==1.7.0"
+            "version": "==1.7.1"
         },
         "google-auth": {
             "hashes": [
@@ -522,11 +522,11 @@
         },
         "youtube-dl": {
             "hashes": [
-                "sha256:220f82618608e4c1f87f53f09a51aa98efe0f24b1da492049e861cc6b7e3c3bc",
-                "sha256:52cecfe67bd753412e975f16a56d6af313c2a7926368aafccd4a68920fc4376f"
+                "sha256:b88451f5185826bc91903293ff047194dea462cb8741d7e4837d8e226f5e2c07",
+                "sha256:d973f9b09edad2456558cdfa677fbf488b63a5467e4ffcf7cb71fa186b8da246"
             ],
             "index": "pypi",
-            "version": "==2018.5.30"
+            "version": "==2018.6.2"
         }
     },
     "develop": {}
