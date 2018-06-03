@@ -745,6 +745,8 @@ async def dl_vid(ctx, url : str):
 
     if proc.returncode != 0:
         await bot.say(embed=create_embed(title='Failed to upload video to Google Drive.', colour=discord.Colour.red()))
+        with suppress(Exception):
+            os.remove('{0}.part'.format(vid_filename))
         return
 
     await bot.say(embed=create_embed(description='Upload complete. Your video is available here: https://drive.google.com/open?id=1-PF_5XjUZCyzbNTgBdNnwAiQrM3Zp72T. The Google Drive folder has limited space so it will be purged from time to time.'))
