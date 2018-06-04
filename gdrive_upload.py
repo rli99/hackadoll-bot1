@@ -8,7 +8,7 @@ try:
 	gdrive = GoogleDrive(gauth)
 
 	vid_filename = sys.argv[1]
-	video_file = gdrive.CreateFile({'parents': [{'kind': 'drive#fileLink', 'id': '1-PF_5XjUZCyzbNTgBdNnwAiQrM3Zp72T'}]})
+	video_file = gdrive.CreateFile({'parents': [{'kind': 'drive#fileLink', 'id': sys.argv[2]}]})
 	video_file.SetContentFile(vid_filename)
 	video_file.Upload()
 	os.remove(vid_filename)

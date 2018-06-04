@@ -15,6 +15,7 @@ from html import unescape
 from humanfriendly import format_timespan
 from math import ceil
 from operator import itemgetter
+from pathlib import Path
 from random import randrange
 from timezonefinder import TimezoneFinder
 from urllib.parse import quote
@@ -110,6 +111,52 @@ async def check_poll_status():
             else:
                 await bot.send_message(channel, embed=create_embed(title='The creator of the poll took too long to specify the options. The poll has been cancelled.', colour=discord.Colour.red()))
         await asyncio.sleep(10)
+
+@bot.event
+async def check_wugch_omake():
+    await bot.wait_until_ready()
+    while not bot.is_closed:
+        wugch_vid = ''
+        retry = True
+        while retry:
+            with suppress(Exception):
+                html_response = urlopen('http://ch.nicovideo.jp/WUGch/video')
+                soup = BeautifulSoup(html_response, 'html.parser')
+                first_video = soup.find('h6')
+                video = first_video.find('a')
+                if 'オマケ放送' in video['title']:
+                    prev_wugch_omake = int(firebase_ref.child('last_wugch_omake').get())
+                    latest_wugch_omake = int(video['href'][video['href'].rfind('/') + 1:])
+                    if latest_wugch_omake > prev_wugch_omake:
+                        wugch_vid = video['href']
+                retry = False
+
+        if wugch_vid:
+            proc = subprocess.run(args=['youtube-dl', '--get-filename', wugch_vid], universal_newlines=True, stdout=subprocess.PIPE)
+            vid_filename = proc.stdout.strip()
+
+            retry = True
+            while retry:
+                proc = subprocess.Popen(args=['youtube-dl', '-o', vid_filename, '-u', config['nicovideo_user'], '-p', config['nicovideo_pw'], wugch_vid])
+                while proc.poll() is None:
+                    await asyncio.sleep(2)
+
+                downloaded_vid = Path(vid_filename)
+                if not downloaded_vid.is_file():
+                    continue
+                retry = False
+
+            proc = subprocess.Popen(args=['python', 'gdrive_upload.py', vid_filename, config['wugch_folder']])
+            while proc.poll() is None:
+                await asyncio.sleep(1)
+
+            if proc.returncode != 0:
+                with suppress(Exception):
+                    os.remove(vid_filename)
+            else:
+                firebase_ref.child('last_wugch_omake').set(str(latest_wugch_omake))
+
+        await asyncio.sleep(1200)
 
 @bot.group(pass_context=True)
 async def help(ctx):
@@ -609,7 +656,7 @@ async def blogpics(ctx, member : str=''):
             if page != 1 or entry_num != 1:
                 blog_entry = soup.find_all(attrs={'class': 'skin-entryBody'}, limit=entry_num)[entry_num - 1]
 
-            pics = [p['href'] for p in blog_entry.find_all('a') if p['href'][-4:] == '.jpg']
+            pics = [p['href'] for p in blog_entry.find_all('a') if hkd.is_image_file(p['href'])]
             num_pics = len(pics)
             for pic in pics:
                 await bot.send_typing(ctx.message.channel)
@@ -623,7 +670,7 @@ async def blogpics(ctx, member : str=''):
 
     await asyncio.sleep(3)
     async for message in bot.logs_from(ctx.message.channel, after=ctx.message):
-        if message.author == bot.user and message.content.endswith('.jpg') and not message.embeds:
+        if message.author == bot.user and hkd.is_image_file(message.content) and not message.embeds:
             image_url = message.content
             await bot.edit_message(message, 'Reposting picture...')
             await asyncio.sleep(1)
@@ -719,39 +766,49 @@ async def yt(ctx, *, query : str):
 async def dl_vid(ctx, url : str):
     await bot.send_typing(ctx.message.channel)
     await bot.say('Attempting to download the video using youtube-dl. Please wait.')
+    niconico_vid = 'nicovideo.jp' in url
     proc = subprocess.run(args=['youtube-dl', '--get-filename', url], universal_newlines=True, stdout=subprocess.PIPE)
     vid_filename = proc.stdout.strip()
 
     ytdl_args = ['youtube-dl', '-o', vid_filename]
-    if 'nicovideo.jp' in url:
+    if niconico_vid:
         ytdl_args += ['-u', config['nicovideo_user'], '-p', config['nicovideo_pw']]
     ytdl_args.append(url)
 
-    proc = subprocess.Popen(args=ytdl_args)
-    while proc.poll() is None:
-        await asyncio.sleep(2)
+    retry = True
+    while retry:
+        proc = subprocess.Popen(args=ytdl_args)
+        while proc.poll() is None:
+            await asyncio.sleep(2)
 
-    if proc.returncode != 0:
-        await bot.say(embed=create_embed(title='Failed to download video.', colour=discord.Colour.red()))
-        with suppress(Exception):
-            os.remove('{0}.part'.format(vid_filename))
-        return
+        if proc.returncode != 0:
+            if niconico_vid:
+                downloaded_vid = Path(vid_filename)
+                if not downloaded_vid.is_file():
+                    continue
+            else:
+                await bot.say(embed=create_embed(title='Failed to download video.', colour=discord.Colour.red()))
+                with suppress(Exception):
+                    os.remove('{0}.part'.format(vid_filename))
+                return
+        retry = False
 
     await bot.say('Download complete. Now uploading video to Google Drive. Please wait.')
 
-    proc = subprocess.Popen(args=['python', 'gdrive_upload.py', vid_filename])
+    proc = subprocess.Popen(args=['python', 'gdrive_upload.py', vid_filename, config['uploads_folder']])
     while proc.poll() is None:
         await asyncio.sleep(1)
 
     if proc.returncode != 0:
         await bot.say(embed=create_embed(title='Failed to upload video to Google Drive.', colour=discord.Colour.red()))
         with suppress(Exception):
-            os.remove('{0}.part'.format(vid_filename))
+            os.remove(vid_filename)
         return
 
-    await bot.say(embed=create_embed(description='Upload complete. Your video is available here: https://drive.google.com/open?id=1-PF_5XjUZCyzbNTgBdNnwAiQrM3Zp72T. The Google Drive folder has limited space so it will be purged from time to time.'))
+    await bot.say(embed=create_embed(description='Upload complete. Your video is available here: https://drive.google.com/open?id={0}. The Google Drive folder has limited space so it will be purged from time to time.'.format(config['uploads_folder'])))
 
 bot.loop.create_task(check_mute_status())
 bot.loop.create_task(check_tweets())
 bot.loop.create_task(check_poll_status())
+bot.loop.create_task(check_wugch_omake())
 bot.run(config['token'])
