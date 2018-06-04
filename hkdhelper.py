@@ -52,6 +52,9 @@ def strip_from_end(text, endings):
                 text = text[:-len(ending)]
     return text
 
+def is_image_file(filename):
+    return filename.endswith('.jpg') or filename.endswith('.png')
+
 def create_embed(author = {}, title='', description='', colour=discord.Colour.light_grey(), url='', image='', thumbnail='', fields=[], inline=False):
     embed = discord.Embed(title=title, description=description, colour=colour, url=url)
     if author:
