@@ -609,7 +609,7 @@ async def blogpics(ctx, member : str=''):
             if page != 1 or entry_num != 1:
                 blog_entry = soup.find_all(attrs={'class': 'skin-entryBody'}, limit=entry_num)[entry_num - 1]
 
-            pics = [p['href'] for p in blog_entry.find_all('a') if p['href'][-4:] == '.jpg']
+            pics = [p['href'] for p in blog_entry.find_all('a') if hkd.is_image_file(p['href'])]
             num_pics = len(pics)
             for pic in pics:
                 await bot.send_typing(ctx.message.channel)
@@ -623,7 +623,7 @@ async def blogpics(ctx, member : str=''):
 
     await asyncio.sleep(3)
     async for message in bot.logs_from(ctx.message.channel, after=ctx.message):
-        if message.author == bot.user and message.content.endswith('.jpg') and not message.embeds:
+        if message.author == bot.user and hkd.is_image_file(message.content) and not message.embeds:
             image_url = message.content
             await bot.edit_message(message, 'Reposting picture...')
             await asyncio.sleep(1)
@@ -746,7 +746,7 @@ async def dl_vid(ctx, url : str):
     if proc.returncode != 0:
         await bot.say(embed=create_embed(title='Failed to upload video to Google Drive.', colour=discord.Colour.red()))
         with suppress(Exception):
-            os.remove('{0}.part'.format(vid_filename))
+            os.remove(vid_filename)
         return
 
     await bot.say(embed=create_embed(description='Upload complete. Your video is available here: https://drive.google.com/open?id=1-PF_5XjUZCyzbNTgBdNnwAiQrM3Zp72T. The Google Drive folder has limited space so it will be purged from time to time.'))
