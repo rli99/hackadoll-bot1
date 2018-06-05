@@ -15,4 +15,4 @@ access_token_secret = Access token secret for the Twitter app.
 nicovideo_user = Username for the Niconico user.  
 nicovideo_pw = Password for the Niconico user.  
 uploads_folder = ID of Google Drive folder for regular video uploads.  
-wugch_omake_folder = ID of Google Drive folder for WUGch omake uploads.  
+wugch_folder = ID of Google Drive folder for WUGch omake uploads.  
