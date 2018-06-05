@@ -15,7 +15,6 @@ from html import unescape
 from humanfriendly import format_timespan
 from math import ceil
 from operator import itemgetter
-from pathlib import Path
 from random import randrange
 from timezonefinder import TimezoneFinder
 from urllib.parse import quote
@@ -132,18 +131,18 @@ async def check_wugch_omake():
                 retry = False
 
         if wugch_vid:
-            proc = subprocess.run(args=['youtube-dl', '--get-filename', wugch_vid], universal_newlines=True, stdout=subprocess.PIPE)
-            vid_filename = proc.stdout.strip()
-
+            vid_filename = '{0}.mp4'.format(video['title'])
             retry = True
+            last_try_time = time.time()
             while retry:
                 proc = subprocess.Popen(args=['youtube-dl', '-o', vid_filename, '-u', config['nicovideo_user'], '-p', config['nicovideo_pw'], wugch_vid])
                 while proc.poll() is None:
                     await asyncio.sleep(2)
 
-                downloaded_vid = Path(vid_filename)
-                if not downloaded_vid.is_file():
-                    continue
+                if proc.returncode != 0:
+                    if time.time() - last_try_time > 30:
+                        last_try_time = time.time()
+                        continue
                 retry = False
 
             proc = subprocess.Popen(args=['python', 'gdrive_upload.py', vid_filename, config['wugch_folder']])
@@ -155,8 +154,11 @@ async def check_wugch_omake():
                     os.remove(vid_filename)
             else:
                 firebase_ref.child('last_wugch_omake').set(str(latest_wugch_omake))
+                server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
+                channel = discord.utils.get(server.channels, id=hkd.SEIYUU_CHANNEL_ID)
+                await bot.send_message(channel, embed=create_embed(description='{0} is now available for download at https://drive.google.com/open?id={1}'.format(video['title'], config['wugch_folder'])))
 
-        await asyncio.sleep(1200)
+        await asyncio.sleep(1800)
 
 @bot.group(pass_context=True)
 async def help(ctx):
@@ -770,12 +772,18 @@ async def dl_vid(ctx, url : str):
     proc = subprocess.run(args=['youtube-dl', '--get-filename', url], universal_newlines=True, stdout=subprocess.PIPE)
     vid_filename = proc.stdout.strip()
 
+    if niconico_vid and not vid_filename:
+        url = url.rstrip('/')
+        niconico_id = url[url.rfind('/') + 1:]
+        vid_filename = 'nicovideo_{0}.mp4'.format(niconico_id)
+
     ytdl_args = ['youtube-dl', '-o', vid_filename]
     if niconico_vid:
         ytdl_args += ['-u', config['nicovideo_user'], '-p', config['nicovideo_pw']]
     ytdl_args.append(url)
 
     retry = True
+    last_try_time = time.time()
     while retry:
         proc = subprocess.Popen(args=ytdl_args)
         while proc.poll() is None:
@@ -783,8 +791,8 @@ async def dl_vid(ctx, url : str):
 
         if proc.returncode != 0:
             if niconico_vid:
-                downloaded_vid = Path(vid_filename)
-                if not downloaded_vid.is_file():
+                if time.time() - last_retry_time > 30:
+                    last_retry_time = time.time()
                     continue
             else:
                 await bot.say(embed=create_embed(title='Failed to download video.', colour=discord.Colour.red()))
