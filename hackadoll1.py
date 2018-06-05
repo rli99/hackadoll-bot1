@@ -57,8 +57,7 @@ async def check_tweets():
         server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
         channel = discord.utils.get(server.channels, id=hkd.TWITTER_CHANNEL_ID)
         for name in hkd.WUG_TWITTER_NAMES:
-            retry = True
-            while retry:
+            for _ in range(3):
                 with suppress(Exception):
                     last_tweet_id = int(firebase_ref.child('last_tweet_ids/{0}'.format(name)).get())
                     posted_tweets = []
@@ -94,7 +93,7 @@ async def check_tweets():
                         await bot.send_message(channel, embed=create_embed(author=author, title='Tweet by {0}'.format(user['name']), description=tweet_content, colour=colour, url='https://twitter.com/{0}/status/{1}'.format(name, tweet_id), image=image))
                     if posted_tweets:
                         firebase_ref.child('last_tweet_ids/{0}'.format(name)).set(str(max(posted_tweets)))
-                    retry = False
+                    break
         await asyncio.sleep(20)
 
 @bot.event
@@ -116,8 +115,7 @@ async def check_wugch_omake():
     await bot.wait_until_ready()
     while not bot.is_closed:
         wugch_vid = ''
-        retry = True
-        while retry:
+        for _ in range(3):
             with suppress(Exception):
                 html_response = urlopen('http://ch.nicovideo.jp/WUGch/video')
                 soup = BeautifulSoup(html_response, 'html.parser')
@@ -128,12 +126,12 @@ async def check_wugch_omake():
                     latest_wugch_omake = int(video['href'][video['href'].rfind('/') + 1:])
                     if latest_wugch_omake > prev_wugch_omake:
                         wugch_vid = video['href']
-                retry = False
+                break
 
         if wugch_vid:
             vid_filename = '{0}.mp4'.format(video['title'])
-            retry = True
             last_try_time = time.time()
+            retry = True
             while retry:
                 proc = subprocess.Popen(args=['youtube-dl', '-o', vid_filename, '-u', config['nicovideo_user'], '-p', config['nicovideo_pw'], wugch_vid])
                 while proc.poll() is None:
@@ -234,20 +232,18 @@ async def polls():
 async def kick(ctx, member : discord.Member):
     await bot.send_typing(ctx.message.channel)
     if ctx.message.author.server_permissions.kick_members:
-        with suppress(Exception):
-            await bot.say(embed=create_embed(title='{0} has been kicked.'.format(member)))  
-            await bot.kick(member)
-            return
+        await bot.kick(member)
+        await bot.say(embed=create_embed(title='{0} has been kicked.'.format(member)))  
+        return
     await bot.say(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True, no_pm=True)
 async def ban(ctx, member : discord.Member):
     await bot.send_typing(ctx.message.channel)
     if ctx.message.author.server_permissions.ban_members:
-        with suppress(Exception):
-            await bot.say(embed=create_embed(title='{0} has been banned.'.format(member)))
-            await bot.ban(member)
-            return
+        await bot.ban(member)
+        await bot.say(embed=create_embed(title='{0} has been banned.'.format(member)))
+        return
     await bot.say(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
 
 @bot.command(pass_context=True, no_pm=True)
@@ -364,8 +360,7 @@ async def events(ctx, *, date : str=''):
     search_date = parser.parse(date) if date else datetime.now(pytz.timezone('Japan'))
     first = True
     for member in hkd.WUG_MEMBERS:
-        retry = True
-        while retry:
+        for _ in range(3):
             with suppress(Exception):
                 html_response = urlopen('https://www.eventernote.com/events/search?keyword={0}&year={1}&month={2}&day={3}'.format(quote(member), search_date.year, search_date.month, search_date.day))
                 soup = BeautifulSoup(html_response, 'html.parser')
@@ -397,7 +392,7 @@ async def events(ctx, *, date : str=''):
                         event_urls.append(event_url)
                         await asyncio.sleep(0.5)
                         await bot.say(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
-                retry = False
+                break
 
     if not event_urls:
         await bot.say(embed=create_embed(description='Couldn\'t find any events on that day.', colour=discord.Colour.red()))
@@ -423,8 +418,7 @@ async def eventsin(ctx, month : str, member : str=''):
     first = True
     search_start = False
     for i in search_index:
-        retry = True
-        while retry:
+        for _ in range(3):
             with suppress(Exception):
                 html_response = urlopen('https://www.eventernote.com/actors/{0}/{1}/events?actor_id={1}&limit=5000'.format(quote(hkd.WUG_MEMBERS[i]), hkd.WUG_EVENTERNOTE_IDS[i]))
                 soup = BeautifulSoup(html_response, 'html.parser')
@@ -463,7 +457,7 @@ async def eventsin(ctx, month : str, member : str=''):
                         event_urls.append(event_url)
                         await asyncio.sleep(0.5)
                         await bot.say(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
-                retry = False
+                break
 
     if not event_urls:
         await bot.say(embed=create_embed(description='Couldn\'t find any events during that month.', colour=discord.Colour.red()))
@@ -631,8 +625,7 @@ async def blogpics(ctx, member : str=''):
     entry_num = 1
     day = -1
     num_pics = 0
-    retry = True
-    while retry:
+    for _ in range(3):
         with suppress(Exception):
             html_response = urlopen('https://ameblo.jp/wakeupgirls')
             soup = BeautifulSoup(html_response, 'html.parser')
@@ -664,7 +657,7 @@ async def blogpics(ctx, member : str=''):
                 await bot.send_typing(ctx.message.channel)
                 await asyncio.sleep(1)
                 await bot.say(pic)
-            retry = False
+            break
 
     if num_pics == 0:
         await bot.say(embed=create_embed(description='Couldn\'t find any pictures.', colour=discord.Colour.red()))
@@ -751,8 +744,7 @@ async def choose(ctx, *options : str):
 @bot.command(pass_context=True)
 async def yt(ctx, *, query : str):
     await bot.send_typing(ctx.message.channel)
-    retry = True
-    while retry:
+    for _ in range(3):
         with suppress(Exception):
             html_response = urlopen('https://www.youtube.com/results?search_query={0}'.format(quote(query)))
             soup = BeautifulSoup(html_response, 'html.parser')
@@ -761,7 +753,7 @@ async def yt(ctx, *, query : str):
                 if link.find('googleads.g.doubleclick.net') == -1 and not link.startswith('/channel'):
                     await bot.say('https://www.youtube.com{0}'.format(link))
                     return
-            retry = False
+            break
     await bot.say(embed=create_embed(title='Couldn\'t find any results.', colour=discord.Colour.red()))
 
 @bot.command(name='dl-vid', pass_context=True, no_pm=True)
@@ -782,8 +774,8 @@ async def dl_vid(ctx, url : str):
         ytdl_args += ['-u', config['nicovideo_user'], '-p', config['nicovideo_pw']]
     ytdl_args.append(url)
 
-    retry = True
     last_try_time = time.time()
+    retry = True
     while retry:
         proc = subprocess.Popen(args=ytdl_args)
         while proc.poll() is None:
