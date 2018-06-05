@@ -791,8 +791,8 @@ async def dl_vid(ctx, url : str):
 
         if proc.returncode != 0:
             if niconico_vid:
-                if time.time() - last_retry_time > 30:
-                    last_retry_time = time.time()
+                if time.time() - last_try_time > 30:
+                    last_try_time = time.time()
                     continue
             else:
                 await bot.say(embed=create_embed(title='Failed to download video.', colour=discord.Colour.red()))
@@ -813,7 +813,7 @@ async def dl_vid(ctx, url : str):
             os.remove(vid_filename)
         return
 
-    await bot.say(embed=create_embed(description='Upload complete. Your video is available here: https://drive.google.com/open?id={0}. The Google Drive folder has limited space so it will be purged from time to time.'.format(config['uploads_folder'])))
+    await bot.say(content='{0.mention}'.format(ctx.message.author), embed=create_embed(description='Upload complete. Your video is available here: https://drive.google.com/open?id={0}. The Google Drive folder has limited space so it will be purged from time to time.'.format(config['uploads_folder'])))
 
 bot.loop.create_task(check_mute_status())
 bot.loop.create_task(check_tweets())
