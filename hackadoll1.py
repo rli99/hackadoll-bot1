@@ -10,10 +10,9 @@ from discord.ext import commands
 from firebase_admin import credentials, db, initialize_app
 from forex_python.converter import CurrencyRates
 from googletrans import Translator
-from hkdhelper import create_embed, get_muted_role, get_wug_role, Poll
+from hkdhelper import create_embed, get_muted_role, get_wug_role
 from html import unescape
 from humanfriendly import format_timespan
-from math import ceil
 from operator import itemgetter
 from random import randrange
 from timezonefinder import TimezoneFinder
@@ -28,7 +27,7 @@ firebase = initialize_app(certificate, {'databaseURL': config['firebase_db']})
 firebase_ref = db.reference()
 muted_members = firebase_ref.child('muted_members').get() or {}
 twitter_api = twitter.Api(consumer_key=config['consumer_key'], consumer_secret=config['consumer_secret'], access_token_key=config['access_token_key'], access_token_secret=config['access_token_secret'], tweet_mode='extended')
-poll = Poll()
+poll = hkd.Poll()
 
 @bot.event
 async def on_ready():
