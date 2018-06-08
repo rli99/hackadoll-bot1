@@ -174,6 +174,7 @@ async def help(ctx):
         embed_fields.append(('!serverinfo', 'Show server information.'))
         embed_fields.append(('!blogpics *member*', 'Get pictures from the latest blog post of the specified WUG member (optional). If *member* not specified, gets pictures from the latest blog post.'))
         embed_fields.append(('!seiyuu-vids', 'Show link to the wiki page with WUG seiyuu content.'))
+        embed_fields.append(('!wugch-omake', 'Show link to the Google Drive folder with WUG Channel omake videos.'))
         embed_fields.append(('!tl *japanese text*', 'Translate the provided Japanese text into English via Google Translate.'))
         embed_fields.append(('!currency *amount* *x* to *y*', 'Convert *amount* of *x* currency to *y* currency, e.g. **!currency** 12.34 AUD to USD'))
         embed_fields.append(('!weather *city*, *country*', 'Show weather information for *city*, *country* (optional), e.g. **!weather** Melbourne, Australia'))
@@ -693,7 +694,12 @@ async def mv_list(ctx):
 @bot.command(name='seiyuu-vids', pass_context=True)
 async def seiyuu_vids(ctx):
     await bot.send_typing(ctx.message.channel)
-    await bot.say(content='**WUG Seiyuu Videos**', embed=create_embed(title='Wake Up, Girls! Wiki - List of Seiyuu Content', url='http://wake-up-girls.wikia.com/wiki/List_of_Seiyuu_Content'))
+    await bot.say(content='**WUG Seiyuu Videos**', embed=create_embed(title='List of seiyuu content on the Wake Up, Girls! wiki', url='http://wake-up-girls.wikia.com/wiki/List_of_Seiyuu_Content'))
+
+@bot.command(name='wugch-omake', pass_context=True, no_pm=True)
+async def wugch_omake(ctx):
+    await bot.send_typing(ctx.message.channel)
+    await bot.say(content='**WUG Channel Omake Videos**', embed=create_embed(title='Google Drive folder with recent WUGch omake videos', url='https://drive.google.com/open?id=1o0PWGdlCUhsIN72O0aKSP6HRbim5Fzpw'))
 
 @bot.command(pass_context=True)
 async def tl(ctx, *, text : str):
