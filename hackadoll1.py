@@ -674,19 +674,19 @@ async def blogpics(ctx, member : str=''):
 async def mv(ctx, *, song_name : str):
     await bot.send_typing(ctx.message.channel)
     name_to_mv = {}
-    for mv, names in list(hkd.MV_NAMES.items()):
+    for mv, names in list(firebase_ref.child('music_videos/mv_aliases').get().items()):
         name_to_mv.update({name : mv for name in names})
 
     song = hkd.parse_mv_name(song_name)
     if song in name_to_mv:
-        await bot.say(hkd.MUSICVIDEOS[name_to_mv[song]])
+        await bot.say(firebase_ref.child('music_videos/mv_links').get()[name_to_mv[song]])
     else:
         await bot.say(embed=create_embed(description='Couldn\'t find that MV. Use **!mv-list** to show the list of available MVs.', colour=discord.Colour.red()))
 
 @bot.command(name='mv-list', pass_context=True)
 async def mv_list(ctx):
     await bot.send_typing(ctx.message.channel)
-    description = '{0}\n\n'.format('\n'.join(list(hkd.MUSICVIDEOS.keys())))
+    description = '{0}\n\n'.format('\n'.join(list(firebase_ref.child('music_videos/mv_links').get().keys())))
     description += 'Use **!mv** *song* to show the full MV. You can also write the name of the song in English.'
     await bot.say(content='**List of Available Music Videos**', embed=create_embed(description=description))
 
