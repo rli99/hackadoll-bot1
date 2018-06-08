@@ -55,7 +55,7 @@ async def check_tweets():
     while not bot.is_closed:
         server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
         channel = discord.utils.get(server.channels, id=hkd.TWITTER_CHANNEL_ID)
-        for name in hkd.WUG_TWITTER_NAMES:
+        for name in firebase_ref.child('last_tweet_ids').get().keys():
             for _ in range(3):
                 with suppress(Exception):
                     last_tweet_id = int(firebase_ref.child('last_tweet_ids/{0}'.format(name)).get())
