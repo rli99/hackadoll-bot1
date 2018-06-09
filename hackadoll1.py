@@ -118,13 +118,14 @@ async def check_wugch_omake():
             with suppress(Exception):
                 html_response = urlopen('http://ch.nicovideo.jp/WUGch/video')
                 soup = BeautifulSoup(html_response, 'html.parser')
-                first_video = soup.find('h6')
-                video = first_video.find('a')
-                if 'オマケ放送' in video['title']:
-                    prev_wugch_omake = int(firebase_ref.child('last_wugch_omake').get())
-                    latest_wugch_omake = int(video['href'][video['href'].rfind('/') + 1:])
-                    if latest_wugch_omake > prev_wugch_omake:
-                        wugch_vid = video['href']
+                for top_video in soup.find_all('h6', limit=2):  
+                    video = top_video.find('a')
+                    if 'オマケ放送' in video['title']:
+                        prev_wugch_omake = int(firebase_ref.child('last_wugch_omake').get())
+                        latest_wugch_omake = int(video['href'][video['href'].rfind('/') + 1:])
+                        if latest_wugch_omake > prev_wugch_omake:
+                            wugch_vid = video['href']
+                            break
                 break
 
         if wugch_vid:
