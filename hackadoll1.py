@@ -60,7 +60,7 @@ async def check_tweets():
                 with suppress(Exception):
                     last_tweet_id = int(firebase_ref.child('last_tweet_ids/{0}'.format(name)).get())
                     posted_tweets = []
-                    for status in twitter_api.GetUserTimeline(screen_name=name, since_id=last_tweet_id, count=40, include_rts=False):
+                    for status in twitter_api.GetUserTimeline(screen_name=name, since_id=last_tweet_id, count=40, include_rts=False, exclude_replies=True):
                         await bot.send_typing(channel)
                         await asyncio.sleep(1)
                         tweet = status.AsDict()
