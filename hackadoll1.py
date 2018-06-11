@@ -55,9 +55,9 @@ async def check_tweets():
     while not bot.is_closed:
         server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
         channel = discord.utils.get(server.channels, id=hkd.TWITTER_CHANNEL_ID)
-        for name in firebase_ref.child('last_tweet_ids').get().keys():
-            for _ in range(3):
-                with suppress(Exception):
+        for _ in range(3):
+            with suppress(Exception):
+                for name in firebase_ref.child('last_tweet_ids').get().keys():
                     last_tweet_id = int(firebase_ref.child('last_tweet_ids/{0}'.format(name)).get())
                     posted_tweets = []
                     for status in twitter_api.GetUserTimeline(screen_name=name, since_id=last_tweet_id, count=40, include_rts=False, exclude_replies=True):
@@ -92,7 +92,7 @@ async def check_tweets():
                         await bot.send_message(channel, embed=create_embed(author=author, title='Tweet by {0}'.format(user['name']), description=tweet_content, colour=colour, url='https://twitter.com/{0}/status/{1}'.format(name, tweet_id), image=image))
                     if posted_tweets:
                         firebase_ref.child('last_tweet_ids/{0}'.format(name)).set(str(max(posted_tweets)))
-                    break
+                break
         await asyncio.sleep(20)
 
 @bot.event
