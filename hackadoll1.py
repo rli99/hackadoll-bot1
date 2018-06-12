@@ -118,7 +118,7 @@ async def check_wugch_omake():
             with suppress(Exception):
                 html_response = urlopen('http://ch.nicovideo.jp/WUGch/video')
                 soup = BeautifulSoup(html_response, 'html.parser')
-                for top_video in soup.find_all('h6', limit=2):  
+                for top_video in soup.find_all('h6', limit=2):
                     video = top_video.find('a')
                     if 'オマケ放送' in video['title']:
                         prev_wugch_omake = int(firebase_ref.child('last_wugch_omake').get())
@@ -234,7 +234,7 @@ async def kick(ctx, member : discord.Member):
     await bot.send_typing(ctx.message.channel)
     if ctx.message.author.server_permissions.kick_members:
         await bot.kick(member)
-        await bot.say(embed=create_embed(title='{0} has been kicked.'.format(member)))  
+        await bot.say(embed=create_embed(title='{0} has been kicked.'.format(member)))
         return
     await bot.say(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
 
@@ -277,7 +277,7 @@ async def unmute(ctx, member : discord.Member):
 async def oshihen(ctx, member : str):
     await bot.send_typing(ctx.message.channel)
     role = get_wug_role(ctx.message.server, member)
-    if role is None: 
+    if role is None:
         await bot.say(embed=create_embed(description='Couldn\'t find that role. Use **!roles** to show additional help on how to get roles.', colour=discord.Colour.red()))
         return
 
@@ -291,7 +291,7 @@ async def oshihen(ctx, member : str):
     elif len(roles_to_remove) > 0:
         await bot.remove_roles(ctx.message.author, *roles_to_remove)
         await asyncio.sleep(1)
-        
+
     await bot.add_roles(ctx.message.author, role)
     await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you have oshihened to the **{1}** role {2.mention}.'.format(ctx, member.title(), role), colour=role.colour))
 
@@ -332,8 +332,8 @@ async def kamioshi_count(ctx):
         member_roles = [r for r in member.roles if r.id in ids_to_member]
         if len(member_roles) > 0:
             role = sorted(member_roles)[-1]
-            oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1  
-    
+            oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1
+
     description = ''
     for oshi in sorted(oshi_num.items(), key=itemgetter(1), reverse=True):
         description += '**{0}** ({1.mention}) - {2}\n'.format(oshi[0].title(), get_wug_role(ctx.message.server, oshi[0]), oshi[1])
@@ -644,7 +644,7 @@ async def blogpics(ctx, member : str=''):
 
             page, entry_num = map(sum, zip(divmod((hkd.WUG_BLOG_ORDER.index(hkd.WUG_BLOG_SIGNS[member.lower()]) - day) % 7, 3), (1, 1)))
 
-            if page != 1:    
+            if page != 1:
                 html_response = urlopen('https://ameblo.jp/wakeupgirls/page-{0}.html'.format(page))
                 soup = BeautifulSoup(html_response, 'html.parser')
 
