@@ -630,9 +630,8 @@ async def blogpics(ctx, member : str=''):
         with suppress(Exception):
             html_response = urlopen('https://ameblo.jp/wakeupgirls')
             soup = BeautifulSoup(html_response, 'html.parser')
-            blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
-            sign_entry = hkd.strip_from_end(str(blog_entry)[:-10], [' ', '<br/>'])
-            member_sign = sign_entry[sign_entry.rfind('>') + 3:]
+            blog_title = soup.find('h2')
+            member_sign = blog_title.find('a').contents[0]
 
             for i, sign in enumerate(hkd.WUG_BLOG_ORDER):
                 if sign in member_sign:
@@ -645,13 +644,11 @@ async def blogpics(ctx, member : str=''):
 
             page, entry_num = map(sum, zip(divmod((hkd.WUG_BLOG_ORDER.index(hkd.WUG_BLOG_SIGNS[member.lower()]) - day) % 7, 3), (1, 1)))
 
-            if page != 1:
+            if page != 1:    
                 html_response = urlopen('https://ameblo.jp/wakeupgirls/page-{0}.html'.format(page))
                 soup = BeautifulSoup(html_response, 'html.parser')
 
-            if page != 1 or entry_num != 1:
-                blog_entry = soup.find_all(attrs={'class': 'skin-entryBody'}, limit=entry_num)[entry_num - 1]
-
+            blog_entry = soup.find_all(attrs={'class': 'skin-entryBody'}, limit=entry_num)[entry_num - 1]
             pics = [p['href'] for p in blog_entry.find_all('a') if hkd.is_image_file(p['href'])]
             num_pics = len(pics)
             for pic in pics:

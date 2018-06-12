@@ -8,8 +8,8 @@ SEIYUU_CHANNEL_ID = '309934970124763147'
 MUTED_ROLE_ID = '445572638543446016'
 WUG_ROLE_IDS = {'mayushii': '332788311280189443', 'aichan': '333727530680844288', 'minyami': '332793887200641028', 'yoppi': '332796755399933953', 'nanamin': '333721984196411392', 'kayatan': '333721510164430848', 'myu': '333722098377818115'}    
 WUG_TWITTER_BLOG_SIGNS = ['まゆ', 'あいり', '虎>ω<', 'よぴ', 'anaminn', 'かやたん', 'み´μ｀ゆ']
-WUG_BLOG_ORDER = ['まゆ', 'μ', 'かやたん', 'anaminn', 'よぴ', 'みにゃみ', '永野愛理']
-WUG_BLOG_SIGNS = {'mayushii': 'まゆ', 'myu': 'μ', 'kayatan': 'かやたん', 'nanamin': 'anaminn', 'yoppi': 'よぴ', 'minyami': 'みにゃみ', 'aichan': '永野愛理'}
+WUG_BLOG_ORDER = ['まゆ', 'み´μ｀ゆ', 'かやたん', 'anaminn', 'よぴ', '虎>ω<', 'あいり']
+WUG_BLOG_SIGNS = {'mayushii': 'まゆ', 'myu': 'み´μ｀ゆ', 'kayatan': 'かやたん', 'nanamin': 'anaminn', 'yoppi': 'よぴ', 'minyami': '虎>ω<', 'aichan': 'あいり'}
 WUG_MEMBERS = ['Wake Up, Girls', '吉岡茉祐', '永野愛理', '田中美海', '青山吉能', '山下七海', '奥野香耶', '高木美佑']
 WUG_EVENTERNOTE_IDS = [6988, 3774, 6984, 6983, 6985, 6982, 6986, 6987]
 
@@ -38,17 +38,6 @@ def parse_month(month):
         if month_query in month_group:
             return str(i + 1) if i > 8 else '0{0}'.format(i + 1)
     return 'None'
-
-def strip_from_end(text, endings):
-    removing = True
-    while removing:
-        text = text.strip()
-        removing = False
-        for ending in endings:
-            while text.endswith(ending):
-                removing = True
-                text = text[:-len(ending)]
-    return text
 
 def is_image_file(filename):
     return filename.endswith('.jpg') or filename.endswith('.png')
