@@ -513,7 +513,22 @@ async def tag(ctx, tag_name : str):
     await bot.send_typing(ctx.message.channel)
     tag_result = firebase_ref.child('tags/{0}'.format(tag_name)).get()
     if tag_result:
-        await bot.say(tag_result)
+        split_tag = hkd.split_media_files(tag_result)
+        if not split_tag:
+            await bot.say(tag_result)
+        else:
+            for link in split_tag:
+                await bot.send_typing(ctx.message.channel)
+                await asyncio.sleep(1)
+                await bot.say(link)
+
+            await asyncio.sleep(3)
+            async for message in bot.logs_from(ctx.message.channel, after=ctx.message):
+                if message.author == bot.user and hkd.is_media_file(message.content) and not message.embeds:
+                    link_url = message.content
+                    await bot.edit_message(message, 'Reposting link...')
+                    await asyncio.sleep(1)
+                    await bot.edit_message(message, link_url)
     else:
         await bot.say(embed=create_embed(description='That tag doesn\'t exist. Use **!tagcreate** *tag_name* *Content of the tag* to create a tag.', colour=discord.Colour.red()))
 
@@ -622,10 +637,6 @@ async def serverinfo(ctx):
 @bot.command(pass_context=True)
 async def blogpics(ctx, member : str=''):
     await bot.send_typing(ctx.message.channel)
-    page = 1
-    entry_num = 1
-    day = -1
-    num_pics = 0
     for _ in range(3):
         with suppress(Exception):
             html_response = urlopen('https://ameblo.jp/wakeupgirls')
@@ -633,6 +644,7 @@ async def blogpics(ctx, member : str=''):
             blog_title = soup.find('h2')
             member_sign = blog_title.find('a').contents[0]
 
+            day = -1
             for i, sign in enumerate(hkd.WUG_BLOG_ORDER):
                 if sign in member_sign:
                     day = i
@@ -650,14 +662,13 @@ async def blogpics(ctx, member : str=''):
 
             blog_entry = soup.find_all(attrs={'class': 'skin-entryBody'}, limit=entry_num)[entry_num - 1]
             pics = [p['href'] for p in blog_entry.find_all('a') if hkd.is_image_file(p['href'])]
-            num_pics = len(pics)
             for pic in pics:
                 await bot.send_typing(ctx.message.channel)
                 await asyncio.sleep(1)
                 await bot.say(pic)
             break
 
-    if num_pics == 0:
+    if len(pics) == 0:
         await bot.say(embed=create_embed(description='Couldn\'t find any pictures.', colour=discord.Colour.red()))
         return
 

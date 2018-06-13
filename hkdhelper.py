@@ -12,6 +12,7 @@ WUG_BLOG_ORDER = ['まゆ', 'み´μ｀ゆ', 'かやたん', 'anaminn', 'よぴ'
 WUG_BLOG_SIGNS = {'mayushii': 'まゆ', 'myu': 'み´μ｀ゆ', 'kayatan': 'かやたん', 'nanamin': 'anaminn', 'yoppi': 'よぴ', 'minyami': '虎>ω<', 'aichan': 'あいり'}
 WUG_MEMBERS = ['Wake Up, Girls', '吉岡茉祐', '永野愛理', '田中美海', '青山吉能', '山下七海', '奥野香耶', '高木美佑']
 WUG_EVENTERNOTE_IDS = [6988, 3774, 6984, 6983, 6985, 6982, 6986, 6987]
+VIDEO_LINK_URLS = ['streamable.com', 'youtube.com']
 
 def parse_config():
     config = configparser.ConfigParser()
@@ -41,6 +42,21 @@ def parse_month(month):
 
 def is_image_file(filename):
     return filename.endswith('.jpg') or filename.endswith('.png')
+
+def is_video_link(text):
+    for url in VIDEO_LINK_URLS:
+        if url in text:
+            return True
+    return False
+
+def split_media_files(tag_content):
+    split_tag = tag_content.split()
+    for line in split_tag:
+        if is_image_file(line) or is_video_link(line):
+            continue
+        else:
+            return
+    return split_tag
 
 def create_embed(author = {}, title='', description='', colour=discord.Colour.light_grey(), url='', image='', thumbnail='', fields=[], inline=False):
     embed = discord.Embed(title=title, description=description, colour=colour, url=url)
