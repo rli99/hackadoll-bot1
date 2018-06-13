@@ -524,11 +524,12 @@ async def tag(ctx, tag_name : str):
 
             await asyncio.sleep(3)
             async for message in bot.logs_from(ctx.message.channel, after=ctx.message):
-                if message.author == bot.user and hkd.is_media_file(message.content) and not message.embeds:
-                    link_url = message.content
-                    await bot.edit_message(message, 'Reposting link...')
-                    await asyncio.sleep(1)
-                    await bot.edit_message(message, link_url)
+                if message.author == bot.user and not message.embeds:
+                    if hkd.is_image_file(message.content) or hkd.is_video_link(message.content):
+                        link_url = message.content
+                        await bot.edit_message(message, 'Reposting link...')
+                        await asyncio.sleep(1)
+                        await bot.edit_message(message, link_url)
     else:
         await bot.say(embed=create_embed(description='That tag doesn\'t exist. Use **!tagcreate** *tag_name* *Content of the tag* to create a tag.', colour=discord.Colour.red()))
 
