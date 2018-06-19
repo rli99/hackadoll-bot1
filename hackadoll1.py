@@ -1,5 +1,6 @@
 import asyncio, discord, os, pycountry, pytz, requests, subprocess, time, twitter
 import hkdhelper as hkd
+from apiclient.discovery import build
 from bs4 import BeautifulSoup
 from calendar import month_name
 from contextlib import suppress
@@ -12,7 +13,9 @@ from forex_python.converter import CurrencyRates
 from googletrans import Translator
 from hkdhelper import create_embed, get_muted_role, get_wug_role
 from html import unescape
+from httplib2 import Http
 from humanfriendly import format_timespan
+from oauth2client import file
 from operator import itemgetter
 from random import randrange
 from timezonefinder import TimezoneFinder
@@ -28,6 +31,7 @@ firebase_ref = db.reference()
 muted_members = firebase_ref.child('muted_members').get() or {}
 twitter_api = twitter.Api(consumer_key=config['consumer_key'], consumer_secret=config['consumer_secret'], access_token_key=config['access_token_key'], access_token_secret=config['access_token_secret'], tweet_mode='extended')
 poll = hkd.Poll()
+calendar = build('calendar', 'v3', http=file.Storage('credentials.json').get().authorize(Http()))
 
 @bot.event
 async def on_ready():
@@ -157,6 +161,28 @@ async def check_wugch_omake():
                 await bot.send_message(channel, embed=create_embed(description='{0} is now available for download at https://drive.google.com/open?id={1}'.format(video['title'], config['wugch_folder'])))
 
         await asyncio.sleep(1800)
+
+@bot.event
+async def check_live_streams():
+    await bot.wait_until_ready()
+    while not bot.is_closed:
+        now = datetime.utcnow().isoformat() + 'Z'
+        events = calendar.events().list(calendarId='primary', timeMin=now, maxResults=10, singleEvents=True, orderBy='startTime').execute().get('items', [])
+        for event in events:
+            start = parser.parse(event['start'].get('dateTime', event['start'].get('date')))
+            if start.timestamp() - time.time() < 900 and event['description'][0] != '*':
+                wug_members_str, stream_link = event['description'].split(';')
+                wug_members = wug_members_str.split(',')
+                server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
+                channel = discord.utils.get(server.channels, id=hkd.SEIYUU_CHANNEL_ID)
+                colour = get_wug_role(server, wug_members[0]).colour if len(wug_members) == 1 else discord.Colour.light_grey()
+                embed_fields = []
+                embed_fields.append(('Start Time', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} JST'.format(start.astimezone(pytz.timezone('Japan')))))
+                embed_fields.append(('WUG Members', ', '.join(wug_members)))
+                await bot.send_message(channel, content='**Starting in 15 Minutes**', embed=create_embed(title=event['summary'], colour=colour, url=stream_link, fields=embed_fields, inline=True))
+                event['description'] = '*' + event['description']
+                calendar.events().update(calendarId='primary', eventId=event['id'], body=event).execute()
+        await asyncio.sleep(30)
 
 @bot.group(pass_context=True)
 async def help(ctx):
@@ -826,4 +852,5 @@ bot.loop.create_task(check_mute_status())
 bot.loop.create_task(check_tweets())
 bot.loop.create_task(check_poll_status())
 bot.loop.create_task(check_wugch_omake())
+bot.loop.create_task(check_live_streams())
 bot.run(config['token'])
