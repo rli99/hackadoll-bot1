@@ -784,7 +784,7 @@ async def dl_vid(ctx, url : str):
         niconico_id = url[url.rfind('/') + 1:]
         vid_filename = 'nicovideo_{0}.mp4'.format(niconico_id)
 
-    ytdl_args = ['youtube-dl', '-o', vid_filename]
+    ytdl_args = ['youtube-dl', '-o', vid_filename, '-f', 'best']
     if niconico_vid:
         ytdl_args += ['-u', config['nicovideo_user'], '-p', config['nicovideo_pw']]
     ytdl_args.append(url)
