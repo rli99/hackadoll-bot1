@@ -17,6 +17,7 @@ pytz = "*"
 timezonefinder = "*"
 pydrive = "*"
 youtube-dl = "*"
+"oauth2client" = "*"
 
 [dev-packages]
 
