@@ -90,11 +90,11 @@
         },
         "forex-python": {
             "hashes": [
-                "sha256:263e7be3c5d4b6604bb3c0fbc5d266e33600d287eaa13b0c29edb4ba2f81e705",
-                "sha256:a1a1529584bc031c6b383ce07f3ec1b53a4912b030b521112f74632f789309f4"
+                "sha256:71f4c17871e5dee60c58bb365bec4b3c26c0985158e79c817b9316c989f91da3",
+                "sha256:9f629eee99ae3e211fb2eb09f2427af8380e3d5c4e4a6e94d16ab5be774a08cf"
             ],
             "index": "pypi",
-            "version": "==1.0.0"
+            "version": "==1.1"
         },
         "future": {
             "hashes": [
@@ -533,11 +533,11 @@
         },
         "youtube-dl": {
             "hashes": [
-                "sha256:414cebe5e38e5cbb67732168c77f0e9c0f88c54de303afdcdb677c4f4f7d82fc",
-                "sha256:71b421b3abe744eeb9a03c7234a9421069aab779204aeb1076169313649579f9"
+                "sha256:0440a3e44ff0e874bfb5a60d647f6cbd2465afcd8eae2e04ba2d7db91f0dc25a",
+                "sha256:7bc3dd28d02cefae34feae058ece3e9ea8c72d83017a08df8e0808144d7ea4c6"
             ],
             "index": "pypi",
-            "version": "==2018.6.18"
+            "version": "==2018.6.25"
         }
     },
     "develop": {}

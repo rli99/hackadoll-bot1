@@ -137,7 +137,7 @@ async def check_wugch_omake():
             last_try_time = time.time()
             retry = True
             while retry:
-                proc = subprocess.Popen(args=['youtube-dl', '-o', vid_filename, '-u', config['nicovideo_user'], '-p', config['nicovideo_pw'], wugch_vid])
+                proc = subprocess.Popen(args=['youtube-dl', '-o', vid_filename, '-f', 'best', '-u', config['nicovideo_user'], '-p', config['nicovideo_pw'], wugch_vid])
                 while proc.poll() is None:
                     await asyncio.sleep(2)
 
@@ -171,15 +171,18 @@ async def check_live_streams():
         for event in events:
             start = parser.parse(event['start'].get('dateTime', event['start'].get('date')))
             if start.timestamp() - time.time() < 900 and event['description'][0] != '*':
-                wug_members_str, stream_link = event['description'].split(';')
+                split_index = event['description'].find(';')
+                wug_members_str, stream_link = event['description'][:split_index], event['description'][split_index + 1:]
                 wug_members = wug_members_str.split(',')
+                if stream_link[0] == '<':
+                    stream_link = BeautifulSoup(stream_link, 'html.parser').find('a').contents[0]
                 server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
                 channel = discord.utils.get(server.channels, id=hkd.SEIYUU_CHANNEL_ID)
                 colour = get_wug_role(server, wug_members[0]).colour if len(wug_members) == 1 else discord.Colour.light_grey()
                 embed_fields = []
-                embed_fields.append(('Start Time', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} JST'.format(start.astimezone(pytz.timezone('Japan')))))
+                embed_fields.append(('Time', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M} JST'.format(start.astimezone(pytz.timezone('Japan')))))
                 embed_fields.append(('WUG Members', ', '.join(wug_members)))
-                await bot.send_message(channel, content='**Starting in 15 Minutes**', embed=create_embed(title=event['summary'], colour=colour, url=stream_link, fields=embed_fields, inline=True))
+                await bot.send_message(channel, content='**Starting in 15 Minutes**', embed=create_embed(title=event['summary'], colour=colour, url=stream_link, fields=embed_fields))
                 event['description'] = '*' + event['description']
                 calendar.events().update(calendarId='primary', eventId=event['id'], body=event).execute()
         await asyncio.sleep(30)
@@ -847,6 +850,15 @@ async def dl_vid(ctx, url : str):
         return
 
     await bot.say(content='{0.mention}'.format(ctx.message.author), embed=create_embed(description='Upload complete. Your video is available here: https://drive.google.com/open?id={0}. The Google Drive folder has limited space so it will be purged from time to time.'.format(config['uploads_folder'])))
+
+@bot.command(pass_context=True)
+async def say(ctx, channel_name : str, *, message : str):
+    if ctx.message.author.id != hkd.BOT_ADMIN_ID:
+        return
+
+    server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
+    channel = discord.utils.get(server.channels, name=channel_name)
+    await bot.send_message(channel, message)
 
 bot.loop.create_task(check_mute_status())
 bot.loop.create_task(check_tweets())
