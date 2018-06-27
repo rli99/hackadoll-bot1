@@ -167,24 +167,27 @@ async def check_live_streams():
     await bot.wait_until_ready()
     while not bot.is_closed:
         now = datetime.utcnow().isoformat() + 'Z'
-        events = calendar.events().list(calendarId='primary', timeMin=now, maxResults=10, singleEvents=True, orderBy='startTime').execute().get('items', [])
-        for event in events:
-            start = parser.parse(event['start'].get('dateTime', event['start'].get('date')))
-            if start.timestamp() - time.time() < 900 and event['description'][0] != '*':
-                split_index = event['description'].find(';')
-                wug_members_str, stream_link = event['description'][:split_index], event['description'][split_index + 1:]
-                wug_members = wug_members_str.split(',')
-                if stream_link[0] == '<':
-                    stream_link = BeautifulSoup(stream_link, 'html.parser').find('a').contents[0]
-                server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
-                channel = discord.utils.get(server.channels, id=hkd.SEIYUU_CHANNEL_ID)
-                colour = get_wug_role(server, wug_members[0]).colour if len(wug_members) == 1 else discord.Colour.light_grey()
-                embed_fields = []
-                embed_fields.append(('Time', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M} JST'.format(start.astimezone(pytz.timezone('Japan')))))
-                embed_fields.append(('WUG Members', ', '.join(wug_members)))
-                await bot.send_message(channel, content='**Starting in 15 Minutes**', embed=create_embed(title=event['summary'], colour=colour, url=stream_link, fields=embed_fields))
-                event['description'] = '*' + event['description']
-                calendar.events().update(calendarId='primary', eventId=event['id'], body=event).execute()
+        for _ in range(3):
+            with suppress(Exception):
+                events = calendar.events().list(calendarId='primary', timeMin=now, maxResults=10, singleEvents=True, orderBy='startTime').execute().get('items', [])
+                for event in events:
+                    start = parser.parse(event['start'].get('dateTime', event['start'].get('date')))
+                    if start.timestamp() - time.time() < 900 and event['description'][0] != '*':
+                        split_index = event['description'].find(';')
+                        wug_members_str, stream_link = event['description'][:split_index], event['description'][split_index + 1:]
+                        wug_members = wug_members_str.split(',')
+                        if stream_link[0] == '<':
+                            stream_link = BeautifulSoup(stream_link, 'html.parser').find('a').contents[0]
+                        server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
+                        channel = discord.utils.get(server.channels, id=hkd.SEIYUU_CHANNEL_ID)
+                        colour = get_wug_role(server, wug_members[0]).colour if len(wug_members) == 1 else discord.Colour.light_grey()
+                        embed_fields = []
+                        embed_fields.append(('Time', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M} JST'.format(start.astimezone(pytz.timezone('Japan')))))
+                        embed_fields.append(('WUG Members', ', '.join(wug_members)))
+                        await bot.send_message(channel, content='**Starting in 15 Minutes**', embed=create_embed(title=event['summary'], colour=colour, url=stream_link, fields=embed_fields))
+                        event['description'] = '*' + event['description']
+                        calendar.events().update(calendarId='primary', eventId=event['id'], body=event).execute()
+                break
         await asyncio.sleep(30)
 
 @bot.group(pass_context=True)
@@ -858,6 +861,8 @@ async def say(ctx, channel_name : str, *, message : str):
 
     server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
     channel = discord.utils.get(server.channels, name=channel_name)
+    await bot.send_typing(channel)
+    await asyncio.sleep(1.5)
     await bot.send_message(channel, message)
 
 bot.loop.create_task(check_mute_status())
