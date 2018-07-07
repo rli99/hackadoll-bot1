@@ -48,7 +48,7 @@ def is_video_link(text):
     for url in VIDEO_LINK_URLS:
         if url in text:
             return True
-    return False    
+    return False
 
 def split_embeddable_content(tag_content):
     split_tag = tag_content.split()
