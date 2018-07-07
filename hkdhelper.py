@@ -48,12 +48,22 @@ def is_video_link(text):
     for url in VIDEO_LINK_URLS:
         if url in text:
             return True
-    return False
+    return False    
 
-def split_media_files(tag_content):
+def split_embeddable_content(tag_content):
     split_tag = tag_content.split()
+    all_embeddable_content = True
     for line in split_tag:
-        if is_image_file(line) or is_video_link(line):
+        if is_image_file(line) or is_video_link(line) or 'twitter.com' in line:
+            continue
+        else:
+            all_embeddable_content = False
+    if all_embeddable_content:
+        return split_tag
+
+    split_tag = tag_content.splitlines()
+    for line in split_tag:
+        if is_image_file(line) or is_video_link(line) or 'twitter.com' in line:
             continue
         else:
             return

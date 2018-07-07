@@ -545,7 +545,7 @@ async def tag(ctx, tag_name : str):
     await bot.send_typing(ctx.message.channel)
     tag_result = firebase_ref.child('tags/{0}'.format(tag_name)).get()
     if tag_result:
-        split_tag = hkd.split_media_files(tag_result)
+        split_tag = hkd.split_embeddable_content(tag_result)
         if not split_tag:
             await bot.say(tag_result)
         else:
@@ -557,7 +557,7 @@ async def tag(ctx, tag_name : str):
             await asyncio.sleep(3)
             async for message in bot.logs_from(ctx.message.channel, after=ctx.message):
                 if message.author == bot.user and not message.embeds:
-                    if hkd.is_image_file(message.content) or hkd.is_video_link(message.content):
+                    if hkd.is_image_file(message.content) or hkd.is_video_link(message.content) or 'twitter.com' in message.content:
                         link_url = message.content
                         await bot.edit_message(message, 'Reposting link...')
                         await asyncio.sleep(1)
