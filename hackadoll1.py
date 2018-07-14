@@ -180,7 +180,7 @@ async def check_live_streams():
                             stream_link = BeautifulSoup(stream_link, 'html.parser').find('a').contents[0]
                         server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
                         channel = discord.utils.get(server.channels, id=hkd.SEIYUU_CHANNEL_ID)
-                        colour = get_wug_role(server, wug_members[0]).colour if len(wug_members) == 1 else discord.Colour.light_grey()
+                        colour = get_wug_role(server, wug_members[0]).colour if len(wug_members) == 1 else discord.Colour.teal()
                         embed_fields = []
                         embed_fields.append(('Time', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M} JST'.format(start.astimezone(pytz.timezone('Japan')))))
                         embed_fields.append(('WUG Members', ', '.join(wug_members)))
@@ -409,7 +409,7 @@ async def events(ctx, *, date : str=''):
                         if not wug_performers:
                             continue
                         await bot.send_typing(ctx.message.channel)
-                        colour = get_wug_role(ctx.message.server, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]).colour if len(wug_performers) == 1 else discord.Colour.light_grey()
+                        colour = get_wug_role(ctx.message.server, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]).colour if len(wug_performers) == 1 else discord.Colour.teal()
                         if first:
                             first = False
                             await bot.say('**Events Involving WUG Members on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date))
@@ -474,7 +474,7 @@ async def eventsin(ctx, month : str, member : str=''):
                         if not wug_performers:
                             continue
                         await bot.send_typing(ctx.message.channel)
-                        colour = get_wug_role(ctx.message.server, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]).colour if len(wug_performers) == 1 else discord.Colour.light_grey()
+                        colour = get_wug_role(ctx.message.server, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]).colour if len(wug_performers) == 1 else discord.Colour.teal()
                         if first:
                             first = False
                             await bot.say('**Events for {0} in {1} {2}**'.format(member.title() if member else 'Wake Up, Girls!', month_name[int(search_month)], search_year))

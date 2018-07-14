@@ -111,10 +111,10 @@
         },
         "google-api-python-client": {
             "hashes": [
-                "sha256:876b974612c6d9b5de348079b706500bd170e7fdab30b9a4b72758d129cd64dc",
-                "sha256:e32d30563b90c4f88ff042d4d891b5e8ed1f6cdca0adab95e9c2ce2603087436"
+                "sha256:5d5cb02c6f3112c68eed51b74891a49c0e35263380672d662f8bfe85b8114d7c",
+                "sha256:7cc47cf80b25ecd7f3d917ea247bb6c62587514e40604ae29c47c0e4ebd1174b"
             ],
-            "version": "==1.7.3"
+            "version": "==1.7.4"
         },
         "google-auth": {
             "hashes": [
@@ -185,7 +185,9 @@
                 "sha256:67b36c6b0070ef858e5438e82d3a3fb19db33a174572019744d7b965c95fa9b0",
                 "sha256:83766cdfc3492a693902eff193648b3cc9710e4a131815cd0cc60e30e9b7cf8f",
                 "sha256:935a0b328b79e03a47d87960836513bab1150d0faab44aff7968f8623ed48d62",
+                "sha256:982349cc24df7569ab955bafa3ba7575140db171c3bd757fa135d0c0c0d6990d",
                 "sha256:9c79eaca4b0b8fb973c6e0c4c6cd4be44e76dfd09d56cfc7b2a959289fda6682",
+                "sha256:9efcdfe1cc1670dde940f86e51fe080184f637106cf9b6d8dfc14cab9660d710",
                 "sha256:a24a37e441c36d6605029cfb035806ef4f888a37d757e64fb0488d03c3fff806",
                 "sha256:ab33b5965df89fd6e4ea7846cb9a28ece4e6d9ded23434d3321b992051a62de0",
                 "sha256:ad6c12e9ab809fd4f8891a085a7655ca2690a5753bb6258d9d602084f610a223",
@@ -213,11 +215,11 @@
         },
         "humanfriendly": {
             "hashes": [
-                "sha256:72a2efa8b477abb4fbdb3e5e224942c13e201c1df8c70fc244ef13b982ceb010",
-                "sha256:937b4d2c99d29007023ebcab23579429541bfb3357a97e5df38fc5d851a112a3"
+                "sha256:96860fa8931202624f79d67f7cdeb3d86d593fe41b5f1b63d8a5707667d28abe",
+                "sha256:f34f504dd063c2a9bd095fffbce79a639bd6eb067bd6b1318d7b8e67e71a0147"
             ],
             "index": "pypi",
-            "version": "==4.12.1"
+            "version": "==4.15"
         },
         "idna": {
             "hashes": [
@@ -539,11 +541,11 @@
         },
         "youtube-dl": {
             "hashes": [
-                "sha256:036ef4b85db7a7589fa7183a9bde04cddbe97b577cfcf119cca292c871c8105e",
-                "sha256:5b9a61047e181efcd4b4e1eff072182d80694746379f8facd72f9549dd3c0e04"
+                "sha256:3300689ccc6cd22b8229e0c9cbb9f2cfcceaa3cef871a8e83c6a456623bb44e5",
+                "sha256:e4f81d38d2c7b8fa6fa069cd0f0096835dcaab91e74a4ca760625b76e0c614b4"
             ],
             "index": "pypi",
-            "version": "==2018.7.4"
+            "version": "==2018.7.10"
         }
     },
     "develop": {}
