@@ -170,6 +170,7 @@ async def check_live_streams():
         for _ in range(3):
             with suppress(Exception):
                 events = calendar.events().list(calendarId='primary', timeMin=now, maxResults=10, singleEvents=True, orderBy='startTime').execute().get('items', [])
+                first_event = True
                 for event in events:
                     start = parser.parse(event['start'].get('dateTime', event['start'].get('date')))
                     if start.timestamp() - time.time() < 900 and event['description'][0] != '*':
@@ -184,7 +185,9 @@ async def check_live_streams():
                         embed_fields = []
                         embed_fields.append(('Time', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M} JST'.format(start.astimezone(pytz.timezone('Japan')))))
                         embed_fields.append(('WUG Members', ', '.join(wug_members)))
-                        await bot.send_message(channel, content='**Starting in 15 Minutes**', embed=create_embed(title=event['summary'], colour=colour, url=stream_link, fields=embed_fields))
+                        content = '**Starting in 15 Minutes**' if first_event else ''
+                        await bot.send_message(channel, content=content, embed=create_embed(title=event['summary'], colour=colour, url=stream_link, fields=embed_fields))
+                        first_event = False
                         event['description'] = '*' + event['description']
                         calendar.events().update(calendarId='primary', eventId=event['id'], body=event).execute()
                 break
@@ -265,6 +268,9 @@ async def polls():
 async def kick(ctx, member : discord.Member):
     await bot.send_typing(ctx.message.channel)
     if ctx.message.author.server_permissions.kick_members:
+        if member.server_permissions.administrator:
+            await bot.say(embed=create_embed(title='Moderators cannot be kicked.', colour=discord.Colour.red()))
+            return
         await bot.kick(member)
         await bot.say(embed=create_embed(title='{0} has been kicked.'.format(member)))
         return
@@ -283,6 +289,9 @@ async def ban(ctx, member : discord.Member):
 async def mute(ctx, member : discord.Member, duration : int):
     await bot.send_typing(ctx.message.channel)
     if ctx.message.author.server_permissions.kick_members:
+        if member.server_permissions.administrator:
+            await bot.say(embed=create_embed(title='Moderators cannot be muted.', colour=discord.Colour.red()))
+            return
         if duration > 0:
             mute_endtime = time.time() + duration * 60
             firebase_ref.child('muted_members/{0}'.format(member.id)).set(str(mute_endtime))
