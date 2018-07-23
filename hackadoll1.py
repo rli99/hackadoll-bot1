@@ -219,7 +219,7 @@ async def help(ctx):
         embed_fields.append(('!dl-vid *url*', 'Attempts to download the video from the specified URL using youtube-dl.'))
         await bot.say(content='**Available Commands**', embed=create_embed(fields=embed_fields))
 
-@help.command(name='mod-commands')
+@help.command(name='mod-commands', aliases=['mod', 'mods'])
 async def mod_commands():
     embed_fields = []
     embed_fields.append(('!kick *member*', 'Kick a member.'))
@@ -228,7 +228,7 @@ async def mod_commands():
     embed_fields.append(('!unmute *member*', 'Unmute a member.'))
     await bot.say(content='**Commands for Moderators**', embed=create_embed(fields=embed_fields))
 
-@help.command(pass_context=True, no_pm=True)
+@help.command(aliases=['role'], pass_context=True, no_pm=True)
 async def roles(ctx):
     description = 'Users can have any of the 7 WUG member roles. Use **!oshihen** *member* to get the role you want.\n\n'
     for oshi in hkd.WUG_ROLE_IDS.keys():
@@ -237,14 +237,14 @@ async def roles(ctx):
     description += 'Use **!oshi-count** to show the number of members with each WUG member role, or **!kamioshi-count** to show the number of members with each WUG member role as their highest role.\n'
     await bot.say(content='**Commands for Roles**', embed=create_embed(description=description))
 
-@help.command()
+@help.command(aliases=['event'])
 async def events():
     embed_fields = []
     embed_fields.append(('!events *date*', 'Get information for events involving WUG members on the specified date, e.g. **!events** apr 1. If *date* not specified, finds events happening today.'))
     embed_fields.append(('!eventsin *month* *member*', 'Get information for events involving WUG members for the specified month and member, e.g. **!eventsin** April Mayushii. If *member* not specified, searches for Wake, Up Girls! related events instead. Searches events from this month onwards only.'))
     await bot.say(content='**Commands for Searching Events**', embed=create_embed(fields=embed_fields))
 
-@help.command()
+@help.command(aliases=['tag'])
 async def tags():
     embed_fields = []
     embed_fields.append(('!tagcreate *tag_name* *content*', 'Create a tag. Use one word (no spaces) for tag names.'))
@@ -255,7 +255,7 @@ async def tags():
     await bot.say(content='**Commands for Using Tags**', embed=create_embed(fields=embed_fields))
 
 @help.command()
-async def polls():
+async def polls(aliases=['poll']):
     embed_fields = []
     embed_fields.append(('!pollcreate *duration* *topic*', 'Create a poll for the specified topic, lasting for *duration* minutes.'))
     embed_fields.append(('!polloptions *options*', 'Specify the options for a created poll.'))
@@ -366,7 +366,7 @@ async def hakooshi(ctx):
     else:
         await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you already have every WUG member role.'.format(ctx), colour=discord.Colour.red()))
 
-@bot.command(name='kamioshi-count', pass_context=True, no_pm=True)
+@bot.command(name='kamioshi-count', aliases=['kamioshicount'], pass_context=True, no_pm=True)
 async def kamioshi_count(ctx):
     await bot.send_typing(ctx.message.channel)
     ids_to_member = hkd.get_role_ids()
@@ -382,7 +382,7 @@ async def kamioshi_count(ctx):
         description += '**{0}** ({1.mention}) - {2}\n'.format(oshi[0].title(), get_wug_role(ctx.message.server, oshi[0]), oshi[1])
     await bot.say(content='**Number of Users with Each WUG Member Role as Their Highest Role**', embed=create_embed(description=description))
 
-@bot.command(name='oshi-count', pass_context=True, no_pm=True)
+@bot.command(name='oshi-count', aliases=['oshicount'], pass_context=True, no_pm=True)
 async def oshi_count(ctx):
     await bot.send_typing(ctx.message.channel)
     ids_to_member = hkd.get_role_ids()
@@ -505,7 +505,7 @@ async def eventsin(ctx, month : str, member : str=''):
     if not event_urls:
         await bot.say(embed=create_embed(description='Couldn\'t find any events during that month.', colour=discord.Colour.red()))
 
-@bot.command(pass_context=True, no_pm=True)
+@bot.command(aliases=['createtag'], pass_context=True, no_pm=True)
 async def tagcreate(ctx, *, tag_to_create : str):
     await bot.send_typing(ctx.message.channel)
     split_request = tag_to_create.split()
@@ -520,7 +520,7 @@ async def tagcreate(ctx, *, tag_to_create : str):
         return
     await bot.say(embed=create_embed(description='Couldn\'t create tag. Please follow this format for creating a tag: **!tagcreate** *NameOfTag* *Content of the tag*.', colour=discord.Colour.red()))
 
-@bot.command(pass_context=True, no_pm=True)
+@bot.command(aliases=['updatetag'], pass_context=True, no_pm=True)
 async def tagupdate(ctx, *, tag_to_update : str):
     await bot.send_typing(ctx.message.channel)
     split_update = tag_to_update.split()
@@ -535,7 +535,7 @@ async def tagupdate(ctx, *, tag_to_update : str):
         return
     await bot.say(embed=create_embed(description='Couldn\'t update tag. Please follow this format for updating a tag: **!tagupdate** *NameOfTag* *Updated content of the tag*.', colour=discord.Colour.red()))
 
-@bot.command(pass_context=True, no_pm=True)
+@bot.command(aliases=['tagremove', 'deletetag', 'removetag'], pass_context=True, no_pm=True)
 async def tagdelete(ctx, tag_name : str):
     await bot.send_typing(ctx.message.channel)
     if firebase_ref.child('tags/{0}'.format(tag_name)).get():
@@ -544,7 +544,7 @@ async def tagdelete(ctx, tag_name : str):
     else:
         await bot.say(embed=create_embed(title='That tag doesn\'t exist.', colour=discord.Colour.red()))
 
-@bot.command(pass_context=True, no_pm=True)
+@bot.command(aliases=['searchtag', 'tags'], pass_context=True, no_pm=True)
 async def tagsearch(ctx):
     await bot.send_typing(ctx.message.channel)
     tag_list = firebase_ref.child('tags').get()
@@ -575,7 +575,7 @@ async def tag(ctx, tag_name : str):
     else:
         await bot.say(embed=create_embed(description='That tag doesn\'t exist. Use **!tagcreate** *tag_name* *Content of the tag* to create a tag.', colour=discord.Colour.red()))
 
-@bot.command(pass_context=True, no_pm=True)
+@bot.command(aliases=['createpoll'], pass_context=True, no_pm=True)
 async def pollcreate(ctx, duration : int, *, topic : str):
     await bot.send_typing(ctx.message.channel)
     if duration > 120:
@@ -623,7 +623,7 @@ async def polldetails(ctx):
     description += poll.get_details()
     await bot.say(content='Details of the currently running poll.', embed=create_embed(title=poll.topic, description=description))
 
-@bot.command(pass_context=True, no_pm=True)
+@bot.command(aliases=['endpoll'], pass_context=True, no_pm=True)
 async def pollend(ctx):
     await bot.send_typing(ctx.message.channel)
     if not poll.topic:
@@ -648,7 +648,7 @@ async def vote(ctx, option : int):
         return
     poll.vote(option, ctx.message.author.id)
 
-@bot.command(pass_context=True, no_pm=True)
+@bot.command(aliases=['user-info'], pass_context=True, no_pm=True)
 async def userinfo(ctx, member : discord.Member=None):
     await bot.send_typing(ctx.message.channel)
     user = member or ctx.message.author
@@ -661,7 +661,7 @@ async def userinfo(ctx, member : discord.Member=None):
     embed_fields.append(('Avatar', '{0}'.format('<{0}>'.format(user.avatar_url) if user.avatar_url else 'None')))
     await bot.say(content='**User Information for {0.mention}**'.format(user), embed=create_embed(fields=embed_fields, inline=True))
 
-@bot.command(pass_context=True, no_pm=True)
+@bot.command(aliases=['server-info'], pass_context=True, no_pm=True)
 async def serverinfo(ctx):
     await bot.send_typing(ctx.message.channel)
     server = ctx.message.server
@@ -736,29 +736,29 @@ async def mv(ctx, *, song_name : str):
     else:
         await bot.say(embed=create_embed(description='Couldn\'t find that MV. Use **!mv-list** to show the list of available MVs.', colour=discord.Colour.red()))
 
-@bot.command(name='mv-list', pass_context=True)
+@bot.command(name='mv-list', aliases=['mvlist'], pass_context=True)
 async def mv_list(ctx):
     await bot.send_typing(ctx.message.channel)
     description = '{0}\n\n'.format('\n'.join(list(firebase_ref.child('music_videos/mv_links').get().keys())))
     description += 'Use **!mv** *song* to show the full MV. You can also write the name of the song in English.'
     await bot.say(content='**List of Available Music Videos**', embed=create_embed(description=description))
 
-@bot.command(name='seiyuu-vids', pass_context=True)
+@bot.command(name='seiyuu-vids', aliases=['seiyuuvids'], pass_context=True)
 async def seiyuu_vids(ctx):
     await bot.send_typing(ctx.message.channel)
     await bot.say(content='**WUG Seiyuu Videos**', embed=create_embed(title='List of seiyuu content on the Wake Up, Girls! wiki', url='http://wake-up-girls.wikia.com/wiki/List_of_Seiyuu_Content'))
 
-@bot.command(name='wugch-omake', pass_context=True, no_pm=True)
+@bot.command(name='wugch-omake', aliases=['wugch'], pass_context=True, no_pm=True)
 async def wugch_omake(ctx):
     await bot.send_typing(ctx.message.channel)
     await bot.say(content='**WUG Channel Omake Videos**', embed=create_embed(title='Google Drive folder with recent WUGch omake videos', url='https://drive.google.com/open?id=1o0PWGdlCUhsIN72O0aKSP6HRbim5Fzpw'))
 
-@bot.command(pass_context=True)
+@bot.command(aliases=['translate'], pass_context=True)
 async def tl(ctx, *, text : str):
     await bot.send_typing(ctx.message.channel)
     await bot.say(embed=create_embed(description=Translator().translate(text, src='ja', dest='en').text))
 
-@bot.command(pass_context=True)
+@bot.command(aliases=['convert'], pass_context=True)
 async def currency(ctx, *conversion : str):
     await bot.send_typing(ctx.message.channel)
     if len(conversion) == 4 and conversion[2].lower() == 'to':
@@ -790,7 +790,7 @@ async def weather(ctx, *, location : str):
         return
     await bot.say(embed=create_embed(description='Couldn\'t get weather. Please follow this format for checking the weather: **!weather** Melbourne, Australia.', colour=discord.Colour.red()))
 
-@bot.command(pass_context=True)
+@bot.command(aliases=['pick'], pass_context=True)
 async def choose(ctx, *options : str):
     await bot.send_typing(ctx.message.channel)
     if len(options) > 1:
@@ -798,7 +798,7 @@ async def choose(ctx, *options : str):
     else:
         await bot.say(embed=create_embed(description='Please provide 2 or more options to choose from, e.g. **!choose** *option1* *option2*.', colour=discord.Colour.red()))
 
-@bot.command(pass_context=True)
+@bot.command(aliases=['youtube', 'play'], pass_context=True)
 async def yt(ctx, *, query : str):
     await bot.send_typing(ctx.message.channel)
     for _ in range(3):
@@ -813,7 +813,7 @@ async def yt(ctx, *, query : str):
             break
     await bot.say(embed=create_embed(title='Couldn\'t find any results.', colour=discord.Colour.red()))
 
-@bot.command(name='dl-vid', pass_context=True, no_pm=True)
+@bot.command(name='dl-vid', aliases=['dlvid', 'youtube-dl'], pass_context=True, no_pm=True)
 async def dl_vid(ctx, url : str):
     await bot.send_typing(ctx.message.channel)
     await bot.say('Attempting to download the video using youtube-dl. Please wait.')
