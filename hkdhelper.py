@@ -50,6 +50,9 @@ def is_video_link(text):
             return True
     return False
 
+def is_youtube_link(text):
+    return text.find('googleads.g.doubleclick.net') == -1 and text.find('googleadservices.com') == -1 and not text.startswith('/channel') 
+
 def split_embeddable_content(tag_content):
     split_tag = tag_content.split()
     all_embeddable_content = True

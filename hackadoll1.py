@@ -23,7 +23,7 @@ from urllib.parse import quote
 from urllib.request import urlopen
 
 config = hkd.parse_config()
-bot = commands.Bot(command_prefix='!')
+bot = commands.Bot(command_prefix=('!', 'ichigo ', 'alexa '))
 bot.remove_command('help')
 certificate = credentials.Certificate(config['firebase_credentials'])
 firebase = initialize_app(certificate, {'databaseURL': config['firebase_db']})
@@ -43,7 +43,7 @@ async def check_mute_status():
     while not bot.is_closed:
         members_to_unmute = []
         for member_id in muted_members:
-            if time.time() > int(muted_members[member_id]):
+            if time.time() > float(muted_members[member_id]):
                 firebase_ref.child('muted_members/{0}'.format(member_id)).delete()
                 members_to_unmute.append(member_id)
                 server = discord.utils.get(bot.servers, id=hkd.SERVER_ID)
@@ -273,6 +273,7 @@ async def kick(ctx, member : discord.Member):
             return
         await bot.kick(member)
         await bot.say(embed=create_embed(title='{0} has been kicked.'.format(member)))
+        firebase_ref.child('muted_members/{0}'.format(member.id)).delete()
         return
     await bot.say(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
 
@@ -282,6 +283,7 @@ async def ban(ctx, member : discord.Member):
     if ctx.message.author.server_permissions.ban_members:
         await bot.ban(member)
         await bot.say(embed=create_embed(title='{0} has been banned.'.format(member)))
+        firebase_ref.child('muted_members/{0}'.format(member.id)).delete()
         return
     await bot.say(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
 
@@ -805,7 +807,7 @@ async def yt(ctx, *, query : str):
             soup = BeautifulSoup(html_response, 'html.parser')
             for result in soup.find_all(attrs={'class': 'yt-uix-tile-link'}):
                 link = result['href']
-                if link.find('googleads.g.doubleclick.net') == -1 and not link.startswith('/channel'):
+                if hkd.is_youtube_link(link):
                     await bot.say('https://www.youtube.com{0}'.format(link))
                     return
             break
