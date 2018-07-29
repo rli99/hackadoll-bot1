@@ -23,7 +23,7 @@ from urllib.parse import quote
 from urllib.request import urlopen
 
 config = hkd.parse_config()
-bot = commands.Bot(command_prefix=('!', 'ichigo ', 'alexa '))
+bot = commands.Bot(command_prefix=('!', 'ichigo ', 'alexa ', 'Ichigo ', 'Alexa '))
 bot.remove_command('help')
 certificate = credentials.Certificate(config['firebase_credentials'])
 firebase = initialize_app(certificate, {'databaseURL': config['firebase_db']})
@@ -366,7 +366,7 @@ async def hakooshi(ctx):
     else:
         await bot.say(embed=create_embed(description='Hello {0.message.author.mention}, you already have every WUG member role.'.format(ctx), colour=discord.Colour.red()))
 
-@bot.command(name='kamioshi-count', aliases=['kamioshicount'], pass_context=True, no_pm=True)
+@bot.command(name='kamioshi-count', aliases=['kamioshicount', 'kamioshi count'], pass_context=True, no_pm=True)
 async def kamioshi_count(ctx):
     await bot.send_typing(ctx.message.channel)
     ids_to_member = hkd.get_role_ids()
@@ -382,7 +382,7 @@ async def kamioshi_count(ctx):
         description += '**{0}** ({1.mention}) - {2}\n'.format(oshi[0].title(), get_wug_role(ctx.message.server, oshi[0]), oshi[1])
     await bot.say(content='**Number of Users with Each WUG Member Role as Their Highest Role**', embed=create_embed(description=description))
 
-@bot.command(name='oshi-count', aliases=['oshicount'], pass_context=True, no_pm=True)
+@bot.command(name='oshi-count', aliases=['oshicount', 'oshi count'], pass_context=True, no_pm=True)
 async def oshi_count(ctx):
     await bot.send_typing(ctx.message.channel)
     ids_to_member = hkd.get_role_ids()
