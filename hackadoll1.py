@@ -425,7 +425,7 @@ async def events(ctx, *, date : str=''):
                         await bot.say('**Events Involving WUG Members on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date))
                         await bot.send_typing(ctx.message.channel)
                         await asyncio.sleep(0.5)
-                    other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p != 'Wake Up, Girls!']
+                    other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p not in hkd.WUG_OTHER_UNITS]
                     embed_fields = []
                     embed_fields.append(('Location', info[1].contents[0]))
                     embed_fields.append(('Time', event_time.contents[0] if event_time else 'To be announced'))
@@ -489,7 +489,7 @@ async def eventsin(ctx, month : str, member : str=''):
                             first = False
                             await bot.say('**Events for {0} in {1} {2}**'.format(member.title() if member else 'Wake Up, Girls!', month_name[int(search_month)], search_year))
                             await asyncio.sleep(0.5)
-                        other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p != 'Wake Up, Girls!']
+                        other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p not in hkd.WUG_OTHER_UNITS]
                         embed_fields = []
                         embed_fields.append(('Location', info[1].contents[0]))
                         embed_fields.append(('Date', '{0} ({1:%A})'.format(event_date, parser.parse(event_date))))
