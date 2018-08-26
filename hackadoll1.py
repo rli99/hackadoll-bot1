@@ -319,9 +319,9 @@ async def unmute(ctx, member : discord.Member):
 @bot.command(pass_context=True, no_pm=True)
 async def oshihen(ctx, member : str):
     await bot.send_typing(ctx.message.channel)
-    role = get_wug_role(ctx.message.server, member)
+    role = get_wug_role(ctx.message.server, hkd.parse_oshi_name(member))
     if role is None:
-        await bot.say(embed=create_embed(description='Couldn\'t find that role. Use **!roles** to show additional help on how to get roles.', colour=discord.Colour.red()))
+        await bot.say(embed=create_embed(description='Couldn\'t find that role. Use **!help roles** to show additional help on how to get roles.', colour=discord.Colour.red()))
         return
 
     roles_to_remove = []
@@ -341,9 +341,9 @@ async def oshihen(ctx, member : str):
 @bot.command(pass_context=True, no_pm=True)
 async def oshimashi(ctx, member : str):
     await bot.send_typing(ctx.message.channel)
-    role = get_wug_role(ctx.message.server, member)
+    role = get_wug_role(ctx.message.server, hkd.parse_oshi_name(member))
     if role is None:
-        await bot.say(embed=create_embed(description='Couldn\'t find that role. Use **!roles** to show additional help on how to get roles.', colour=discord.Colour.red()))
+        await bot.say(embed=create_embed(description='Couldn\'t find that role. Use **!help roles** to show additional help on how to get roles.', colour=discord.Colour.red()))
         return
 
     if role not in ctx.message.author.roles:
@@ -369,7 +369,7 @@ async def hakooshi(ctx):
 @bot.command(name='kamioshi-count', aliases=['kamioshicount', 'kamioshi count'], pass_context=True, no_pm=True)
 async def kamioshi_count(ctx):
     await bot.send_typing(ctx.message.channel)
-    ids_to_member = hkd.get_role_ids()
+    ids_to_member = hkd.dict_reverse(hkd.WUG_ROLE_IDS)
     oshi_num = {}
     for member in ctx.message.server.members:
         member_roles = [r for r in member.roles if r.id in ids_to_member]
@@ -385,7 +385,7 @@ async def kamioshi_count(ctx):
 @bot.command(name='oshi-count', aliases=['oshicount', 'oshi count'], pass_context=True, no_pm=True)
 async def oshi_count(ctx):
     await bot.send_typing(ctx.message.channel)
-    ids_to_member = hkd.get_role_ids()
+    ids_to_member = hkd.dict_reverse(hkd.WUG_ROLE_IDS)
     oshi_num = {}
     for member in ctx.message.server.members:
         for role in member.roles:
@@ -818,13 +818,13 @@ async def dl_vid(ctx, url : str):
     await bot.send_typing(ctx.message.channel)
     await bot.say('Attempting to download the video using youtube-dl. Please wait.')
     niconico_vid = 'nicovideo.jp' in url
-    proc = subprocess.run(args=['youtube-dl', '--get-filename', url], universal_newlines=True, stdout=subprocess.PIPE)
+    ytdl_getfilename_args = ['youtube-dl']
+    if niconico_vid:
+        ytdl_getfilename_args += ['-u', config['nicovideo_user'], '-p', config['nicovideo_pw']]
+    ytdl_getfilename_args += ['--get-filename', url]
+    
+    proc = subprocess.run(args=ytdl_getfilename_args, universal_newlines=True, stdout=subprocess.PIPE)
     vid_filename = proc.stdout.strip()
-
-    if niconico_vid and not vid_filename:
-        url = url.rstrip('/')
-        niconico_id = url[url.rfind('/') + 1:]
-        vid_filename = 'nicovideo_{0}.mp4'.format(niconico_id)
 
     ytdl_args = ['youtube-dl', '-o', vid_filename, '-f', 'best']
     if niconico_vid:

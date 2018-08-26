@@ -1,4 +1,5 @@
 import configparser, discord, time
+from contextlib import suppress
 from dateutil import parser
 from operator import itemgetter
 
@@ -7,6 +8,7 @@ TWITTER_CHANNEL_ID = '448716340816248832'
 SEIYUU_CHANNEL_ID = '309934970124763147'
 MUTED_ROLE_ID = '445572638543446016'
 BOT_ADMIN_ID = '299908261438816258'
+WUG_OSHI_NAMES = {'mayushii': ['mayushii', 'mayu', 'mayuchan', 'mayushi', 'mayuc'], 'aichan': ['aichan', 'airi', 'chanai'], 'minyami': ['minyami', 'minami', 'minachan', 'mina'], 'yoppi': ['yoppi', 'yoshino', 'yopichan', 'yopi'], 'nanamin': ['nanamin', 'nanami', 'nanachan', 'nana'], 'kayatan': ['kayatan', 'kaya', 'kayachan'], 'myu': ['myu', 'miyu', 'myuchan', 'myuu', 'myuuchan']}
 WUG_ROLE_IDS = {'mayushii': '332788311280189443', 'aichan': '333727530680844288', 'minyami': '332793887200641028', 'yoppi': '332796755399933953', 'nanamin': '333721984196411392', 'kayatan': '333721510164430848', 'myu': '333722098377818115'}
 WUG_TWITTER_BLOG_SIGNS = ['まゆ', 'あいり', '虎>ω<', 'よぴ', 'anaminn', 'かやたん', 'み´μ｀ゆ']
 WUG_BLOG_ORDER = ['まゆ', 'み´μ｀ゆ', 'かやたん', 'anaminn', 'よぴ', '虎>ω<', 'あいり']
@@ -25,10 +27,16 @@ def get_muted_role(server):
     return discord.utils.get(server.roles, id=MUTED_ROLE_ID)
 
 def get_wug_role(server, member):
-    return discord.utils.get(server.roles, id=WUG_ROLE_IDS[member.lower()])
+    with suppress(Exception):
+        return discord.utils.get(server.roles, id=WUG_ROLE_IDS[member.lower()])
 
-def get_role_ids():
-    return {v: k for k, v in WUG_ROLE_IDS.items()}
+def dict_reverse(dictionary):
+    return {v: k for k, v in dictionary.items()}
+
+def parse_oshi_name(name):
+    for oshi, names in WUG_OSHI_NAMES.items():
+        if name.lower() in names:
+            return oshi
 
 def parse_mv_name(name):
     for char in ' .,。、!?！？()（）':
