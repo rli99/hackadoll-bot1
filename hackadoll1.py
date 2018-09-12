@@ -8,6 +8,7 @@ from datetime import datetime
 from dateutil import parser
 from decimal import Decimal
 from discord.ext import commands
+from discord.ext.commands.cooldowns import BucketType
 from firebase_admin import credentials, db, initialize_app
 from forex_python.converter import CurrencyRates
 from googletrans import Translator
