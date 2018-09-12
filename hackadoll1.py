@@ -40,7 +40,7 @@ async def on_ready():
 @bot.event
 async def check_mute_status():
     await bot.wait_until_ready()
-    while not bot.is_closed:
+    while not bot.is_closed():
         members_to_unmute = []
         for member_id in muted_members:
             if time.time() > float(muted_members[member_id]):
@@ -56,7 +56,7 @@ async def check_mute_status():
 @bot.event
 async def check_tweets():
     await bot.wait_until_ready()
-    while not bot.is_closed:
+    while not bot.is_closed():
         guild = discord.utils.get(bot.guilds, id=hkd.SERVER_ID)
         channel = discord.utils.get(guild.channels, id=hkd.TWITTER_CHANNEL_ID)
         for _ in range(3):
@@ -102,7 +102,7 @@ async def check_tweets():
 @bot.event
 async def check_poll_status():
     await bot.wait_until_ready()
-    while not bot.is_closed:
+    while not bot.is_closed():
         topic, channel_id, results = poll.check_status()
         if channel_id:
             guild = discord.utils.get(bot.guilds, id=hkd.SERVER_ID)
@@ -116,7 +116,7 @@ async def check_poll_status():
 @bot.event
 async def check_wugch_omake():
     await bot.wait_until_ready()
-    while not bot.is_closed:
+    while not bot.is_closed():
         wugch_vid = ''
         for _ in range(3):
             with suppress(Exception):
@@ -160,7 +160,7 @@ async def check_wugch_omake():
 @bot.event
 async def check_live_streams():
     await bot.wait_until_ready()
-    while not bot.is_closed:
+    while not bot.is_closed():
         now = datetime.utcnow().isoformat() + 'Z'
         for _ in range(3):
             with suppress(Exception):
