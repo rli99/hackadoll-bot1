@@ -822,7 +822,7 @@ async def dl_vid(ctx, url : str):
     if niconico_vid:
         ytdl_getfilename_args += ['-u', config['nicovideo_user'], '-p', config['nicovideo_pw']]
     ytdl_getfilename_args += ['--get-filename', url]
-    
+
     proc = subprocess.run(args=ytdl_getfilename_args, universal_newlines=True, stdout=subprocess.PIPE)
     vid_filename = proc.stdout.strip()
 
