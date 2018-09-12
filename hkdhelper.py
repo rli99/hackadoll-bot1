@@ -84,7 +84,7 @@ def is_video_link(text):
     return False
 
 def is_youtube_link(text):
-    return text.find('googleads.g.doubleclick.net') == - 1 and text.find('googleadservices.com') == - 1 and not text.startswith(('/channel', '/user'))
+    return text.find('googleads.g.doubleclick.net') == -1 and text.find('googleadservices.com') == -1 and not text.startswith(('/channel', '/user'))
 
 def is_embeddable_content(content):
     return is_image_file(content) or is_video_link(content) or 'twitter.com' in content
