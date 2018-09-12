@@ -223,7 +223,8 @@ async def mod_commands(ctx):
     embed_fields.append(('!unmute *member*', 'Unmute a member.'))
     await ctx.send(content='**Commands for Moderators**', embed=create_embed(fields=embed_fields))
 
-@help.command(aliases=['role'], no_pm=True)
+@help.command(aliases=['role'])
+@commands.guild_only()
 async def roles(ctx):
     description = 'Users can have any of the 7 WUG member roles. Use **!oshihen** *member* to get the role you want.\n\n'
     for oshi in hkd.WUG_ROLE_IDS.keys():
@@ -259,7 +260,8 @@ async def polls(ctx, aliases=['poll']):
     embed_fields.append(('!vote *number*', 'Vote for an option in a poll.'))
     await ctx.send(content='**Commands for Making Polls**', embed=create_embed(fields=embed_fields))
 
-@bot.command(no_pm=True)
+@bot.command()
+@commands.guild_only()
 async def kick(ctx, member: discord.Member):
     await ctx.channel.trigger_typing()
     if ctx.author.guild_permissions.kick_members:
@@ -272,7 +274,8 @@ async def kick(ctx, member: discord.Member):
         return
     await ctx.send(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
 
-@bot.command(no_pm=True)
+@bot.command()
+@commands.guild_only()
 async def ban(ctx, member: discord.Member):
     await ctx.channel.trigger_typing()
     if ctx.author.guild_permissions.ban_members:
@@ -282,7 +285,8 @@ async def ban(ctx, member: discord.Member):
         return
     await ctx.send(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
 
-@bot.command(no_pm=True)
+@bot.command()
+@commands.guild_only()
 async def mute(ctx, member: discord.Member, duration: int):
     await ctx.channel.trigger_typing()
     if ctx.author.guild_permissions.kick_members:
@@ -300,7 +304,8 @@ async def mute(ctx, member: discord.Member, duration: int):
     else:
         await ctx.send(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
 
-@bot.command(no_pm=True)
+@bot.command()
+@commands.guild_only()
 async def unmute(ctx, member: discord.Member):
     await ctx.channel.trigger_typing()
     if ctx.author.guild_permissions.kick_members:
@@ -311,7 +316,8 @@ async def unmute(ctx, member: discord.Member):
     else:
         await ctx.send(embed=create_embed(title='You do not have permission to do that.', colour=discord.Colour.red()))
 
-@bot.command(no_pm=True)
+@bot.command()
+@commands.guild_only()
 async def oshihen(ctx, member: str):
     await ctx.channel.trigger_typing()
     role = get_wug_role(ctx.guild, hkd.parse_oshi_name(member))
@@ -330,7 +336,8 @@ async def oshihen(ctx, member: str):
     await ctx.author.add_roles(role)
     await ctx.send(embed=create_embed(description='Hello {0.message.author.mention}, you have oshihened to the **{1}** role {2.mention}.'.format(ctx, member.title(), role), colour=role.colour))
 
-@bot.command(no_pm=True)
+@bot.command()
+@commands.guild_only()
 async def oshimashi(ctx, member: str):
     await ctx.channel.trigger_typing()
     role = get_wug_role(ctx.guild, hkd.parse_oshi_name(member))
@@ -343,7 +350,8 @@ async def oshimashi(ctx, member: str):
     else:
         await ctx.send(embed=create_embed(description='Hello {0.message.author.mention}, you already have that role.'.format(ctx), colour=discord.Colour.red()))
 
-@bot.command(no_pm=True)
+@bot.command()
+@commands.guild_only()
 async def hakooshi(ctx):
     await ctx.channel.trigger_typing()
     roles_to_add = []
@@ -356,7 +364,8 @@ async def hakooshi(ctx):
     else:
         await ctx.send(embed=create_embed(description='Hello {0.message.author.mention}, you already have every WUG member role.'.format(ctx), colour=discord.Colour.red()))
 
-@bot.command(name='kamioshi-count', aliases=['kamioshicount', 'kamioshi count'], no_pm=True)
+@bot.command(name='kamioshi-count', aliases=['kamioshicount', 'kamioshi count'])
+@commands.guild_only()
 async def kamioshi_count(ctx):
     await ctx.channel.trigger_typing()
     ids_to_member = hkd.dict_reverse(hkd.WUG_ROLE_IDS)
@@ -371,7 +380,8 @@ async def kamioshi_count(ctx):
         description += '**{0}** ({1.mention}) - {2}\n'.format(oshi[0].title(), get_wug_role(ctx.guild, oshi[0]), oshi[1])
     await ctx.send(content='**Number of Users with Each WUG Member Role as Their Highest Role**', embed=create_embed(description=description))
 
-@bot.command(name='oshi-count', aliases=['oshicount', 'oshi count'], no_pm=True)
+@bot.command(name='oshi-count', aliases=['oshicount', 'oshi count'])
+@commands.guild_only()
 async def oshi_count(ctx):
     await ctx.channel.trigger_typing()
     ids_to_member = hkd.dict_reverse(hkd.WUG_ROLE_IDS)
@@ -385,7 +395,8 @@ async def oshi_count(ctx):
         description += '**{0}** ({1.mention}) - {2}\n'.format(oshi[0].title(), get_wug_role(ctx.guild, oshi[0]), oshi[1])
     await ctx.send(content='**Number of Users with Each WUG Member Role**', embed=create_embed(description=description))
 
-@bot.command(no_pm=True)
+@bot.command()
+@commands.guild_only()
 async def events(ctx, *, date: str=''):
     await ctx.channel.trigger_typing()
     event_urls = []
@@ -426,7 +437,8 @@ async def events(ctx, *, date: str=''):
     if not event_urls:
         await ctx.send(embed=create_embed(description="Couldn't find any events on that day.", colour=discord.Colour.red()))
 
-@bot.command(no_pm=True)
+@bot.command()
+@commands.guild_only()
 async def eventsin(ctx, month: str, member: str=''):
     await ctx.channel.trigger_typing()
     search_month = hkd.parse_month(month)
@@ -488,7 +500,8 @@ async def eventsin(ctx, month: str, member: str=''):
     if not event_urls:
         await ctx.send(embed=create_embed(description="Couldn't find any events during that month.", colour=discord.Colour.red()))
 
-@bot.command(aliases=['createtag'], no_pm=True)
+@bot.command(aliases=['createtag'])
+@commands.guild_only()
 async def tagcreate(ctx, *, tag_to_create: str):
     await ctx.channel.trigger_typing()
     split_request = tag_to_create.split()
@@ -503,7 +516,8 @@ async def tagcreate(ctx, *, tag_to_create: str):
         return
     await ctx.send(embed=create_embed(description="Couldn't create tag. Please follow this format for creating a tag: **!tagcreate** *NameOfTag* *Content of the tag*.", colour=discord.Colour.red()))
 
-@bot.command(aliases=['updatetag'], no_pm=True)
+@bot.command(aliases=['updatetag'])
+@commands.guild_only()
 async def tagupdate(ctx, *, tag_to_update: str):
     await ctx.channel.trigger_typing()
     split_update = tag_to_update.split()
@@ -518,7 +532,8 @@ async def tagupdate(ctx, *, tag_to_update: str):
         return
     await ctx.send(embed=create_embed(description="Couldn't update tag. Please follow this format for updating a tag: **!tagupdate** *NameOfTag* *Updated content of the tag*.", colour=discord.Colour.red()))
 
-@bot.command(aliases=['tagremove', 'deletetag', 'removetag'], no_pm=True)
+@bot.command(aliases=['tagremove', 'deletetag', 'removetag'])
+@commands.guild_only()
 async def tagdelete(ctx, tag_name: str):
     await ctx.channel.trigger_typing()
     if firebase_ref.child('tags/{0}'.format(tag_name)).get():
@@ -527,13 +542,15 @@ async def tagdelete(ctx, tag_name: str):
     else:
         await ctx.send(embed=create_embed(title="That tag doesn't exist.", colour=discord.Colour.red()))
 
-@bot.command(aliases=['searchtag', 'tags'], no_pm=True)
+@bot.command(aliases=['searchtag', 'tags'])
+@commands.guild_only()
 async def tagsearch(ctx):
     await ctx.channel.trigger_typing()
     tag_list = firebase_ref.child('tags').get()
     await ctx.send(content='Existing Tags', embed=create_embed(title=', '.join(list(tag_list.keys()))))
 
-@bot.command(no_pm=True)
+@bot.command()
+@commands.guild_only()
 async def tag(ctx, tag_name: str):
     await ctx.channel.trigger_typing()
     tag_result = firebase_ref.child('tags/{0}'.format(tag_name)).get()
@@ -557,7 +574,8 @@ async def tag(ctx, tag_name: str):
     else:
         await ctx.send(embed=create_embed(description="That tag doesn't exist. Use **!tagcreate** *tag_name* *Content of the tag* to create a tag.", colour=discord.Colour.red()))
 
-@bot.command(aliases=['createpoll'], no_pm=True)
+@bot.command(aliases=['createpoll'])
+@commands.guild_only()
 async def pollcreate(ctx, duration: int, *, topic: str):
     await ctx.channel.trigger_typing()
     if duration > 120:
@@ -572,7 +590,8 @@ async def pollcreate(ctx, duration: int, *, topic: str):
     else:
         await ctx.send(embed=create_embed(description='There is already an ongoing poll. Please wait for the current poll to end, or if you are the creator of the current poll, you can end it with **!pollend**.', colour=discord.Colour.red()))
 
-@bot.command(no_pm=True)
+@bot.command()
+@commands.guild_only()
 async def polloptions(ctx, *, options: str):
     await ctx.channel.trigger_typing()
     if not poll.topic:
@@ -593,7 +612,8 @@ async def polloptions(ctx, *, options: str):
     description += poll.get_details()
     await ctx.send(content='Poll created. This poll will last for {0}. The creator of the poll may end it early with **!pollend**.'.format(format_timespan(poll.duration * 60)), embed=create_embed(title=poll.topic, description=description))
 
-@bot.command(no_pm=True)
+@bot.command()
+@commands.guild_only()
 async def polldetails(ctx):
     await ctx.channel.trigger_typing()
     if not poll.options:
@@ -603,7 +623,8 @@ async def polldetails(ctx):
     description += poll.get_details()
     await ctx.send(content='Details of the currently running poll.', embed=create_embed(title=poll.topic, description=description))
 
-@bot.command(aliases=['endpoll'], no_pm=True)
+@bot.command(aliases=['endpoll'])
+@commands.guild_only()
 async def pollend(ctx):
     await ctx.channel.trigger_typing()
     if not poll.topic:
@@ -618,7 +639,8 @@ async def pollend(ctx):
     topic = poll.topic
     await ctx.send(content='Poll ended.', embed=create_embed(title=topic, description=poll.end()))
 
-@bot.command(no_pm=True)
+@bot.command()
+@commands.guild_only()
 async def vote(ctx, option: int):
     if not poll.options:
         await ctx.send(embed=create_embed(title='There is no currently ongoing poll.', colour=discord.Colour.red()))
@@ -628,7 +650,8 @@ async def vote(ctx, option: int):
         return
     poll.vote(option, ctx.author.id)
 
-@bot.command(aliases=['user-info'], no_pm=True)
+@bot.command(aliases=['user-info'])
+@commands.guild_only()
 async def userinfo(ctx, member: discord.Member=None):
     await ctx.channel.trigger_typing()
     user = member or ctx.author
@@ -641,7 +664,8 @@ async def userinfo(ctx, member: discord.Member=None):
     embed_fields.append(('Avatar', '{0}'.format('<{0}>'.format(user.avatar_url) if user.avatar_url else 'None')))
     await ctx.send(content='**User Information for {0.mention}**'.format(user), embed=create_embed(fields=embed_fields, inline=True))
 
-@bot.command(aliases=['server-info'], no_pm=True)
+@bot.command(aliases=['server-info'])
+@commands.guild_only()
 async def serverinfo(ctx):
     await ctx.channel.trigger_typing()
     guild = ctx.guild
@@ -657,6 +681,7 @@ async def serverinfo(ctx):
     await ctx.send(content='**Server Information**', embed=create_embed(fields=embed_fields, inline=True))
 
 @bot.command()
+@commands.cooldown(1, 10, BucketType.guild)
 async def blogpics(ctx, member: str=''):
     await ctx.channel.trigger_typing()
     for _ in range(3):
@@ -720,7 +745,8 @@ async def seiyuu_vids(ctx):
     await ctx.channel.trigger_typing()
     await ctx.send(content='**WUG Seiyuu Videos**', embed=create_embed(title='List of seiyuu content on the Wake Up, Girls! wiki', url='http://wake-up-girls.wikia.com/wiki/List_of_Seiyuu_Content'))
 
-@bot.command(name='wugch-omake', aliases=['wugch'], no_pm=True)
+@bot.command(name='wugch-omake', aliases=['wugch'])
+@commands.guild_only()
 async def wugch_omake(ctx):
     await ctx.channel.trigger_typing()
     await ctx.send(content='**WUG Channel Omake Videos**', embed=create_embed(title='Google Drive folder with recent WUGch omake videos', url='https://drive.google.com/open?id=1o0PWGdlCUhsIN72O0aKSP6HRbim5Fzpw'))
@@ -785,7 +811,8 @@ async def yt(ctx, *, query: str):
             break
     await ctx.send(embed=create_embed(title="Couldn't find any results.", colour=discord.Colour.red()))
 
-@bot.command(name='dl-vid', aliases=['dlvid', 'youtube-dl'], no_pm=True)
+@bot.command(name='dl-vid', aliases=['dlvid', 'youtube-dl'])
+@commands.guild_only()
 async def dl_vid(ctx, url: str):
     await ctx.channel.trigger_typing()
     await ctx.send('Attempting to download the video using youtube-dl. Please wait.')
