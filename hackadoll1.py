@@ -361,7 +361,7 @@ async def kamioshi_count(ctx):
     await ctx.channel.trigger_typing()
     ids_to_member = hkd.dict_reverse(hkd.WUG_ROLE_IDS)
     oshi_num = {}
-    for member in ctx.members:
+    for member in ctx.guild.members:
         member_roles = [r for r in member.roles if r.id in ids_to_member]
         if len(member_roles) > 0:
             role = sorted(member_roles)[-1]
@@ -376,7 +376,7 @@ async def oshi_count(ctx):
     await ctx.channel.trigger_typing()
     ids_to_member = hkd.dict_reverse(hkd.WUG_ROLE_IDS)
     oshi_num = {}
-    for member in ctx.members:
+    for member in ctx.guild.members:
         for role in member.roles:
             if role.id in ids_to_member:
                 oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1
