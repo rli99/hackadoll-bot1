@@ -882,6 +882,7 @@ async def onmusu(ctx, member: str=''):
     author = {}
     author['name'] = char_name
     author['url'] = profile_link
+    author['icon_url'] = 'https://onsen-musume.jp/wp/wp-content/themes/onsenmusume/pc/assets/img/character/thumb/list/yu_icon.png'
     footer = {}
     footer['text'] = serifu
     await ctx.send(embed=create_embed(author=author, title='CV: {0}'.format(seiyuu), description=char_catch, colour=discord.Colour(char_colour), image=char_pic, thumbnail=thumbnail, fields=embed_fields, footer=footer, inline=True))
