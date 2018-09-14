@@ -870,8 +870,7 @@ async def onmusu(ctx, member: str=''):
     serifu = soup.find('div', class_='character_ph__serif').find('img')['alt']
     char_main = soup.find('div', class_='character_post__main')
     char_name = char_main.find('img')['alt']
-    char_cast = char_main.find('h2').find('img')['alt']
-    seiyuu = char_cast[3:char_cast.find(' ')]
+    seiyuu = char_main.find('h2').find('img')['alt'][3:7]
     char_catch = char_main.find('p', class_='character_post__catch').contents[0]
     embed_fields = []
     for item in char_main.find('ul', class_='character_profile').find_all('li'):
