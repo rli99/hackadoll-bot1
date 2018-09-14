@@ -10,8 +10,8 @@ MUTED_ROLE_ID = 445572638543446016
 BOT_ADMIN_ID = 299908261438816258
 WUG_EVENTERNOTE_IDS = [6988, 3774, 6984, 6983, 6985, 6982, 6986, 6987]
 WUG_MEMBERS = ['Wake Up, Girls', '吉岡茉祐', '永野愛理', '田中美海', '青山吉能', '山下七海', '奥野香耶', '高木美佑']
-WUG_TWITTER_BLOG_SIGNS = ['まゆ', 'あいり', '虎>ω<', 'よぴ', 'anaminn', 'かやたん', 'み´μ｀ゆ']
-WUG_BLOG_ORDER = ['まゆ', 'み´μ｀ゆ', 'かやたん', 'anaminn', 'よぴ', '虎>ω<', 'あいり']
+WUG_TWITTER_BLOG_SIGNS = ['まゆ', 'あいり', '虎>ω<', 'よぴ', 'anamin', 'かやたん', 'み´μ｀ゆ']
+WUG_BLOG_ORDER = ['まゆ', 'み´μ｀ゆ', 'かやたん', 'anamin', 'よぴ', '虎>ω<', 'あいり']
 VIDEO_LINK_URLS = ['streamable.com', 'youtube.com']
 WUG_OTHER_UNITS = ['Wake Up, Girls!', "Wake Up, May'n!", 'ハッカドール', 'D-selections', 'チーム“ハナヤマタ”', 'Zähre', '4U', 'Ci+LUS', 'Adhara', 'petit corolla', 'FIVE STARS', 'TEAM OHENRO。']
 WUG_OSHI_NAMES = {
@@ -36,10 +36,18 @@ WUG_BLOG_SIGNS = {
     'mayushii': 'まゆ',
     'myu': 'み´μ｀ゆ',
     'kayatan': 'かやたん',
-    'nanamin': 'anaminn',
+    'nanamin': 'anamin',
     'yoppi': 'よぴ',
     'minyami': '虎>ω<',
     'aichan': 'あいり',
+}
+WUG_ONMUSU_CHARS = {
+    'mayushii': ['iizaka_mahiro', 0x98d98e],
+    'myu': ['yumura_chiyo', 0xe25b54],
+    'kayatan': ['unzen_inori', 0xe6e8ff],
+    'nanamin': ['kinosaki_arisa', 0xd7f498],
+    'yoppi': ['hitoyoshi_aoi', 0xfeeed6],
+    'minyami': ['kurokawa_kira', 0xa09bdc]
 }
 
 def parse_config():
@@ -107,14 +115,16 @@ def split_embeddable_content(tag_content):
             return
     return split_tag
 
-def create_embed(author={}, title='', description='', colour=discord.Colour.light_grey(), url='', image='', thumbnail='', fields=[], inline=False):
+def create_embed(author={}, title='', description='', colour=discord.Colour.light_grey(), url='', image='', thumbnail='', fields=[], footer={}, inline=False):
     embed = discord.Embed(title=title, description=description, colour=colour, url=url)
     if author:
-        embed.set_author(name=author['name'], url=author['url'], icon_url=author['icon_url'])
+        embed.set_author(name=author['name'], url=author.get('url', ''), icon_url=author.get('icon_url', ''))
     if image:
         embed.set_image(url=image)
     if thumbnail:
         embed.set_thumbnail(url=thumbnail)
+    if footer:
+        embed.set_footer(text=footer['text'], icon_url=footer.get('icon_url', ''))
     for field in fields:
         embed.add_field(name=field[0], value=field[1], inline=inline)
     return embed

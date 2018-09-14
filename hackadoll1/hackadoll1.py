@@ -12,7 +12,7 @@ from discord.ext.commands.cooldowns import BucketType
 from firebase_admin import credentials, db, initialize_app
 from forex_python.converter import CurrencyRates
 from googletrans import Translator
-from hkdhelper import create_embed, get_muted_role, get_wug_role
+from hkdhelper import create_embed, get_muted_role, get_wug_role, parse_oshi_name
 from html import unescape
 from httplib2 import Http
 from humanfriendly import format_timespan
@@ -215,6 +215,7 @@ async def help(ctx):
         embed_fields.append(('!choose *options*', 'Randomly choose from one of the provided options, e.g. **!choose** option1 option2'))
         embed_fields.append(('!yt *query*', 'Gets the top result from YouTube based on the provided search terms.'))
         embed_fields.append(('!dl-vid *url*', 'Attempts to download the video from the specified URL using youtube-dl.'))
+        embed_fields.append(('!onmusu *member*', 'Show the Onsen Musume profile for the character of the specified member.'))
         await ctx.send(content='**Available Commands**', embed=create_embed(fields=embed_fields))
 
 @help.command(name='mod-commands', aliases=['mod', 'mods'])
@@ -323,7 +324,7 @@ async def unmute(ctx, member: discord.Member):
 @commands.guild_only()
 async def oshihen(ctx, member: str):
     await ctx.channel.trigger_typing()
-    role = get_wug_role(ctx.guild, hkd.parse_oshi_name(member))
+    role = get_wug_role(ctx.guild, parse_oshi_name(member))
     if role is None:
         await ctx.send(embed=create_embed(description="Couldn't find that role. Use **!help roles** to show additional help on how to get roles.", colour=discord.Colour.red()))
         return
@@ -343,7 +344,7 @@ async def oshihen(ctx, member: str):
 @commands.guild_only()
 async def oshimashi(ctx, member: str):
     await ctx.channel.trigger_typing()
-    role = get_wug_role(ctx.guild, hkd.parse_oshi_name(member))
+    role = get_wug_role(ctx.guild, parse_oshi_name(member))
     if role is None:
         await ctx.send(embed=create_embed(description="Couldn't find that role. Use **!help roles** to show additional help on how to get roles.", colour=discord.Colour.red()))
         return
@@ -857,6 +858,34 @@ async def dl_vid(ctx, url: str):
             os.remove(vid_filename)
         return
     await ctx.send(content='{0.mention}'.format(ctx.author), embed=create_embed(description='Upload complete. Your video is available here: https://drive.google.com/open?id={0}. The Google Drive folder has limited space so it will be purged from time to time.'.format(config['uploads_folder'])))
+
+@bot.command()
+async def onmusu(ctx, member: str=''):
+    await ctx.channel.trigger_typing()
+    char, char_colour = hkd.WUG_ONMUSU_CHARS[parse_oshi_name(member)]
+    profile_link = 'https://onsen-musume.jp/character/{0}'.format(char)
+    html_response = urlopen(profile_link)
+    soup = BeautifulSoup(html_response, 'html.parser')
+    char_pic = 'https://onsen-musume.jp{0}'.format(soup.find('div', class_='character_ph__main').find('img')['src'])
+    serifu = soup.find('div', class_='character_ph__serif').find('img')['alt']
+    char_main = soup.find('div', class_='character_post__main')
+    char_name = char_main.find('img')['alt']
+    char_cast = char_main.find('h2').find('img')['alt']
+    seiyuu = char_cast[3:char_cast.find(' ')]
+    char_catch = char_main.find('p', class_='character_post__catch').contents[0]
+    embed_fields = []
+    for item in char_main.find('ul', class_='character_profile').find_all('li'):
+        for i, entry in enumerate(item.find_all('span')):
+            embed_fields.append((entry.contents[0], item.contents[(i + 1) * 2][1:]))
+    html_response = urlopen('https://onsen-musume.jp/character/')
+    soup = BeautifulSoup(html_response, 'html.parser')
+    thumbnail = 'https://onsen-musume.jp{0}'.format(soup.find('li', class_='character-list__item02 {0}'.format(char)).find('img')['src'])
+    author = {}
+    author['name'] = char_name
+    author['url'] = profile_link
+    footer = {}
+    footer['text'] = serifu
+    await ctx.send(embed=create_embed(author=author, title='CV: {0}'.format(seiyuu), description=char_catch, colour=discord.Colour(char_colour), image=char_pic, thumbnail=thumbnail, fields=embed_fields, footer=footer, inline=True))
 
 @bot.command()
 async def say(ctx, channel_name: str, *, message: str):
