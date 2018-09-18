@@ -692,18 +692,22 @@ async def blogpics(ctx, member: str=''):
         with suppress(Exception):
             html_response = urlopen('https://ameblo.jp/wakeupgirls')
             soup = BeautifulSoup(html_response, 'html.parser')
-            blog_title = soup.find('h2')
-            member_sign = blog_title.find('a').contents[0]
-            day = -1
-            for i, sign in enumerate(hkd.WUG_BLOG_ORDER):
-                if sign in member_sign:
-                    day = i
-                    if not member:
-                        member = [m for m in hkd.WUG_BLOG_SIGNS.keys() if hkd.WUG_BLOG_SIGNS[m] == sign][0]
-            if day == -1:
-                await ctx.send(embed=create_embed(description="Couldn't find pictures for that member.", colour=discord.Colour.red()))
-                return
-            page, entry_num = map(sum, zip(divmod((hkd.WUG_BLOG_ORDER.index(hkd.WUG_BLOG_SIGNS[member.lower()]) - day) % 7, 3), (1, 1)))
+            if member:
+                blog_title = soup.find('h2')
+                member_sign = blog_title.find('a').contents[0]
+                day = -1
+                for i, sign in enumerate(hkd.WUG_BLOG_ORDER):
+                    if sign in member_sign:
+                        day = i
+                        if not member:
+                            member = [m for m in hkd.WUG_BLOG_SIGNS.keys() if hkd.WUG_BLOG_SIGNS[m] == sign][0]
+                if day == -1:
+                    await ctx.send(embed=create_embed(description="Couldn't find pictures for that member.", colour=discord.Colour.red()))
+                    return
+                page, entry_num = map(sum, zip(divmod((hkd.WUG_BLOG_ORDER.index(hkd.WUG_BLOG_SIGNS[member.lower()]) - day) % 7, 3), (1, 1)))
+            else:
+                page = 1
+                entry_num = 1
             if page != 1:
                 html_response = urlopen('https://ameblo.jp/wakeupgirls/page-{0}.html'.format(page))
                 soup = BeautifulSoup(html_response, 'html.parser')
