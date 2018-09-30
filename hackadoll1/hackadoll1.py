@@ -368,7 +368,7 @@ async def hakooshi(ctx):
     else:
         await ctx.send(embed=create_embed(description='Hello {0.message.author.mention}, you already have every WUG member role.'.format(ctx), colour=discord.Colour.red()))
 
-@bot.command(name='kamioshi-count', aliases=['kamioshicount', 'kamioshi count'])
+@bot.command(name='kamioshi-count', aliases=['kamioshicount'])
 @commands.guild_only()
 async def kamioshi_count(ctx):
     await ctx.channel.trigger_typing()
@@ -384,7 +384,7 @@ async def kamioshi_count(ctx):
         description += '**{0}** ({1.mention}) - {2}\n'.format(oshi[0].title(), get_wug_role(ctx.guild, oshi[0]), oshi[1])
     await ctx.send(content='**Number of Users with Each WUG Member Role as Their Highest Role**', embed=create_embed(description=description))
 
-@bot.command(name='oshi-count', aliases=['oshicount', 'oshi count'])
+@bot.command(name='oshi-count', aliases=['oshicount'])
 @commands.guild_only()
 async def oshi_count(ctx):
     await ctx.channel.trigger_typing()
@@ -684,7 +684,7 @@ async def serverinfo(ctx):
     embed_fields.append(('Icon', '{0}'.format('<{0}>'.format(guild.icon_url) if guild.icon_url else 'None')))
     await ctx.send(content='**Server Information**', embed=create_embed(fields=embed_fields, inline=True))
 
-@bot.command()
+@bot.command(aliases=['blog-pics'])
 @commands.cooldown(1, 10, BucketType.guild)
 async def blogpics(ctx, member: str=''):
     await ctx.channel.trigger_typing()
@@ -699,12 +699,10 @@ async def blogpics(ctx, member: str=''):
                 for i, sign in enumerate(hkd.WUG_BLOG_ORDER):
                     if sign in member_sign:
                         day = i
-                        if not member:
-                            member = [m for m in hkd.WUG_BLOG_SIGNS.keys() if hkd.WUG_BLOG_SIGNS[m] == sign][0]
                 if day == -1:
                     await ctx.send(embed=create_embed(description="Couldn't find pictures for that member.", colour=discord.Colour.red()))
                     return
-                page, entry_num = map(sum, zip(divmod((hkd.WUG_BLOG_ORDER.index(hkd.WUG_BLOG_SIGNS[member.lower()]) - day) % 7, 3), (1, 1)))
+                page, entry_num = map(sum, zip(divmod((hkd.WUG_BLOG_ORDER.index(hkd.WUG_BLOG_SIGNS[parse_oshi_name(member)]) - day) % 7, 3), (1, 1)))
             else:
                 page = 1
                 entry_num = 1
@@ -741,7 +739,7 @@ async def mv(ctx, *, song_name: str):
     else:
         await ctx.send(embed=create_embed(description="Couldn't find that MV. Use **!mv-list** to show the list of available MVs.", colour=discord.Colour.red()))
 
-@bot.command(name='mv-list', aliases=['mvlist'])
+@bot.command(name='mv-list', aliases=['mvlist', 'mvs'])
 async def mv_list(ctx):
     await ctx.channel.trigger_typing()
     description = '{0}\n\n'.format('\n'.join(list(firebase_ref.child('music_videos/mv_links').get().keys())))
@@ -753,7 +751,7 @@ async def seiyuu_vids(ctx):
     await ctx.channel.trigger_typing()
     await ctx.send(content='**WUG Seiyuu Videos**', embed=create_embed(title='List of seiyuu content on the Wake Up, Girls! wiki', url='http://wake-up-girls.wikia.com/wiki/List_of_Seiyuu_Content'))
 
-@bot.command(name='wugch-omake', aliases=['wugch'])
+@bot.command(name='wugch-omake', aliases=['wugch', 'wug-ch'])
 @commands.guild_only()
 async def wugch_omake(ctx):
     await ctx.channel.trigger_typing()
@@ -863,10 +861,10 @@ async def dl_vid(ctx, url: str):
         return
     await ctx.send(content='{0.mention}'.format(ctx.author), embed=create_embed(description='Upload complete. Your video is available here: https://drive.google.com/open?id={0}. The Google Drive folder has limited space so it will be purged from time to time.'.format(config['uploads_folder'])))
 
-@bot.command()
+@bot.command(aliases=['onsenmusume'])
 async def onmusu(ctx, member: str=''):
-    await ctx.channel.trigger_typing()
     char, char_colour = hkd.WUG_ONMUSU_CHARS[parse_oshi_name(member)]
+    await ctx.channel.trigger_typing()
     profile_link = 'https://onsen-musume.jp/character/{0}'.format(char)
     html_response = urlopen(profile_link)
     soup = BeautifulSoup(html_response, 'html.parser')
