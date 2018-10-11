@@ -23,6 +23,15 @@ WUG_OSHI_NAMES = {
     'kayatan': ['kayatan', 'kaya', 'kayachan'],
     'myu': ['myu', 'miyu', 'myuchan', 'myuu', 'myuuchan']
 }
+WUG_KAMIOSHI_ROLE_IDS = {
+    'mayushii': 499826746904805377,
+    'aichan': 499826827364139008,
+    'minyami': 499826901939126273,
+    'yoppi': 499826267890122753,
+    'nanamin': 499826972235661322,
+    'kayatan': 499826573231390730,
+    'myu': 499827054586494976
+}
 WUG_ROLE_IDS = {
     'mayushii': 332788311280189443,
     'aichan': 333727530680844288,
@@ -60,7 +69,11 @@ def get_muted_role(guild):
 
 def get_wug_role(guild, member):
     with suppress(Exception):
-        return discord.utils.get(guild.roles, id=WUG_ROLE_IDS[member.lower()])
+        return discord.utils.get(guild.roles, id=WUG_ROLE_IDS[parse_oshi_name(member)])
+
+def get_kamioshi_role(guild, member):
+    with suppress(Exception):
+        return discord.utils.get(guild.roles, id=WUG_KAMIOSHI_ROLE_IDS[parse_oshi_name(member)])
 
 def dict_reverse(dictionary):
     return { v: k for k, v in dictionary.items() }

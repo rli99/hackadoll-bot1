@@ -233,7 +233,7 @@ async def roles(ctx):
     description = 'Users can have any of the 7 WUG member roles. Use **!oshihen** *member* to get the role you want.\n\n'
     for oshi in hkd.WUG_ROLE_IDS.keys():
         description += '**!oshihen** {0} for {1.mention}\n'.format(oshi.title(), get_wug_role(ctx.guild, oshi))
-    description += '\nNote that using **!oshihen** will remove all of your existing member roles. To get an extra role without removing existing ones, use **!oshimashi** *member* instead. To get all 7 roles, use **!hakooshi**.\n\n'
+    description += "\nNote that using **!oshihen** will remove all of your existing member roles. To get an extra role without removing existing ones, use **!oshimashi** *member* instead. To get all 7 roles, use **!hakooshi**. Use **!kamioshi** *member* to specify which member you want to set as your highest role (you will get that member's colour).\n\n"
     description += 'Use **!oshi-count** to show the number of members with each WUG member role, or **!kamioshi-count** to show the number of members with each WUG member role as their highest role.\n'
     await ctx.send(content='**Commands for Roles**', embed=create_embed(description=description))
 
@@ -324,13 +324,13 @@ async def unmute(ctx, member: discord.Member):
 @commands.guild_only()
 async def oshihen(ctx, member: str):
     await ctx.channel.trigger_typing()
-    role = get_wug_role(ctx.guild, parse_oshi_name(member))
+    role = get_wug_role(ctx.guild, member)
     if role is None:
         await ctx.send(embed=create_embed(description="Couldn't find that role. Use **!help roles** to show additional help on how to get roles.", colour=discord.Colour.red()))
         return
     roles_to_remove = []
     for existing_role in ctx.author.roles:
-        if existing_role.id in hkd.WUG_ROLE_IDS.values():
+        if existing_role.id in hkd.WUG_ROLE_IDS.values() or existing_role.id in hkd.WUG_KAMIOSHI_ROLE_IDS.values():
             roles_to_remove.append(existing_role)
     if len(roles_to_remove) == 1 and roles_to_remove[0].name == role.name:
         await ctx.send(embed=create_embed(description='Hello {0.message.author.mention}, you already have that role.'.format(ctx), colour=discord.Colour.red()))
@@ -344,7 +344,7 @@ async def oshihen(ctx, member: str):
 @commands.guild_only()
 async def oshimashi(ctx, member: str):
     await ctx.channel.trigger_typing()
-    role = get_wug_role(ctx.guild, parse_oshi_name(member))
+    role = get_wug_role(ctx.guild, member)
     if role is None:
         await ctx.send(embed=create_embed(description="Couldn't find that role. Use **!help roles** to show additional help on how to get roles.", colour=discord.Colour.red()))
         return
@@ -368,17 +368,47 @@ async def hakooshi(ctx):
     else:
         await ctx.send(embed=create_embed(description='Hello {0.message.author.mention}, you already have every WUG member role.'.format(ctx), colour=discord.Colour.red()))
 
+@bot.command()
+@commands.guild_only()
+async def kamioshi(ctx, member: str):
+    await ctx.channel.trigger_typing()
+    role = get_wug_role(ctx.guild, member)
+    if role is None:
+        await ctx.send(embed=create_embed(description="Couldn't find that role. Use **!help roles** to show additional help on how to get roles.", colour=discord.Colour.red()))
+        return
+    roles_to_remove = []
+    if role in ctx.author.roles:
+        roles_to_remove.append(role)
+    kamioshi_role = hkd.get_kamioshi_role(ctx.guild, member)
+    for existing_role in ctx.author.roles:
+        if existing_role.id != kamioshi_role.id and existing_role.id in hkd.WUG_KAMIOSHI_ROLE_IDS.values():
+            roles_to_remove.append(existing_role)
+    if roles_to_remove:
+        await ctx.author.remove_roles(*roles_to_remove)
+        await asyncio.sleep(1)
+    if kamioshi_role not in ctx.author.roles:
+        await ctx.author.add_roles(kamioshi_role)
+        await ctx.send(embed=create_embed(description='Hello {0.message.author.mention}, you have set **{1}** as your kamioshi.'.format(ctx, member.title()), colour=kamioshi_role.colour))
+    else:
+        await ctx.send(embed=create_embed(description='Hello {0.message.author.mention}, that member is already your kamioshi.'.format(ctx), colour=discord.Colour.red()))
+
 @bot.command(name='kamioshi-count', aliases=['kamioshicount'])
 @commands.guild_only()
 async def kamioshi_count(ctx):
     await ctx.channel.trigger_typing()
-    ids_to_member = hkd.dict_reverse(hkd.WUG_ROLE_IDS)
+    ids_to_kamioshi = hkd.dict_reverse(hkd.WUG_KAMIOSHI_ROLE_IDS)
     oshi_num = {}
     for member in ctx.guild.members:
-        member_roles = [r for r in member.roles if r.id in ids_to_member]
-        if len(member_roles) > 0:
-            role = sorted(member_roles)[-1]
-            oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1
+        kamioshi_roles = [r for r in member.roles if r.id in ids_to_kamioshi]
+        if kamioshi_roles:
+            kamioshi_role = kamioshi_roles[0]
+            oshi_num[ids_to_kamioshi[kamioshi_role.id]] = oshi_num.get(ids_to_kamioshi[kamioshi_role.id], 0) + 1
+        else:
+            ids_to_member = hkd.dict_reverse(hkd.WUG_ROLE_IDS)
+            member_roles = [r for r in member.roles if r.id in ids_to_member]
+            if member_roles:
+                role = sorted(member_roles)[-1]
+                oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1
     description = ''
     for oshi in sorted(oshi_num.items(), key=itemgetter(1), reverse=True):
         description += '**{0}** ({1.mention}) - {2}\n'.format(oshi[0].title(), get_wug_role(ctx.guild, oshi[0]), oshi[1])
@@ -389,11 +419,14 @@ async def kamioshi_count(ctx):
 async def oshi_count(ctx):
     await ctx.channel.trigger_typing()
     ids_to_member = hkd.dict_reverse(hkd.WUG_ROLE_IDS)
+    ids_to_kamioshi = hkd.dict_reverse(hkd.WUG_KAMIOSHI_ROLE_IDS)
     oshi_num = {}
     for member in ctx.guild.members:
         for role in member.roles:
             if role.id in ids_to_member:
                 oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1
+            if role.id in ids_to_kamioshi:
+                oshi_num[ids_to_kamioshi[role.id]] = oshi_num.get(ids_to_kamioshi[role.id], 0) + 1
     description = ''
     for oshi in sorted(oshi_num.items(), key=itemgetter(1), reverse=True):
         description += '**{0}** ({1.mention}) - {2}\n'.format(oshi[0].title(), get_wug_role(ctx.guild, oshi[0]), oshi[1])
@@ -454,10 +487,10 @@ async def eventsin(ctx, month: str, member: str=''):
     search_index = [0]
     wug_names = list(hkd.WUG_ROLE_IDS.keys())
     if member:
-        if member.lower() not in wug_names:
+        if parse_oshi_name(member) not in wug_names:
             await ctx.send(embed=create_embed(description="Couldn't find any events. Please follow this format for searching for events: **!eventsin** April Mayushii.", colour=discord.Colour.red()))
             return
-        search_index = [wug_names.index(member.lower()) + 1]
+        search_index = [wug_names.index(parse_oshi_name(member)) + 1]
     event_urls = []
     first = True
     search_start = False
