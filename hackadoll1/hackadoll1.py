@@ -359,8 +359,11 @@ async def oshimashi(ctx, member: str):
 async def hakooshi(ctx):
     await ctx.channel.trigger_typing()
     roles_to_add = []
-    for role in ctx.guild.roles:
-        if role not in ctx.author.roles and role.id in hkd.WUG_ROLE_IDS.values():
+    existing_kamioshi_roles = [r for r in ctx.author.roles if r.id in hkd.WUG_KAMIOSHI_ROLE_IDS.values()]
+    kamioshi_role_name = existing_kamioshi_roles[0].name if existing_kamioshi_roles else ''
+    for oshi in hkd.WUG_ROLE_IDS:
+        role = discord.utils.get(ctx.guild.roles, id=hkd.WUG_ROLE_IDS[oshi])
+        if role not in ctx.author.roles and role.name != kamioshi_role_name:
             roles_to_add.append(role)
     if len(roles_to_add) > 0:
         await ctx.author.add_roles(*roles_to_add)
@@ -383,6 +386,9 @@ async def kamioshi(ctx, member: str):
     for existing_role in ctx.author.roles:
         if existing_role.id != kamioshi_role.id and existing_role.id in hkd.WUG_KAMIOSHI_ROLE_IDS.values():
             roles_to_remove.append(existing_role)
+            ids_to_kamioshi = hkd.dict_reverse(hkd.WUG_KAMIOSHI_ROLE_IDS)
+            replacement_role = discord.utils.get(ctx.guild.roles, id=hkd.WUG_ROLE_IDS[ids_to_kamioshi[existing_role.id]])
+            await ctx.author.add_roles(replacement_role)
     if roles_to_remove:
         await ctx.author.remove_roles(*roles_to_remove)
         await asyncio.sleep(1)
