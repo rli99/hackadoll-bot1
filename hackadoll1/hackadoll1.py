@@ -12,7 +12,7 @@ from discord.ext.commands.cooldowns import BucketType
 from firebase_admin import credentials, db, initialize_app
 from forex_python.converter import CurrencyRates
 from googletrans import Translator
-from hkdhelper import create_embed, get_muted_role, get_wug_role, parse_oshi_name
+from hkdhelper import create_embed, dict_reverse, get_muted_role, get_oshi_colour, get_wug_role, parse_oshi_name
 from html import unescape
 from httplib2 import Http
 from humanfriendly import format_timespan
@@ -62,12 +62,13 @@ async def check_tweets():
         channel = discord.utils.get(guild.channels, id=hkd.TWITTER_CHANNEL_ID)
         for _ in range(3):
             with suppress(Exception):
-                for name in firebase_ref.child('last_tweet_ids').get().keys():
+                twitter_names = firebase_ref.child('last_tweet_ids').get().keys()
+                for name in twitter_names:
                     last_tweet_id = int(firebase_ref.child('last_tweet_ids/{0}'.format(name)).get())
                     posted_tweets = []
                     for status in twitter_api.GetUserTimeline(screen_name=name, since_id=last_tweet_id, count=40, include_rts=False):
                         tweet = status.AsDict()
-                        if tweet.get('in_reply_to_screen_name', name) != name:
+                        if tweet.get('in_reply_to_screen_name', name) not in twitter_names:
                             continue
                         await channel.trigger_typing()
                         await asyncio.sleep(1)
@@ -76,11 +77,11 @@ async def check_tweets():
                         user = tweet['user']
                         tweet_content = unescape(tweet['full_text'])
                         role = None
+                        colour = discord.Colour.light_grey()
                         if '公式ブログを更新しました' in tweet_content:
                             for i, sign in enumerate(hkd.WUG_TWITTER_BLOG_SIGNS):
                                 if sign in tweet_content:
-                                    role = get_wug_role(guild, list(hkd.WUG_ROLE_IDS.keys())[i])
-                        colour = role.colour if role else discord.Colour.light_grey()
+                                    colour = get_oshi_colour(guild, list(hkd.WUG_ROLE_IDS.keys())[i])
                         author = {}
                         author['name'] = '{0} (@{1})'.format(user['name'], user['screen_name'])
                         author['url'] = 'https://twitter.com/{0}'.format(name)
@@ -179,7 +180,7 @@ async def check_live_streams():
                             stream_link = BeautifulSoup(stream_link, 'html.parser').find('a').contents[0]
                         guild = discord.utils.get(bot.guilds, id=hkd.SERVER_ID)
                         channel = discord.utils.get(guild.channels, id=hkd.SEIYUU_CHANNEL_ID)
-                        colour = get_wug_role(guild, wug_members[0]).colour if len(wug_members) == 1 else discord.Colour.teal()
+                        colour = get_oshi_colour(guild, wug_members[0]) if len(wug_members) == 1 else discord.Colour.teal()
                         embed_fields = []
                         embed_fields.append(('Time', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M} JST'.format(start.astimezone(pytz.timezone('Japan')))))
                         embed_fields.append(('WUG Members', ', '.join(wug_members)))
@@ -386,7 +387,7 @@ async def kamioshi(ctx, member: str):
     for existing_role in ctx.author.roles:
         if existing_role.id != kamioshi_role.id and existing_role.id in hkd.WUG_KAMIOSHI_ROLE_IDS.values():
             roles_to_remove.append(existing_role)
-            ids_to_kamioshi = hkd.dict_reverse(hkd.WUG_KAMIOSHI_ROLE_IDS)
+            ids_to_kamioshi = dict_reverse(hkd.WUG_KAMIOSHI_ROLE_IDS)
             replacement_role = discord.utils.get(ctx.guild.roles, id=hkd.WUG_ROLE_IDS[ids_to_kamioshi[existing_role.id]])
             await ctx.author.add_roles(replacement_role)
     if roles_to_remove:
@@ -402,7 +403,7 @@ async def kamioshi(ctx, member: str):
 @commands.guild_only()
 async def kamioshi_count(ctx):
     await ctx.channel.trigger_typing()
-    ids_to_kamioshi = hkd.dict_reverse(hkd.WUG_KAMIOSHI_ROLE_IDS)
+    ids_to_kamioshi = dict_reverse(hkd.WUG_KAMIOSHI_ROLE_IDS)
     oshi_num = {}
     for member in ctx.guild.members:
         kamioshi_roles = [r for r in member.roles if r.id in ids_to_kamioshi]
@@ -410,7 +411,7 @@ async def kamioshi_count(ctx):
             kamioshi_role = kamioshi_roles[0]
             oshi_num[ids_to_kamioshi[kamioshi_role.id]] = oshi_num.get(ids_to_kamioshi[kamioshi_role.id], 0) + 1
         else:
-            ids_to_member = hkd.dict_reverse(hkd.WUG_ROLE_IDS)
+            ids_to_member = dict_reverse(hkd.WUG_ROLE_IDS)
             member_roles = [r for r in member.roles if r.id in ids_to_member]
             if member_roles:
                 role = sorted(member_roles)[-1]
@@ -424,8 +425,8 @@ async def kamioshi_count(ctx):
 @commands.guild_only()
 async def oshi_count(ctx):
     await ctx.channel.trigger_typing()
-    ids_to_member = hkd.dict_reverse(hkd.WUG_ROLE_IDS)
-    ids_to_kamioshi = hkd.dict_reverse(hkd.WUG_KAMIOSHI_ROLE_IDS)
+    ids_to_member = dict_reverse(hkd.WUG_ROLE_IDS)
+    ids_to_kamioshi = dict_reverse(hkd.WUG_KAMIOSHI_ROLE_IDS)
     oshi_num = {}
     for member in ctx.guild.members:
         for role in member.roles:
@@ -460,7 +461,7 @@ async def events(ctx, *, date: str=''):
                     if not wug_performers:
                         continue
                     await ctx.channel.trigger_typing()
-                    colour = get_wug_role(ctx.guild, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]).colour if len(wug_performers) == 1 else discord.Colour.teal()
+                    colour = get_oshi_colour(ctx.guild, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]) if len(wug_performers) == 1 else discord.Colour.teal()
                     if first:
                         first = False
                         await ctx.send('**Events Involving WUG Members on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date))
@@ -523,7 +524,7 @@ async def eventsin(ctx, month: str, member: str=''):
                         if not wug_performers:
                             continue
                         await ctx.channel.trigger_typing()
-                        colour = get_wug_role(ctx.guild, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]).colour if len(wug_performers) == 1 else discord.Colour.teal()
+                        colour = get_oshi_colour(ctx.guild, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]) if len(wug_performers) == 1 else discord.Colour.teal()
                         if first:
                             first = False
                             await ctx.send('**Events for {0} in {1} {2}**'.format(member.title() if member else 'Wake Up, Girls!', month_name[int(search_month)], search_year))

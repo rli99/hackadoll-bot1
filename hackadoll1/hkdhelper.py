@@ -71,6 +71,11 @@ def get_wug_role(guild, member):
     with suppress(Exception):
         return discord.utils.get(guild.roles, id=WUG_ROLE_IDS[parse_oshi_name(member)])
 
+def get_oshi_colour(guild, member):
+    with suppress(Exception):
+        role = get_wug_role(guild, member)
+        return role.colour if role else discord.Colour.light_grey()
+
 def get_kamioshi_role(guild, member):
     with suppress(Exception):
         return discord.utils.get(guild.roles, id=WUG_KAMIOSHI_ROLE_IDS[parse_oshi_name(member)])

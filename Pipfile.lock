@@ -45,10 +45,10 @@
         },
         "async-timeout": {
             "hashes": [
-                "sha256:474d4bc64cee20603e225eb1ece15e248962958b45a3648a9f5cc29e827a610c",
-                "sha256:b3c0ddc416736619bd4a95ca31de8da6920c3b9a140c64dbef2b2fa7bf521287"
+                "sha256:0c3c816a028d47f659d6ff5c745cb2acf1f966da1fe5c19c77a70282b25f4c5f",
+                "sha256:4291ca197d287d274d0b6cb5d6f8f8f82d434ed288f962539ff18cc9012f9ea3"
             ],
-            "version": "==3.0.0"
+            "version": "==3.0.1"
         },
         "attrs": {
             "hashes": [
@@ -164,10 +164,10 @@
         },
         "google-cloud-storage": {
             "hashes": [
-                "sha256:7e38a54214c4d2f55c240d857c5268ba7b27354d7301f75db813a3e8d3f86c2a",
-                "sha256:9c6c1ec28c248252330c924ad2f7b160c61d3bef3fab35533e1332ed74325dc4"
+                "sha256:936c859c47f8e94fd0005e98235a10d5e75828d2c6c3a8caacae18344a572a0a",
+                "sha256:fc32b9be41a45016ba2387e3ad23e70ccba399d626ef596409316f7cee477956"
             ],
-            "version": "==1.12.0"
+            "version": "==1.13.0"
         },
         "google-resumable-media": {
             "hashes": [
@@ -610,11 +610,11 @@
         },
         "youtube-dl": {
             "hashes": [
-                "sha256:41f5c883405b5ed584c1497ce30cc78683407c0bc491f632daa7ac1ea0f468e9",
-                "sha256:63591bfb3996256a4f05efd02affee6f9d8ca464a128a620f748ddf896b4ca59"
+                "sha256:17b03b94031efc28457ef0808ea2c750012aa38007b2980f93a9c9b1d7387363",
+                "sha256:2edaa70587e0e3ade46f017b6f705c245c45b9b5c329227f7dfd4823e462e7b2"
             ],
             "index": "pypi",
-            "version": "==2018.9.26"
+            "version": "==2018.10.5"
         }
     },
     "develop": {}
