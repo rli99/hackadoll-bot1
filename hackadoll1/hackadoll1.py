@@ -76,11 +76,12 @@ async def check_tweets():
                         posted_tweets.append(tweet_id)
                         user = tweet['user']
                         tweet_content = unescape(tweet['full_text'])
-                        role = None
+                        blog_post = False
                         colour = discord.Colour.light_grey()
                         if '公式ブログを更新しました' in tweet_content:
                             for i, sign in enumerate(hkd.WUG_TWITTER_BLOG_SIGNS):
                                 if sign in tweet_content:
+                                    blog_post = True
                                     colour = get_oshi_colour(guild, list(hkd.WUG_ROLE_IDS.keys())[i])
                         author = {}
                         author['name'] = '{0} (@{1})'.format(user['name'], user['screen_name'])
@@ -90,7 +91,7 @@ async def check_tweets():
                         media = tweet.get('media', '')
                         if media:
                             image = media[0].get('media_url_https', '')
-                        if role:
+                        if blog_post:
                             html_response = urlopen('https://ameblo.jp/wakeupgirls/')
                             soup = BeautifulSoup(html_response, 'html.parser')
                             blog_entry = soup.find(attrs={ 'class': 'skin-entryBody' })
