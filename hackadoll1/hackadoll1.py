@@ -430,11 +430,18 @@ async def oshi_count(ctx):
     ids_to_kamioshi = dict_reverse(hkd.WUG_KAMIOSHI_ROLE_IDS)
     oshi_num = {}
     for member in ctx.guild.members:
+        counted_members = []
         for role in member.roles:
             if role.id in ids_to_member:
-                oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1
-            if role.id in ids_to_kamioshi:
-                oshi_num[ids_to_kamioshi[role.id]] = oshi_num.get(ids_to_kamioshi[role.id], 0) + 1
+                cur_member = ids_to_member[role.id]
+                if cur_member not in counted_members:
+                    oshi_num[cur_member] = oshi_num.get(cur_member, 0) + 1
+                    counted_members.append(cur_member)
+            elif role.id in ids_to_kamioshi:
+                cur_kamioshi = ids_to_kamioshi[role.id]
+                if cur_kamioshi not in counted_members:
+                    oshi_num[cur_kamioshi] = oshi_num.get(cur_kamioshi, 0) + 1
+                    counted_members.append(cur_kamioshi)
     description = ''
     for oshi in sorted(oshi_num.items(), key=itemgetter(1), reverse=True):
         description += '**{0}** ({1.mention}) - {2}\n'.format(oshi[0].title(), get_wug_role(ctx.guild, oshi[0]), oshi[1])
