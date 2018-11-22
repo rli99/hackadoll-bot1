@@ -13,7 +13,7 @@ WUG_MEMBERS = ['Wake Up, Girls', '吉岡茉祐', '永野愛理', '田中美海',
 WUG_TWITTER_BLOG_SIGNS = ['まゆ', 'あいり', '虎>ω<', 'よぴ', 'anamin', 'かやたん', '´μ｀']
 WUG_BLOG_ORDER = ['まゆ', '´μ｀', 'かやたん', 'anamin', 'よぴ', '虎>ω<', 'あいり']
 VIDEO_LINK_URLS = ['streamable.com', 'youtube.com']
-WUG_OTHER_UNITS = ['Wake Up, Girls!', "Wake Up, May'n!", 'ハッカドール', 'D-selections', 'チーム“ハナヤマタ”', 'Zähre', '4U', 'Ci+LUS', 'Adhara', 'petit corolla', 'FIVE STARS', 'TEAM OHENRO。']
+WUG_OTHER_UNITS = ['Wake Up, Girls!', "Wake Up, May'n!", 'ハッカドール', 'D-selections', 'チーム“ハナヤマタ”', 'Zähre', '4U', 'Ci+LUS', 'Adhara', 'petit corolla', 'FIVE STARS', 'TEAM OHENRO。', 'フランシュシュ']
 WUG_OSHI_NAMES = {
     'mayushii': ['mayushii', 'mayu', 'mayuchan', 'mayushi', 'mayuc'],
     'aichan': ['aichan', 'airi', 'chanai'],

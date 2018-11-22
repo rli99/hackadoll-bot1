@@ -452,11 +452,13 @@ async def oshi_count(ctx):
 async def events(ctx, *, date: str=''):
     await ctx.channel.trigger_typing()
     event_urls = []
-    search_date = parser.parse(date) if date else datetime.now(pytz.timezone('Japan'))
+    current_time = datetime.now(pytz.timezone('Japan'))
+    search_date = parser.parse(date) if date else current_time
+    search_year = str(current_time.year if current_time.month <= search_date.month and current_time.date < search_date.day else current_time.year + 1)
     first = True
     for _ in range(3):
         with suppress(Exception):
-            html_response = urlopen('https://www.eventernote.com/events/month/{0}-{1}-{2}/1?limit=1000'.format(search_date.year, search_date.month, search_date.day))
+            html_response = urlopen('https://www.eventernote.com/events/month/{0}-{1}-{2}/1?limit=1000'.format(search_year, search_date.month, search_date.day))
             soup = BeautifulSoup(html_response, 'html.parser')
             result = soup.find_all(attrs={ 'class': ['date', 'event', 'actor', 'note_count'] })
             for event in [result[i:i + 4] for i in range(0, len(result), 4)]:
@@ -472,7 +474,7 @@ async def events(ctx, *, date: str=''):
                     colour = get_oshi_colour(ctx.guild, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]) if len(wug_performers) == 1 else discord.Colour.teal()
                     if first:
                         first = False
-                        await ctx.send('**Events Involving WUG Members on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date))
+                        await ctx.send('**Events Involving WUG Members on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date.replace(year=int(search_year))))
                         await ctx.channel.trigger_typing()
                         await asyncio.sleep(0.5)
                     other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p not in hkd.WUG_OTHER_UNITS]
