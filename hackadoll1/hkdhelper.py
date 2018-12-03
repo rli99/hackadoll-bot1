@@ -73,8 +73,9 @@ def get_wug_role(guild, member):
 
 def get_oshi_colour(guild, member):
     with suppress(Exception):
-        role = get_wug_role(guild, member)
-        return role.colour if role else discord.Colour.light_grey()
+        if member == 'Everyone':
+            return discord.Colour.teal()
+        return get_wug_role(guild, member).colour
 
 def get_kamioshi_role(guild, member):
     with suppress(Exception):

@@ -890,10 +890,9 @@ async def dl_vid(ctx, url: str):
         while proc.poll() is None:
             await asyncio.sleep(2)
         if proc.returncode != 0:
-            if niconico_vid:
-                if time.time() - last_try_time > 30:
-                    last_try_time = time.time()
-                    continue
+            if niconico_vid and time.time() - last_try_time > 30:
+                last_try_time = time.time()
+                continue
             else:
                 await ctx.send(embed=create_embed(title='Failed to download video.', colour=discord.Colour.red()))
                 with suppress(Exception):
