@@ -324,7 +324,7 @@ async def unmute(ctx, member: discord.Member):
 
 @bot.command()
 @commands.guild_only()
-async def oshihen(ctx, member: str):
+async def oshihen(ctx, member: str=''):
     await ctx.channel.trigger_typing()
     role = get_wug_role(ctx.guild, member)
     if role is None:
@@ -344,7 +344,7 @@ async def oshihen(ctx, member: str):
 
 @bot.command()
 @commands.guild_only()
-async def oshimashi(ctx, member: str):
+async def oshimashi(ctx, member: str=''):
     await ctx.channel.trigger_typing()
     role = get_wug_role(ctx.guild, member)
     if role is None:
@@ -375,7 +375,7 @@ async def hakooshi(ctx):
 
 @bot.command()
 @commands.guild_only()
-async def kamioshi(ctx, member: str):
+async def kamioshi(ctx, member: str=''):
     await ctx.channel.trigger_typing()
     role = get_wug_role(ctx.guild, member)
     if role is None:
@@ -617,14 +617,6 @@ async def tag(ctx, tag_name: str):
                 await ctx.channel.trigger_typing()
                 await asyncio.sleep(1)
                 await ctx.send(link)
-            await asyncio.sleep(3)
-            async for message in ctx.channel.history(after=ctx.message):
-                if message.author == bot.user and not message.embeds:
-                    if hkd.is_embeddable_content(message.content):
-                        link_url = message.content
-                        await message.edit(content='Reposting link...')
-                        await asyncio.sleep(1)
-                        await message.edit(content=link_url)
     else:
         await ctx.send(embed=create_embed(description="That tag doesn't exist. Use **!tagcreate** *tag_name* *Content of the tag* to create a tag.", colour=discord.Colour.red()))
 
@@ -769,13 +761,6 @@ async def blogpics(ctx, member: str=''):
     if len(pics) == 0:
         await ctx.send(embed=create_embed(description="Couldn't find any pictures.", colour=discord.Colour.red()))
         return
-    await asyncio.sleep(3)
-    async for message in ctx.channel.history(after=ctx.message):
-        if message.author == bot.user and hkd.is_image_file(message.content) and not message.embeds:
-            image_url = message.content
-            await message.edit(content='Reposting picture...')
-            await asyncio.sleep(1)
-            await message.edit(content=image_url)
 
 @bot.command()
 async def mv(ctx, *, song_name: str):

@@ -43,20 +43,21 @@ WUG_ROLE_IDS = {
 }
 WUG_BLOG_SIGNS = {
     'mayushii': 'まゆ',
-    'myu': '´μ｀',
-    'kayatan': 'かやたん',
-    'nanamin': 'anamin',
-    'yoppi': 'よぴ',
-    'minyami': '虎>ω<',
     'aichan': 'あいり',
+    'minyami': '虎>ω<',
+    'yoppi': 'よぴ',
+    'nanamin': 'anamin',
+    'kayatan': 'かやたん',
+    'myu': '´μ｀'
 }
 WUG_ONMUSU_CHARS = {
     'mayushii': ['iizaka_mahiro', 0x98d98e],
-    'myu': ['yumura_chiyo', 0xe25b54],
-    'kayatan': ['unzen_inori', 0xe6e8ff],
-    'nanamin': ['kinosaki_arisa', 0xd7f498],
+    'aichan': ['matsushima_nazuki', 0x7ecfb3],
+    'minyami': ['kurokawa_kira', 0xa09bdc],
     'yoppi': ['hitoyoshi_aoi', 0xfeeed6],
-    'minyami': ['kurokawa_kira', 0xa09bdc]
+    'nanamin': ['kinosaki_arisa', 0xd7f498],
+    'kayatan': ['unzen_inori', 0xe6e8ff],
+    'myu': ['yumura_chiyo', 0xe25b54]
 }
 
 def parse_config():
