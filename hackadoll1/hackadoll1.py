@@ -31,7 +31,6 @@ firebase = initialize_app(certificate, { 'databaseURL': config['firebase_db'] })
 firebase_ref = db.reference()
 muted_members = firebase_ref.child('muted_members').get() or {}
 twitter_api = twitter.Api(consumer_key=config['consumer_key'], consumer_secret=config['consumer_secret'], access_token_key=config['access_token_key'], access_token_secret=config['access_token_secret'], tweet_mode='extended')
-poll = hkd.Poll()
 calendar = build('calendar', 'v3', http=file.Storage('credentials.json').get().authorize(Http()))
 
 @bot.event
@@ -105,64 +104,6 @@ async def check_tweets():
         await asyncio.sleep(20)
 
 @bot.event
-async def check_poll_status():
-    await bot.wait_until_ready()
-    while not bot.is_closed():
-        topic, channel_id, results = poll.check_status()
-        if channel_id:
-            guild = discord.utils.get(bot.guilds, id=hkd.SERVER_ID)
-            channel = discord.utils.get(guild.channels, id=channel_id)
-            if topic:
-                await channel.send(content='Poll ended.', embed=create_embed(title=topic, description=results))
-            else:
-                await channel.send(embed=create_embed(title='The creator of the poll took too long to specify the options. The poll has been cancelled.', colour=discord.Colour.red()))
-        await asyncio.sleep(10)
-
-@bot.event
-async def check_wugch_omake():
-    await bot.wait_until_ready()
-    while not bot.is_closed():
-        wugch_vid = ''
-        for _ in range(3):
-            with suppress(Exception):
-                html_response = urlopen('http://ch.nicovideo.jp/WUGch/video')
-                soup = BeautifulSoup(html_response, 'html.parser')
-                for top_video in soup.find_all('h6', limit=2):
-                    video = top_video.find('a')
-                    if 'オマケ放送' in video['title']:
-                        prev_wugch_omake = int(firebase_ref.child('last_wugch_omake').get())
-                        latest_wugch_omake = int(video['href'][video['href'].rfind('/') + 1:])
-                        if latest_wugch_omake > prev_wugch_omake:
-                            wugch_vid = video['href']
-                            break
-                break
-        if wugch_vid:
-            vid_filename = '{0}.mp4'.format(video['title'])
-            last_try_time = time.time()
-            retry = True
-            while retry:
-                proc = subprocess.Popen(args=['youtube-dl', '-o', vid_filename, '-f', 'best', '-u', config['nicovideo_user'], '-p', config['nicovideo_pw'], wugch_vid])
-                while proc.poll() is None:
-                    await asyncio.sleep(2)
-                if proc.returncode != 0:
-                    if time.time() - last_try_time > 30:
-                        last_try_time = time.time()
-                        continue
-                retry = False
-            proc = subprocess.Popen(args=['python', 'gdrive_upload.py', vid_filename, config['wugch_folder']])
-            while proc.poll() is None:
-                await asyncio.sleep(1)
-            if proc.returncode != 0:
-                with suppress(Exception):
-                    os.remove(vid_filename)
-            else:
-                firebase_ref.child('last_wugch_omake').set(str(latest_wugch_omake))
-                guild = discord.utils.get(bot.guilds, id=hkd.SERVER_ID)
-                channel = discord.utils.get(guild.channels, id=hkd.SEIYUU_CHANNEL_ID)
-                await channel.send(embed=create_embed(description='{0} is now available for download at https://drive.google.com/open?id={1}'.format(video['title'], config['wugch_folder'])))
-        await asyncio.sleep(1800)
-
-@bot.event
 async def check_live_streams():
     await bot.wait_until_ready()
     while not bot.is_closed():
@@ -203,7 +144,6 @@ async def help(ctx):
         embed_fields.append(('!help roles', 'Show help for role commands.'))
         embed_fields.append(('!help events', 'Show help for event commands.'))
         embed_fields.append(('!help tags', 'Show help for tag commands.'))
-        embed_fields.append(('!help polls', 'Show help for poll commands.'))
         embed_fields.append(('!mv *song*', 'Show full MV of a song.'))
         embed_fields.append(('!mv-list', 'Show list of available MVs.'))
         embed_fields.append(('!userinfo', 'Show your user information.'))
@@ -255,16 +195,6 @@ async def tags(ctx):
     embed_fields.append(('!tagsearch', 'Shows a list of all existing tags.'))
     embed_fields.append(('!tag *tag_name*', 'Display a saved tag.'))
     await ctx.send(content='**Commands for Using Tags**', embed=create_embed(fields=embed_fields))
-
-@help.command()
-async def polls(ctx, aliases=['poll']):
-    embed_fields = []
-    embed_fields.append(('!pollcreate *duration* *topic*', 'Create a poll for the specified topic, lasting for *duration* minutes.'))
-    embed_fields.append(('!polloptions *options*', 'Specify the options for a created poll.'))
-    embed_fields.append(('!polldetails', 'See the options for the currently running poll.'))
-    embed_fields.append(('!pollend', 'Immediately end an ongoing poll.'))
-    embed_fields.append(('!vote *number*', 'Vote for an option in a poll.'))
-    await ctx.send(content='**Commands for Making Polls**', embed=create_embed(fields=embed_fields))
 
 @bot.command()
 @commands.guild_only()
@@ -620,71 +550,6 @@ async def tag(ctx, tag_name: str):
     else:
         await ctx.send(embed=create_embed(description="That tag doesn't exist. Use **!tagcreate** *tag_name* *Content of the tag* to create a tag.", colour=discord.Colour.red()))
 
-@bot.command(aliases=['createpoll'])
-@commands.guild_only()
-async def pollcreate(ctx, duration: int, *, topic: str):
-    await ctx.channel.trigger_typing()
-    if duration > 120:
-        await ctx.send(embed=create_embed(title='Please specify a duration of less than 2 hours.', colour=discord.Colour.red()))
-        return
-    elif duration < 1:
-        await ctx.send(embed=create_embed(title='Please specify a duration of at least 1 minute.', colour=discord.COlour.red()))
-        return
-    if not poll.topic:
-        poll.create(topic, ctx.author.id, duration, ctx.channel.id)
-        await ctx.send(embed=create_embed(description='Poll successfully created. Please specify the options for the poll with **!polloptions** *options*, e.g. **!polloptions** first option, second option, third option.'))
-    else:
-        await ctx.send(embed=create_embed(description='There is already an ongoing poll. Please wait for the current poll to end, or if you are the creator of the current poll, you can end it with **!pollend**.', colour=discord.Colour.red()))
-
-@bot.command()
-@commands.guild_only()
-async def polloptions(ctx, *, options: str):
-    await ctx.channel.trigger_typing()
-    if not poll.topic:
-        await ctx.send(embed=create_embed(description='There is no created poll to provide options for. You can create a poll with **!pollcreate** *duration* *topic*.', colour=discord.Colour.red()))
-        return
-    if ctx.author.id != poll.owner:
-        await ctx.send(embed=create_embed(title='Only the creator of the poll can specify the options.', colour=discord.Colour.red()))
-        return
-    if poll.options:
-        await ctx.send(embed=create_embed(description='The options for this poll have already been specified. Please wait for the current poll to end, or if you are the creator of the current poll, you can end it with **!pollend**.', colour=discord.Colour.red()))
-        return
-    poll_options = [p.strip() for p in options.split(',')]
-    if len(poll_options) < 2:
-        await ctx.send(embed=create_embed(title='Please specify more than one option for the poll.', colour=discord.Colour.red()))
-        return
-    poll.set_options(poll_options, time.time() + poll.duration * 60)
-    description = 'Vote for an option with **!vote** *number*, e.g. **!vote** 1 for option 1.\n\n'
-    description += poll.get_details()
-    await ctx.send(content='Poll created. This poll will last for {0}. The creator of the poll may end it early with **!pollend**.'.format(format_timespan(poll.duration * 60)), embed=create_embed(title=poll.topic, description=description))
-
-@bot.command()
-@commands.guild_only()
-async def polldetails(ctx):
-    await ctx.channel.trigger_typing()
-    if not poll.options:
-        await ctx.send(embed=create_embed(description='There is no poll currently ongoing. You can create a poll with **!pollcreate** *duration* *topic*.', colour=discord.Colour.red()))
-        return
-    description = 'Vote for an option with **!vote** *number*, e.g. **!vote** 1 for option 1.\n\n'
-    description += poll.get_details()
-    await ctx.send(content='Details of the currently running poll.', embed=create_embed(title=poll.topic, description=description))
-
-@bot.command(aliases=['endpoll'])
-@commands.guild_only()
-async def pollend(ctx):
-    await ctx.channel.trigger_typing()
-    if not poll.topic:
-        await ctx.send(embed=create_embed(description='There is no poll currently ongoing. You can create a poll with **!pollcreate** *duration* *topic*.', colour=discord.Colour.red()))
-        return
-    if not poll.options:
-        await ctx.send(embed=create_embed(description='A poll was created but no options provided. The poll has been cancelled.'))
-        return
-    if ctx.author.id != poll.owner:
-        await ctx.send(embed=create_embed(title='Only the creator of the poll can end it.', colour=discord.Colour.red()))
-        return
-    topic = poll.topic
-    await ctx.send(content='Poll ended.', embed=create_embed(title=topic, description=poll.end()))
-
 @bot.command()
 @commands.guild_only()
 async def vote(ctx, option: int):
@@ -935,7 +800,5 @@ async def say(ctx, channel_name: str, *, message: str):
 
 bot.loop.create_task(check_mute_status())
 bot.loop.create_task(check_tweets())
-bot.loop.create_task(check_poll_status())
-bot.loop.create_task(check_wugch_omake())
 bot.loop.create_task(check_live_streams())
 bot.run(config['token'])
