@@ -384,7 +384,10 @@ async def events(ctx, *, date: str=''):
     event_urls = []
     current_time = datetime.now(pytz.timezone('Japan'))
     search_date = parser.parse(date) if date else current_time
-    search_year = str(current_time.year if current_time.month <= search_date.month and current_time.date < search_date.day else current_time.year + 1)
+    if current_time.month > search_date.month or current_time.month == search_date.month and current_time.day > search_date.day:
+        search_year = current_time.year + 1
+    else:
+        search_year = current_time.year
     first = True
     for _ in range(3):
         with suppress(Exception):
@@ -404,7 +407,7 @@ async def events(ctx, *, date: str=''):
                     colour = get_oshi_colour(ctx.guild, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]) if len(wug_performers) == 1 else discord.Colour.teal()
                     if first:
                         first = False
-                        await ctx.send('**Events Involving WUG Members on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date.replace(year=int(search_year))))
+                        await ctx.send('**Events Involving WUG Members on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date.replace(year=search_year)))
                         await ctx.channel.trigger_typing()
                         await asyncio.sleep(0.5)
                     other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p not in hkd.WUG_OTHER_UNITS]
