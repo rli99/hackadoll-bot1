@@ -20,7 +20,7 @@ from oauth2client import file
 from operator import itemgetter
 from random import randrange
 from timezonefinder import TimezoneFinder
-from urllib.parse import quote, urlparse
+from urllib.parse import quote
 from urllib.request import urlopen
 
 config = hkd.parse_config()
