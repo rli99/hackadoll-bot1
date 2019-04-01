@@ -20,7 +20,7 @@ from oauth2client import file
 from operator import itemgetter
 from random import randrange
 from timezonefinder import TimezoneFinder
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 from urllib.request import urlopen
 
 config = hkd.parse_config()
@@ -75,13 +75,10 @@ async def check_tweets():
                         posted_tweets.append(tweet_id)
                         user = tweet['user']
                         tweet_content = unescape(tweet['full_text'])
-                        blog_post = False
-                        colour = discord.Colour.light_grey()
-                        if '公式ブログを更新しました' in tweet_content:
-                            for i, sign in enumerate(hkd.WUG_TWITTER_BLOG_SIGNS):
-                                if sign in tweet_content:
-                                    blog_post = True
-                                    colour = get_oshi_colour(guild, list(hkd.WUG_ROLE_IDS.keys())[i])
+                        if name in hkd.WUG_TWITTER_IDS.values():
+                            colour = get_oshi_colour(guild, dict_reverse(hkd.WUG_TWITTER_IDS)[name])
+                        else:
+                            colour = discord.Colour.light_grey()
                         author = {}
                         author['name'] = '{0} (@{1})'.format(user['name'], user['screen_name'])
                         author['url'] = 'https://twitter.com/{0}'.format(name)
@@ -90,13 +87,6 @@ async def check_tweets():
                         media = tweet.get('media', '')
                         if media:
                             image = media[0].get('media_url_https', '')
-                        if blog_post:
-                            html_response = urlopen('https://ameblo.jp/wakeupgirls/')
-                            soup = BeautifulSoup(html_response, 'html.parser')
-                            blog_entry = soup.find(attrs={ 'class': 'skin-entryBody' })
-                            blog_images = [p['src'] for p in blog_entry.find_all('img') if '?caw=' in p['src'][-9:]]
-                            if blog_images:
-                                image = blog_images[-1]
                         await channel.send(embed=create_embed(author=author, title='Tweet by {0}'.format(user['name']), description=tweet_content, colour=colour, url='https://twitter.com/{0}/status/{1}'.format(name, tweet_id), image=image))
                     if posted_tweets:
                         firebase_ref.child('last_tweet_ids/{0}'.format(name)).set(str(max(posted_tweets)))
@@ -148,7 +138,6 @@ async def help(ctx):
         embed_fields.append(('!mv-list', 'Show list of available MVs.'))
         embed_fields.append(('!userinfo', 'Show your user information.'))
         embed_fields.append(('!serverinfo', 'Show server information.'))
-        embed_fields.append(('!blogpics *member*', 'Get pictures from the latest blog post of the specified WUG member (optional). If *member* not specified, gets pictures from the latest blog post.'))
         embed_fields.append(('!seiyuu-vids', 'Show link to the wiki page with WUG seiyuu content.'))
         embed_fields.append(('!wugch-omake', 'Show link to the Google Drive folder with WUG Channel omake videos.'))
         embed_fields.append(('!tl *japanese text*', 'Translate the provided Japanese text into English via Google Translate.'))
@@ -594,42 +583,6 @@ async def serverinfo(ctx):
     embed_fields.append(('Icon', '{0}'.format('<{0}>'.format(guild.icon_url) if guild.icon_url else 'None')))
     await ctx.send(content='**Server Information**', embed=create_embed(fields=embed_fields, inline=True))
 
-@bot.command(aliases=['blog-pics'])
-@commands.cooldown(1, 10, BucketType.guild)
-async def blogpics(ctx, member: str=''):
-    await ctx.channel.trigger_typing()
-    for _ in range(3):
-        with suppress(Exception):
-            html_response = urlopen('https://ameblo.jp/wakeupgirls')
-            soup = BeautifulSoup(html_response, 'html.parser')
-            if member:
-                blog_title = soup.find('h2')
-                member_sign = blog_title.find('a').contents[0]
-                day = -1
-                for i, sign in enumerate(hkd.WUG_BLOG_ORDER):
-                    if sign in member_sign:
-                        day = i
-                if day == -1:
-                    await ctx.send(embed=create_embed(description="Couldn't find pictures for that member.", colour=discord.Colour.red()))
-                    return
-                page, entry_num = map(sum, zip(divmod((hkd.WUG_BLOG_ORDER.index(hkd.WUG_BLOG_SIGNS[parse_oshi_name(member)]) - day) % 7, 3), (1, 1)))
-            else:
-                page = 1
-                entry_num = 1
-            if page != 1:
-                html_response = urlopen('https://ameblo.jp/wakeupgirls/page-{0}.html'.format(page))
-                soup = BeautifulSoup(html_response, 'html.parser')
-            blog_entry = soup.find_all(attrs={ 'class': 'skin-entryBody' }, limit=entry_num)[entry_num - 1]
-            pics = [p['href'] for p in blog_entry.find_all('a') if hkd.is_image_file(p['href'])]
-            for pic in pics:
-                await ctx.channel.trigger_typing()
-                await asyncio.sleep(1)
-                await ctx.send(pic)
-            break
-    if len(pics) == 0:
-        await ctx.send(embed=create_embed(description="Couldn't find any pictures.", colour=discord.Colour.red()))
-        return
-
 @bot.command()
 async def mv(ctx, *, song_name: str):
     await ctx.channel.trigger_typing()
@@ -720,7 +673,7 @@ async def yt(ctx, *, query: str):
             break
     await ctx.send(embed=create_embed(title="Couldn't find any results.", colour=discord.Colour.red()))
 
-@bot.command(name='dl-vid', aliases=['dlvid', 'youtube-dl'])
+@bot.command(name='dl-vid', aliases=['dlvid', 'youtube-dl', 'ytdl'])
 @commands.guild_only()
 async def dl_vid(ctx, url: str):
     await ctx.channel.trigger_typing()

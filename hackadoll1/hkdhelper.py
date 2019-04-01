@@ -9,8 +9,6 @@ MUTED_ROLE_ID = 445572638543446016
 BOT_ADMIN_ID = 299908261438816258
 WUG_EVENTERNOTE_IDS = [6988, 3774, 6984, 6983, 6985, 6982, 6986, 6987]
 WUG_MEMBERS = ['Wake Up, Girls', '吉岡茉祐', '永野愛理', '田中美海', '青山吉能', '山下七海', '奥野香耶', '高木美佑']
-WUG_TWITTER_BLOG_SIGNS = ['まゆ', 'あいり', '虎>ω<', 'よぴ', 'anamin', 'かやたん', '´μ｀']
-WUG_BLOG_ORDER = ['まゆ', '´μ｀', 'かやたん', 'anamin', 'よぴ', '虎>ω<', 'あいり']
 VIDEO_LINK_URLS = ['streamable.com', 'youtube.com']
 WUG_OTHER_UNITS = ['Wake Up, Girls!', "Wake Up, May'n!", 'ハッカドール', 'D-selections', 'チーム“ハナヤマタ”', 'Zähre', '4U', 'Ci+LUS', 'Adhara', 'petit corolla', 'FIVE STARS', 'TEAM OHENRO。', 'フランシュシュ']
 WUG_OSHI_NAMES = {
@@ -40,15 +38,6 @@ WUG_ROLE_IDS = {
     'kayatan': 333721510164430848,
     'myu': 333722098377818115
 }
-WUG_BLOG_SIGNS = {
-    'mayushii': 'まゆ',
-    'aichan': 'あいり',
-    'minyami': '虎>ω<',
-    'yoppi': 'よぴ',
-    'nanamin': 'anamin',
-    'kayatan': 'かやたん',
-    'myu': '´μ｀'
-}
 WUG_ONMUSU_CHARS = {
     'mayushii': ['iizaka_mahiro', 0x98d98e],
     'aichan': ['matsushima_nazuki', 0x7ecfb3],
@@ -57,6 +46,9 @@ WUG_ONMUSU_CHARS = {
     'nanamin': ['kinosaki_arisa', 0xd7f498],
     'kayatan': ['unzen_inori', 0xe6e8ff],
     'myu': ['yumura_chiyo', 0xe25b54]
+}
+WUG_TWITTER_IDS = {
+    'myu': 'Yukgaejang98'
 }
 
 def parse_config():
