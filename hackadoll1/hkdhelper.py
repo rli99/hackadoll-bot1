@@ -48,7 +48,8 @@ WUG_ONMUSU_CHARS = {
     'myu': ['yumura_chiyo', 0xe25b54]
 }
 WUG_TWITTER_IDS = {
-    'myu': 'Yukgaejang98'
+    'myu': 'Yukgaejang98',
+    'mayushii': 'yoshioka_mayuC'
 }
 
 def parse_config():
