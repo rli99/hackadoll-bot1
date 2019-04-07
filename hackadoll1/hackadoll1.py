@@ -61,22 +61,24 @@ async def check_tweets():
         channel = discord.utils.get(guild.channels, id=hkd.TWITTER_CHANNEL_ID)
         for _ in range(3):
             with suppress(Exception):
-                twitter_names = firebase_ref.child('last_tweet_ids').get().keys()
-                for name in twitter_names:
-                    last_tweet_id = int(firebase_ref.child('last_tweet_ids/{0}'.format(name)).get())
+                twitter_user_ids = firebase_ref.child('last_userid_tweets').get().keys()
+                for user_id_str in twitter_user_ids:
+                    user_id = int(user_id_str)
+                    last_tweet_id = int(firebase_ref.child('last_userid_tweets/{0}'.format(user_id)).get())
                     posted_tweets = []
-                    for status in twitter_api.GetUserTimeline(screen_name=name, since_id=last_tweet_id, count=40, include_rts=False):
+                    for status in twitter_api.GetUserTimeline(user_id=user_id, since_id=last_tweet_id, count=40, include_rts=False):
                         tweet = status.AsDict()
-                        if tweet.get('in_reply_to_screen_name', name) not in twitter_names:
+                        user = tweet['user']
+                        name = user['screen_name']
+                        if str(tweet.get('in_reply_to_user_id', user_id)) not in twitter_user_ids:
                             continue
                         await channel.trigger_typing()
                         await asyncio.sleep(1)
                         tweet_id = tweet['id']
                         posted_tweets.append(tweet_id)
-                        user = tweet['user']
                         tweet_content = unescape(tweet['full_text'])
-                        if name in hkd.WUG_TWITTER_IDS.values():
-                            colour = get_oshi_colour(guild, dict_reverse(hkd.WUG_TWITTER_IDS)[name])
+                        if user_id in hkd.WUG_TWITTER_IDS.values():
+                            colour = get_oshi_colour(guild, dict_reverse(hkd.WUG_TWITTER_IDS)[user_id])
                         else:
                             colour = discord.Colour.light_grey()
                         author = {}
@@ -89,7 +91,7 @@ async def check_tweets():
                             image = media[0].get('media_url_https', '')
                         await channel.send(embed=create_embed(author=author, title='Tweet by {0}'.format(user['name']), description=tweet_content, colour=colour, url='https://twitter.com/{0}/status/{1}'.format(name, tweet_id), image=image))
                     if posted_tweets:
-                        firebase_ref.child('last_tweet_ids/{0}'.format(name)).set(str(max(posted_tweets)))
+                        firebase_ref.child('last_userid_tweets/{0}'.format(user_id)).set(str(max(posted_tweets)))
                 break
         await asyncio.sleep(20)
 
