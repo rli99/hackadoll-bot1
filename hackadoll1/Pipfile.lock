@@ -93,12 +93,6 @@
             ],
             "version": "==3.0.4"
         },
-        "discord-py": {
-            "editable": true,
-            "git": "https://github.com/Rapptz/discord.py",
-            "ref": "dea3ba5eb7c99f54c72b11f3e3f7b8f41649e779",
-            "version": "==1.0.0a1792+gdea3ba5"
-        },
         "discord.py": {
             "editable": true,
             "git": "https://github.com/Rapptz/discord.py",
@@ -114,10 +108,10 @@
         },
         "forex-python": {
             "hashes": [
-                "sha256:ed4b5f1a40b63512fb5d34448672043340596de243d46cd60cb4099e157b8a53"
+                "sha256:928951a0be8bf1139a07d21da0437ba111ef69a4d6c59b9252083611036548d5"
             ],
             "index": "pypi",
-            "version": "==1.4"
+            "version": "==1.5"
         },
         "future": {
             "hashes": [
@@ -126,15 +120,11 @@
             "version": "==0.17.1"
         },
         "google-api-core": {
-            "extras": [
-                "grpc"
-            ],
             "hashes": [
-                "sha256:16b14c0492154110d869a08be22d27440010057fd826205303c7edaa1c3cd71e",
-                "sha256:9f8ef10c924d8a9f50d9156eea7cd779929f27aa23b855ad0abe05424553b66f"
+                "sha256:5dcf8895690b4b95c1d96f77a314fcc5674a5e2db925343b3f67df3f0882967e",
+                "sha256:fc1fea74bd863fb71486066e0c6b3a4dad26fb70ec61a0edcada8637feb77c68"
             ],
-            "markers": "platform_python_implementation != 'PyPy'",
-            "version": "==1.8.2"
+            "version": "==1.9.0"
         },
         "google-api-python-client": {
             "hashes": [
@@ -166,11 +156,11 @@
         },
         "google-cloud-firestore": {
             "hashes": [
-                "sha256:f1887a5ef1666f637864f517d36699d5d13552e94c53e5f007f797337d4d3633",
-                "sha256:f56bb7ca146927aa2a9ed8e342855f783c1006eaea1c27ebb7bb7bd0edac961e"
+                "sha256:4ae5a5568d65b9082759c352144e306fd4c4109bed9fc400844be185d1c822d2",
+                "sha256:59d2907d717086a629ac3b7006ef9d9e93b887060c0d6384ec9220e3cdda1112"
             ],
             "markers": "platform_python_implementation != 'PyPy'",
-            "version": "==0.32.0"
+            "version": "==0.32.1"
         },
         "google-cloud-storage": {
             "hashes": [
@@ -620,11 +610,11 @@
         },
         "youtube-dl": {
             "hashes": [
-                "sha256:b483724ecba65c21a24f72e2a03c95d4bed8270adf395ccc9658eac0f1575fdb",
-                "sha256:b7efff0b7960111370a09b59fe2800341ec51d03f591d0dc29b026d28b801dff"
+                "sha256:01c3feff562ff85d8b650af7c86c00104c2d33d7fe528186d142479a73657884",
+                "sha256:d8250c9fedea3bcf5c2df62012e9814c96db53540a2842b8f8345885adfd0a85"
             ],
             "index": "pypi",
-            "version": "==2019.4.1"
+            "version": "==2019.4.7"
         }
     },
     "develop": {}
