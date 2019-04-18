@@ -1,4 +1,4 @@
-import asyncio, discord, os, pycountry, pytz, requests, subprocess, time, twitter
+import asyncio, discord, json, os, pycountry, pytz, requests, subprocess, time, twitter
 import hkdhelper as hkd
 from apiclient.discovery import build
 from bs4 import BeautifulSoup
@@ -9,6 +9,7 @@ from dateutil import parser
 from decimal import Decimal
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
+from fake_useragent import UserAgent
 from firebase_admin import credentials, db, initialize_app
 from forex_python.converter import CurrencyRates
 from googletrans import Translator
@@ -32,6 +33,7 @@ firebase_ref = db.reference()
 muted_members = firebase_ref.child('muted_members').get() or {}
 twitter_api = twitter.Api(consumer_key=config['consumer_key'], consumer_secret=config['consumer_secret'], access_token_key=config['access_token_key'], access_token_secret=config['access_token_secret'], tweet_mode='extended')
 calendar = build('calendar', 'v3', http=file.Storage('credentials.json').get().authorize(Http()))
+user_agent = UserAgent()
 
 @bot.event
 async def on_ready():
@@ -94,6 +96,49 @@ async def check_tweets():
                         firebase_ref.child('last_userid_tweets/{0}'.format(user_id)).set(str(max(posted_tweets)))
                 break
         await asyncio.sleep(20)
+
+@bot.event
+async def check_instagram():
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        guild = discord.utils.get(bot.guilds, id=hkd.SERVER_ID)
+        channel = discord.utils.get(guild.channels, id=hkd.TWITTER_CHANNEL_ID)
+        for _ in range(3):
+            with suppress(Exception):
+                for instagram_id in firebase_ref.child('last_instagram_posts').get().keys():
+                    last_post_id = int(firebase_ref.child('last_instagram_posts/{0}'.format(instagram_id)).get())
+                    response = requests.get('https://www.instagram.com/{0}/'.format(instagram_id), headers = { 'User-Agent': user_agent.random })
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    script = soup.find('body').find('script')
+                    json_data = json.loads(script.text.strip().replace('window._sharedData =', '').replace(';', ''))
+                    user_data = json_data['entry_data']['ProfilePage'][0]['graphql']['user']
+                    user_name = user_data['full_name']
+                    user_id = user_data['username']
+                    profile_pic = user_data['profile_pic_url_hd']
+                    timeline = user_data['edge_owner_to_timeline_media']['edges']
+                    posted_updates = []
+                    for post in timeline:
+                        post_content = post['node']
+                        post_id = int(post_content['id'])
+                        if post_id <= last_post_id:
+                            break
+                        post_text = post_content['edge_media_to_caption']['edges'][0]['node']['text']
+                        post_pic = post_content['display_url']
+                        post_link = 'https://www.instagram.com/p/{0}/'.format(post_content['shortcode'])
+                        posted_updates.append(post_id)
+                        if instagram_id in hkd.WUG_INSTAGRAM_IDS.values():
+                            colour = get_oshi_colour(guild, dict_reverse(hkd.WUG_INSTAGRAM_IDS)[instagram_id])
+                        else:
+                            colour = discord.Colour.light_grey()
+                        author = {}
+                        author['name'] = '{0} (@{1})'.format(user_name, user_id)
+                        author['url'] = 'https://www.instagram.com/{0}/'.format(instagram_id)
+                        author['icon_url'] = profile_pic
+                        await channel.send(embed=create_embed(author=author, title='Post by {0}'.format(user_name), description=post_text, colour=colour, url=post_link, image=post_pic))
+                    if posted_updates:
+                        firebase_ref.child('last_instagram_posts/{0}'.format(instagram_id)).set(str(max(posted_updates)))
+                break
+        await asyncio.sleep(30)
 
 @bot.event
 async def check_live_streams():
@@ -758,5 +803,6 @@ async def say(ctx, channel_name: str, *, message: str):
 
 bot.loop.create_task(check_mute_status())
 bot.loop.create_task(check_tweets())
+bot.loop.create_task(check_instagram())
 bot.loop.create_task(check_live_streams())
 bot.run(config['token'])

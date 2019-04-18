@@ -52,6 +52,9 @@ WUG_TWITTER_IDS = {
     'mayushii': 1113758206436622336,
     'minyami': 1113445785004269568
 }
+WUG_INSTAGRAM_IDS = {
+    'nanamin': 'aishite773'
+}
 
 def parse_config():
     config = configparser.ConfigParser()

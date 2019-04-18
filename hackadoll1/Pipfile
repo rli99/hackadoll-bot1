@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 yarl = "<1.2"
-"beautifulsoup4" = "*"
+beautifulsoup4 = "*"
 firebase-admin = "*"
 forex-python = "*"
 googletrans = "*"
@@ -17,10 +17,15 @@ pytz = "*"
 timezonefinder = "*"
 pydrive = "*"
 youtube-dl = "*"
-"oauth2client" = "*"
-"discord.py" = {git = "https://github.com/Rapptz/discord.py", editable = true, ref = "rewrite"}
+oauth2client = "*"
+fake-useragent = "*"
 
 [dev-packages]
 
 [requires]
 python_version = "3.7"
+
+[packages."discord.py"]
+git = "https://github.com/Rapptz/discord.py"
+editable = true
+ref = "rewrite"
