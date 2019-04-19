@@ -192,7 +192,8 @@ async def check_instagram_stories():
                 await channel.send(file=discord.File('./{0}/{1}'.format(instagram_id, story)))
                 with suppress(Exception):
                     os.remove('./{0}/{1}'.format(instagram_id, story))
-            firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).set(str(max(uploaded_story_ids)))
+            if uploaded_story_ids:
+                firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).set(str(max(uploaded_story_ids)))
         await asyncio.sleep(60)
 
 @bot.event
