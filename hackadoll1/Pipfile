@@ -19,6 +19,7 @@ pydrive = "*"
 youtube-dl = "*"
 oauth2client = "*"
 fake-useragent = "*"
+instaloader = "*"
 
 [dev-packages]
 

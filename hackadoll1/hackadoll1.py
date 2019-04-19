@@ -141,6 +141,61 @@ async def check_instagram():
         await asyncio.sleep(30)
 
 @bot.event
+async def check_instagram_stories():
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        guild = discord.utils.get(bot.guilds, id=hkd.SERVER_ID)
+        channel = discord.utils.get(guild.channels, id=hkd.TWITTER_CHANNEL_ID)
+        instaloader_args = ['instaloader', '--login={0}'.format(config['instagram_user']), '--sessionfile={0}'.format('./.instaloader-session'), '--quiet', '--dirname-pattern={profile}', '--filename-pattern={profile}_{mediaid}', ':stories']
+        proc = subprocess.Popen(args=instaloader_args)
+        while proc.poll() is None:
+            await asyncio.sleep(1)
+        for instagram_id in firebase_ref.child('last_instagram_stories').get().keys():
+            last_story_id = int(firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).get())
+            story_videos = [v for v in os.listdir(instagram_id) if v.endswith('.mp4')]
+            uploaded_story_ids = []
+            stories_to_upload = []
+            for vid in story_videos:
+                video_id = int(vid[:-4].rsplit('_')[1])
+                if video_id > last_story_id:
+                    stories_to_upload.append(vid)
+                    uploaded_story_ids.append(video_id)
+            story_pics = [p for p in os.listdir(instagram_id) if p.endswith('.jpg')]
+            for pic in story_pics:
+                pic_id = int(pic[:-4].rsplit('_')[1])
+                if pic_id > last_story_id and pic_id not in uploaded_story_ids:
+                    stories_to_upload.append(pic)
+                    uploaded_story_ids.append(pic_id)
+            if uploaded_story_ids:
+                response = requests.get('https://www.instagram.com/{0}/'.format(instagram_id), headers = { 'User-Agent': user_agent.random })
+                soup = BeautifulSoup(response.text, 'html.parser')
+                script = soup.find('body').find('script')
+                json_data = json.loads(script.text.strip().replace('window._sharedData =', '').replace(';', ''))
+                user_data = json_data['entry_data']['ProfilePage'][0]['graphql']['user']
+                user_name = user_data['full_name']
+                user_id = user_data['username']
+                profile_pic = user_data['profile_pic_url_hd']
+                if instagram_id in hkd.WUG_INSTAGRAM_IDS.values():
+                    colour = get_oshi_colour(guild, dict_reverse(hkd.WUG_INSTAGRAM_IDS)[instagram_id])
+                else:
+                    colour = discord.Colour.light_grey()
+                author = {}
+                author['name'] = '{0} (@{1})'.format(user_name, user_id)
+                author['url'] = 'https://www.instagram.com/{0}/'.format(instagram_id)
+                author['icon_url'] = profile_pic
+                story_link = 'https://www.instagram.com/stories/{0}/'.format(instagram_id)
+            first_upload = True
+            for story in stories_to_upload:
+                if first_upload:
+                    await channel.send(embed=create_embed(author=author, title='Instagram Story Updated by {0}'.format(user_name), colour=colour, url=story_link))
+                    first_upload = False
+                await channel.send(file=discord.File('./{0}/{1}'.format(instagram_id, story)))
+                with suppress(Exception):
+                    os.remove('./{0}/{1}'.format(instagram_id, story))
+            firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).set(str(max(uploaded_story_ids)))
+        await asyncio.sleep(60)
+
+@bot.event
 async def check_live_streams():
     await bot.wait_until_ready()
     while not bot.is_closed():
@@ -804,5 +859,6 @@ async def say(ctx, channel_name: str, *, message: str):
 bot.loop.create_task(check_mute_status())
 bot.loop.create_task(check_tweets())
 bot.loop.create_task(check_instagram())
+bot.loop.create_task(check_instagram_stories())
 bot.loop.create_task(check_live_streams())
 bot.run(config['token'])
