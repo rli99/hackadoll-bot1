@@ -68,7 +68,8 @@ async def check_tweets():
                     user_id = int(user_id_str)
                     last_tweet_id = int(firebase_ref.child('last_userid_tweets/{0}'.format(user_id)).get())
                     posted_tweets = []
-                    for status in twitter_api.GetUserTimeline(user_id=user_id, since_id=last_tweet_id, count=40, include_rts=False):
+                    statuses = twitter_api.GetUserTimeline(user_id=user_id, since_id=last_tweet_id, count=40, include_rts=False)
+                    for status in reversed(statuses):
                         tweet = status.AsDict()
                         user = tweet['user']
                         name = user['screen_name']
@@ -185,13 +186,11 @@ async def check_instagram_stories():
                 author['icon_url'] = profile_pic
                 story_link = 'https://www.instagram.com/stories/{0}/'.format(instagram_id)
             first_upload = True
-            for story in stories_to_upload:
+            for story in sorted(stories_to_upload):
                 if first_upload:
                     await channel.send(embed=create_embed(author=author, title='Instagram Story Updated by {0}'.format(user_name), colour=colour, url=story_link))
                     first_upload = False
                 await channel.send(file=discord.File('./{0}/{1}'.format(instagram_id, story)))
-                with suppress(Exception):
-                    os.remove('./{0}/{1}'.format(instagram_id, story))
             if uploaded_story_ids:
                 firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).set(str(max(uploaded_story_ids)))
         await asyncio.sleep(60)
