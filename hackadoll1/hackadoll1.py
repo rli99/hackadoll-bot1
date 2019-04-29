@@ -8,12 +8,11 @@ from datetime import datetime
 from dateutil import parser
 from decimal import Decimal
 from discord.ext import commands
-from discord.ext.commands.cooldowns import BucketType
 from fake_useragent import UserAgent
 from firebase_admin import credentials, db, initialize_app
 from forex_python.converter import CurrencyRates
 from googletrans import Translator
-from hkdhelper import create_embed, dict_reverse, get_muted_role, get_oshi_colour, get_wug_role, parse_oshi_name
+from hkdhelper import create_embed, dict_reverse, get_html_from_url, get_muted_role, get_oshi_colour, get_seiyuu_channel, get_updates_channel, get_wug_guild, get_wug_role, parse_oshi_name
 from html import unescape
 from httplib2 import Http
 from humanfriendly import format_timespan
@@ -22,7 +21,6 @@ from operator import itemgetter
 from random import randrange
 from timezonefinder import TimezoneFinder
 from urllib.parse import quote
-from urllib.request import urlopen
 
 config = hkd.parse_config()
 bot = commands.Bot(command_prefix=('!', 'ichigo ', 'alexa ', 'Ichigo ', 'Alexa '))
@@ -48,7 +46,7 @@ async def check_mute_status():
             if time.time() > float(muted_members[member_id]):
                 firebase_ref.child('muted_members/{0}'.format(member_id)).delete()
                 members_to_unmute.append(member_id)
-                guild = discord.utils.get(bot.guilds, id=hkd.SERVER_ID)
+                guild = get_wug_guild(bot.guilds)
                 member = discord.utils.get(guild.members, id=int(member_id))
                 await member.remove_roles(get_muted_role(guild))
         for member_id in members_to_unmute:
@@ -59,8 +57,7 @@ async def check_mute_status():
 async def check_tweets():
     await bot.wait_until_ready()
     while not bot.is_closed():
-        guild = discord.utils.get(bot.guilds, id=hkd.SERVER_ID)
-        channel = discord.utils.get(guild.channels, id=hkd.TWITTER_CHANNEL_ID)
+        channel = get_updates_channel(bot.guilds)
         for _ in range(3):
             with suppress(Exception):
                 twitter_user_ids = firebase_ref.child('last_userid_tweets').get().keys()
@@ -81,7 +78,7 @@ async def check_tweets():
                         posted_tweets.append(tweet_id)
                         tweet_content = unescape(tweet['full_text'])
                         if user_id in hkd.WUG_TWITTER_IDS.values():
-                            colour = get_oshi_colour(guild, dict_reverse(hkd.WUG_TWITTER_IDS)[user_id])
+                            colour = get_oshi_colour(get_wug_guild(bot.guilds), dict_reverse(hkd.WUG_TWITTER_IDS)[user_id])
                         else:
                             colour = discord.Colour.light_grey()
                         author = {}
@@ -102,8 +99,7 @@ async def check_tweets():
 async def check_instagram():
     await bot.wait_until_ready()
     while not bot.is_closed():
-        guild = discord.utils.get(bot.guilds, id=hkd.SERVER_ID)
-        channel = discord.utils.get(guild.channels, id=hkd.TWITTER_CHANNEL_ID)
+        channel = get_updates_channel(bot.guilds)
         for _ in range(3):
             with suppress(Exception):
                 for instagram_id in firebase_ref.child('last_instagram_posts').get().keys():
@@ -128,7 +124,7 @@ async def check_instagram():
                         post_link = 'https://www.instagram.com/p/{0}/'.format(post_content['shortcode'])
                         posted_updates.append(post_id)
                         if instagram_id in hkd.WUG_INSTAGRAM_IDS.values():
-                            colour = get_oshi_colour(guild, dict_reverse(hkd.WUG_INSTAGRAM_IDS)[instagram_id])
+                            colour = get_oshi_colour(get_wug_guild(bot.guilds), dict_reverse(hkd.WUG_INSTAGRAM_IDS)[instagram_id])
                         else:
                             colour = discord.Colour.light_grey()
                         author = {}
@@ -145,60 +141,63 @@ async def check_instagram():
 async def check_instagram_stories():
     await bot.wait_until_ready()
     while not bot.is_closed():
-        guild = discord.utils.get(bot.guilds, id=hkd.SERVER_ID)
-        channel = discord.utils.get(guild.channels, id=hkd.TWITTER_CHANNEL_ID)
-        instaloader_args = ['instaloader', '--login={0}'.format(config['instagram_user']), '--sessionfile={0}'.format('./.instaloader-session'), '--quiet', '--dirname-pattern={profile}', '--filename-pattern={profile}_{mediaid}', ':stories']
-        proc = subprocess.Popen(args=instaloader_args)
-        while proc.poll() is None:
-            await asyncio.sleep(1)
-        for instagram_id in firebase_ref.child('last_instagram_stories').get().keys():
-            last_story_id = int(firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).get())
-            story_videos = [v for v in os.listdir(instagram_id) if v.endswith('.mp4')]
-            uploaded_story_ids = []
-            stories_to_upload = []
-            for vid in story_videos:
-                video_id = int(vid[:-4].rsplit('_')[1])
-                if video_id > last_story_id:
-                    stories_to_upload.append(vid)
-                    uploaded_story_ids.append(video_id)
-            story_pics = [p for p in os.listdir(instagram_id) if p.endswith('.jpg')]
-            for pic in story_pics:
-                pic_id = int(pic[:-4].rsplit('_')[1])
-                if pic_id > last_story_id and pic_id not in uploaded_story_ids:
-                    stories_to_upload.append(pic)
-                    uploaded_story_ids.append(pic_id)
-            if uploaded_story_ids:
-                response = requests.get('https://www.instagram.com/{0}/'.format(instagram_id), headers = { 'User-Agent': user_agent.random })
-                soup = BeautifulSoup(response.text, 'html.parser')
-                script = soup.find('body').find('script')
-                json_data = json.loads(script.text.strip().replace('window._sharedData =', '').replace(';', ''))
-                user_data = json_data['entry_data']['ProfilePage'][0]['graphql']['user']
-                user_name = user_data['full_name']
-                user_id = user_data['username']
-                profile_pic = user_data['profile_pic_url_hd']
-                if instagram_id in hkd.WUG_INSTAGRAM_IDS.values():
-                    colour = get_oshi_colour(guild, dict_reverse(hkd.WUG_INSTAGRAM_IDS)[instagram_id])
-                else:
-                    colour = discord.Colour.light_grey()
-                author = {}
-                author['name'] = '{0} (@{1})'.format(user_name, user_id)
-                author['url'] = 'https://www.instagram.com/{0}/'.format(instagram_id)
-                author['icon_url'] = profile_pic
-                story_link = 'https://www.instagram.com/stories/{0}/'.format(instagram_id)
-            first_upload = True
-            for story in sorted(stories_to_upload):
-                if first_upload:
-                    await channel.send(embed=create_embed(author=author, title='Instagram Story Updated by {0}'.format(user_name), colour=colour, url=story_link))
-                    first_upload = False
-                await channel.send(file=discord.File('./{0}/{1}'.format(instagram_id, story)))
-            if uploaded_story_ids:
-                firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).set(str(max(uploaded_story_ids)))
+        channel = get_updates_channel(bot.guilds)
+        for _ in range(3):
+            with suppress(Exception):
+                instaloader_args = ['instaloader', '--login={0}'.format(config['instagram_user']), '--sessionfile={0}'.format('./.instaloader-session'), '--quiet', '--dirname-pattern={profile}', '--filename-pattern={profile}_{mediaid}', ':stories']
+                proc = subprocess.Popen(args=instaloader_args)
+                while proc.poll() is None:
+                    await asyncio.sleep(1)
+                for instagram_id in firebase_ref.child('last_instagram_stories').get().keys():
+                    last_story_id = int(firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).get())
+                    story_videos = [v for v in os.listdir(instagram_id) if v.endswith('.mp4')]
+                    uploaded_story_ids = []
+                    stories_to_upload = []
+                    for vid in story_videos:
+                        video_id = int(vid[:-4].rsplit('_')[1])
+                        if video_id > last_story_id:
+                            stories_to_upload.append(vid)
+                            uploaded_story_ids.append(video_id)
+                    story_pics = [p for p in os.listdir(instagram_id) if p.endswith('.jpg')]
+                    for pic in story_pics:
+                        pic_id = int(pic[:-4].rsplit('_')[1])
+                        if pic_id > last_story_id and pic_id not in uploaded_story_ids:
+                            stories_to_upload.append(pic)
+                            uploaded_story_ids.append(pic_id)
+                    if uploaded_story_ids:
+                        response = requests.get('https://www.instagram.com/{0}/'.format(instagram_id), headers = { 'User-Agent': user_agent.random })
+                        soup = BeautifulSoup(response.text, 'html.parser')
+                        script = soup.find('body').find('script')
+                        json_data = json.loads(script.text.strip().replace('window._sharedData =', '').replace(';', ''))
+                        user_data = json_data['entry_data']['ProfilePage'][0]['graphql']['user']
+                        user_name = user_data['full_name']
+                        user_id = user_data['username']
+                        profile_pic = user_data['profile_pic_url_hd']
+                        if instagram_id in hkd.WUG_INSTAGRAM_IDS.values():
+                            colour = get_oshi_colour(get_wug_guild(bot.guilds), dict_reverse(hkd.WUG_INSTAGRAM_IDS)[instagram_id])
+                        else:
+                            colour = discord.Colour.light_grey()
+                        author = {}
+                        author['name'] = '{0} (@{1})'.format(user_name, user_id)
+                        author['url'] = 'https://www.instagram.com/{0}/'.format(instagram_id)
+                        author['icon_url'] = profile_pic
+                        story_link = 'https://www.instagram.com/stories/{0}/'.format(instagram_id)
+                    first_upload = True
+                    for story in sorted(stories_to_upload):
+                        if first_upload:
+                            await channel.send(embed=create_embed(author=author, title='Instagram Story Updated by {0}'.format(user_name), colour=colour, url=story_link))
+                            first_upload = False
+                        await channel.send(file=discord.File('./{0}/{1}'.format(instagram_id, story)))
+                    if uploaded_story_ids:
+                        firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).set(str(max(uploaded_story_ids)))
+                break
         await asyncio.sleep(60)
 
 @bot.event
 async def check_live_streams():
     await bot.wait_until_ready()
     while not bot.is_closed():
+        channel = get_seiyuu_channel(bot.guilds)
         now = datetime.utcnow().isoformat() + 'Z'
         for _ in range(3):
             with suppress(Exception):
@@ -212,9 +211,7 @@ async def check_live_streams():
                         wug_members = wug_members_str.split(',')
                         if stream_link[0] == '<':
                             stream_link = BeautifulSoup(stream_link, 'html.parser').find('a').contents[0]
-                        guild = discord.utils.get(bot.guilds, id=hkd.SERVER_ID)
-                        channel = discord.utils.get(guild.channels, id=hkd.SEIYUU_CHANNEL_ID)
-                        colour = get_oshi_colour(guild, wug_members[0]) if len(wug_members) == 1 else discord.Colour.teal()
+                        colour = get_oshi_colour(get_wug_guild(bot.guilds), wug_members[0]) if len(wug_members) == 1 else discord.Colour.teal()
                         embed_fields = []
                         embed_fields.append(('Time', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M} JST'.format(start.astimezone(pytz.timezone('Japan')))))
                         embed_fields.append(('WUG Members', ', '.join(wug_members)))
@@ -241,7 +238,6 @@ async def help(ctx):
         embed_fields.append(('!userinfo', 'Show your user information.'))
         embed_fields.append(('!serverinfo', 'Show server information.'))
         embed_fields.append(('!seiyuu-vids', 'Show link to the wiki page with WUG seiyuu content.'))
-        embed_fields.append(('!wugch-omake', 'Show link to the Google Drive folder with WUG Channel omake videos.'))
         embed_fields.append(('!tl *japanese text*', 'Translate the provided Japanese text into English via Google Translate.'))
         embed_fields.append(('!currency *amount* *x* to *y*', 'Convert *amount* of *x* currency to *y* currency, e.g. **!currency** 12.34 AUD to USD'))
         embed_fields.append(('!weather *city*, *country*', 'Show weather information for *city*, *country* (optional), e.g. **!weather** Melbourne, Australia'))
@@ -482,8 +478,7 @@ async def events(ctx, *, date: str=''):
     first = True
     for _ in range(3):
         with suppress(Exception):
-            html_response = urlopen('https://www.eventernote.com/events/month/{0}-{1}-{2}/1?limit=1000'.format(search_year, search_date.month, search_date.day))
-            soup = BeautifulSoup(html_response, 'html.parser')
+            soup = get_html_from_url('https://www.eventernote.com/events/month/{0}-{1}-{2}/1?limit=1000'.format(search_year, search_date.month, search_date.day))
             result = soup.find_all(attrs={ 'class': ['date', 'event', 'actor', 'note_count'] })
             for event in [result[i:i + 4] for i in range(0, len(result), 4)]:
                 info = event[1].find_all('a')
@@ -538,18 +533,21 @@ async def eventsin(ctx, month: str, member: str=''):
     for i in search_index:
         for _ in range(3):
             with suppress(Exception):
-                html_response = urlopen('https://www.eventernote.com/actors/{0}/{1}/events?actor_id={1}&limit=5000'.format(quote(hkd.WUG_MEMBERS[i]), hkd.WUG_EVENTERNOTE_IDS[i]))
-                soup = BeautifulSoup(html_response, 'html.parser')
+                soup = get_html_from_url('https://www.eventernote.com/actors/{0}/{1}/events?actor_id={1}&limit=5000'.format(quote(hkd.WUG_MEMBERS[i]), hkd.WUG_EVENTERNOTE_IDS[i]))
                 result = soup.find_all(attrs={ 'class': ['date', 'event', 'actor', 'note_count'] })
+                events = []
                 for event in [result[i:i + 4] for i in range(0, len(result), 4)]:
                     event_date = event[0].find('p').contents[0][:10]
                     if event_date[:4] == search_year and event_date[5:7] == search_month:
                         search_start = True
+                        events.append(event)
                     elif search_start:
                         break
                     else:
                         continue
+                for event in reversed(events):
                     info = event[1].find_all('a')
+                    event_date = event[0].find('p').contents[0][:10]
                     event_time = event[1].find('span')
                     event_url = info[0]['href']
                     if event_url not in event_urls:
@@ -709,12 +707,6 @@ async def seiyuu_vids(ctx):
     await ctx.channel.trigger_typing()
     await ctx.send(content='**WUG Seiyuu Videos**', embed=create_embed(title='List of seiyuu content on the Wake Up, Girls! wiki', url='http://wake-up-girls.wikia.com/wiki/List_of_Seiyuu_Content'))
 
-@bot.command(name='wugch-omake', aliases=['wugch', 'wug-ch'])
-@commands.guild_only()
-async def wugch_omake(ctx):
-    await ctx.channel.trigger_typing()
-    await ctx.send(content='**WUG Channel Omake Videos**', embed=create_embed(title='Google Drive folder with recent WUGch omake videos', url='https://drive.google.com/open?id=1o0PWGdlCUhsIN72O0aKSP6HRbim5Fzpw'))
-
 @bot.command(aliases=['translate'])
 async def tl(ctx, *, text: str):
     await ctx.channel.trigger_typing()
@@ -765,8 +757,7 @@ async def yt(ctx, *, query: str):
     await ctx.channel.trigger_typing()
     for _ in range(3):
         with suppress(Exception):
-            html_response = urlopen('https://www.youtube.com/results?search_query={0}'.format(quote(query)))
-            soup = BeautifulSoup(html_response, 'html.parser')
+            soup = get_html_from_url('https://www.youtube.com/results?search_query={0}'.format(quote(query)))
             for result in soup.find_all(attrs={ 'class': 'yt-uix-tile-link' }):
                 link = result['href']
                 if hkd.is_youtube_link(link):
@@ -823,8 +814,7 @@ async def onmusu(ctx, member: str=''):
     char, char_colour = hkd.WUG_ONMUSU_CHARS[parse_oshi_name(member)]
     await ctx.channel.trigger_typing()
     profile_link = 'https://onsen-musume.jp/character/{0}'.format(char)
-    html_response = urlopen(profile_link)
-    soup = BeautifulSoup(html_response, 'html.parser')
+    soup = get_html_from_url(profile_link)
     char_pic = 'https://onsen-musume.jp{0}'.format(soup.find('div', class_='character_ph__main').find('img')['src'])
     serifu = soup.find('div', class_='character_ph__serif').find('img')['alt']
     char_main = soup.find('div', class_='character_post__main')
@@ -835,8 +825,7 @@ async def onmusu(ctx, member: str=''):
     for item in char_main.find('ul', class_='character_profile').find_all('li'):
         for i, entry in enumerate(item.find_all('span')):
             embed_fields.append((entry.contents[0], item.contents[(i + 1) * 2][1:]))
-    html_response = urlopen('https://onsen-musume.jp/character/')
-    soup = BeautifulSoup(html_response, 'html.parser')
+    soup = get_html_from_url('https://onsen-musume.jp/character/')
     thumbnail = 'https://onsen-musume.jp{0}'.format(soup.find('li', class_='character-list__item02 {0}'.format(char)).find('img')['src'])
     author = {}
     author['name'] = char_name

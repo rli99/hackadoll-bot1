@@ -1,6 +1,8 @@
 import configparser, discord, time
+from bs4 import BeautifulSoup
 from contextlib import suppress
 from dateutil import parser
+from urllib.request import urlopen
 
 SERVER_ID = 280439975911096320
 TWITTER_CHANNEL_ID = 448716340816248832
@@ -60,6 +62,17 @@ def parse_config():
     config = configparser.ConfigParser()
     config.read('config.ini')
     return config['DEFAULT']
+
+def get_wug_guild(guilds):
+    return discord.utils.get(guilds, id=SERVER_ID)
+
+def get_updates_channel(guilds):
+    guild = discord.utils.get(guilds, id=SERVER_ID)
+    return discord.utils.get(guild.channels, id=TWITTER_CHANNEL_ID)
+
+def get_seiyuu_channel(guilds):
+    guild = discord.utils.get(guilds, id=SERVER_ID)
+    return discord.utils.get(guild.channels, id=SEIYUU_CHANNEL_ID)
 
 def get_muted_role(guild):
     return discord.utils.get(guild.roles, id=MUTED_ROLE_ID)
@@ -130,6 +143,10 @@ def split_embeddable_content(tag_content):
         else:
             return
     return split_tag
+
+def get_html_from_url(url):
+    html_response = urlopen(url)
+    return BeautifulSoup(html_response, 'html.parser')
 
 def create_embed(author={}, title='', description='', colour=discord.Colour.light_grey(), url='', image='', thumbnail='', fields=[], footer={}, inline=False):
     embed = discord.Embed(title=title, description=description, colour=colour, url=url)
