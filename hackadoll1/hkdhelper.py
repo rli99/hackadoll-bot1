@@ -52,10 +52,12 @@ WUG_ONMUSU_CHARS = {
 WUG_TWITTER_IDS = {
     'myu': 1112369342815956994,
     'mayushii': 1113758206436622336,
-    'minyami': 1113445785004269568
+    'minyami': 1113445785004269568,
+    'kayatan': 1123177804114190336
 }
 WUG_INSTAGRAM_IDS = {
-    'nanamin': 'aishite773'
+    'nanamin': 'aishite773',
+    'kayatan': 'kaayaataaaan'
 }
 
 def parse_config():
