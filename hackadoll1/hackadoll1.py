@@ -8,7 +8,6 @@ from datetime import datetime
 from dateutil import parser
 from decimal import Decimal
 from discord.ext import commands
-from fake_useragent import UserAgent
 from firebase_admin import credentials, db, initialize_app
 from forex_python.converter import CurrencyRates
 from googletrans import Translator
@@ -31,7 +30,6 @@ firebase_ref = db.reference()
 muted_members = firebase_ref.child('muted_members').get() or {}
 twitter_api = twitter.Api(consumer_key=config['consumer_key'], consumer_secret=config['consumer_secret'], access_token_key=config['access_token_key'], access_token_secret=config['access_token_secret'], tweet_mode='extended')
 calendar = build('calendar', 'v3', http=file.Storage('credentials.json').get().authorize(Http()))
-user_agent = UserAgent()
 
 @bot.event
 async def on_ready():
@@ -104,7 +102,7 @@ async def check_instagram():
             with suppress(Exception):
                 for instagram_id in firebase_ref.child('last_instagram_posts').get().keys():
                     last_post_id = int(firebase_ref.child('last_instagram_posts/{0}'.format(instagram_id)).get())
-                    response = requests.get('https://www.instagram.com/{0}/'.format(instagram_id), headers = { 'User-Agent': user_agent.random })
+                    response = requests.get('https://www.instagram.com/{0}/'.format(instagram_id), headers=hkd.get_random_header())
                     soup = BeautifulSoup(response.text, 'html.parser')
                     script = soup.find('body').find('script')
                     json_data = json.loads(script.text.strip().replace('window._sharedData =', '').replace(';', ''))
@@ -164,7 +162,7 @@ async def check_instagram_stories():
                         stories_to_upload.append(pic)
                         uploaded_story_ids.append(pic_id)
                 if uploaded_story_ids:
-                    response = requests.get('https://www.instagram.com/{0}/'.format(instagram_id), headers = { 'User-Agent': user_agent.random })
+                    response = requests.get('https://www.instagram.com/{0}/'.format(instagram_id), headers=hkd.get_random_header())
                     soup = BeautifulSoup(response.text, 'html.parser')
                     script = soup.find('body').find('script')
                     json_data = json.loads(script.text.strip().replace('window._sharedData =', '').replace(';', ''))
@@ -189,7 +187,6 @@ async def check_instagram_stories():
                     await channel.send(file=discord.File('./{0}/{1}'.format(instagram_id, story)))
                 if uploaded_story_ids:
                     firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).set(str(max(uploaded_story_ids)))
-            break
         await asyncio.sleep(90)
 
 @bot.event

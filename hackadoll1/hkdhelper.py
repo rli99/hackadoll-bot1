@@ -2,6 +2,7 @@ import configparser, discord, time
 from bs4 import BeautifulSoup
 from contextlib import suppress
 from dateutil import parser
+from random import choice
 from urllib.request import urlopen
 
 SERVER_ID = 280439975911096320
@@ -60,6 +61,18 @@ WUG_INSTAGRAM_IDS = {
     'nanamin': 'aishite773',
     'kayatan': 'kaayaataaaan'
 }
+FAKE_USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36', 
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36',
+    'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0'
+]
 
 def parse_config():
     config = configparser.ConfigParser()
@@ -150,6 +163,9 @@ def split_embeddable_content(tag_content):
 def get_html_from_url(url):
     html_response = urlopen(url)
     return BeautifulSoup(html_response, 'html.parser')
+
+def get_random_header():
+    return { 'User-Agent': choice(FAKE_USER_AGENTS) }
 
 def create_embed(author={}, title='', description='', colour=discord.Colour.light_grey(), url='', image='', thumbnail='', fields=[], footer={}, inline=False):
     embed = discord.Embed(title=title, description=description, colour=colour, url=url)
