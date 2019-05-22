@@ -146,8 +146,10 @@ async def check_instagram_stories():
             while proc.poll() is None:
                 await asyncio.sleep(1)
             for instagram_id in firebase_ref.child('last_instagram_stories').get().keys():
-                last_story_id = int(firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).get())
+                if not os.path.isdir(instagram_id):
+                    continue
                 story_videos = [v for v in os.listdir(instagram_id) if v.endswith('.mp4')]
+                last_story_id = int(firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).get())
                 uploaded_story_ids = []
                 stories_to_upload = []
                 for vid in story_videos:
