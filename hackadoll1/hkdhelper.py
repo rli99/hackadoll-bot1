@@ -55,7 +55,8 @@ WUG_TWITTER_IDS = {
     'mayushii': 1113758206436622336,
     'minyami': 1113445785004269568,
     'kayatan': 1123177804114190336,
-    'yoppi': 1128244095887917056
+    'yoppi': 1128244095887917056,
+    'aichan': 1134589498610802688
 }
 WUG_INSTAGRAM_IDS = {
     'nanamin': 'aishite773',
@@ -126,6 +127,9 @@ def parse_month(month):
         if month_query in month_group:
             return str(i + 1) if i > 8 else '0{0}'.format(i + 1)
     return 'None'
+
+def is_blog_post(tweet):
+    return '@ameba_officialさんから' in tweet
 
 def is_image_file(filename):
     return filename.endswith(('.jpg', '.png'))
