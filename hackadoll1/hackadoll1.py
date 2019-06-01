@@ -8,6 +8,7 @@ from datetime import datetime
 from dateutil import parser
 from decimal import Decimal
 from discord.ext import commands
+from discord.ext.commands.cooldowns import BucketType
 from firebase_admin import credentials, db, initialize_app
 from forex_python.converter import CurrencyRates
 from googletrans import Translator
@@ -241,6 +242,7 @@ async def help(ctx):
         embed_fields.append(('!mv-list', 'Show list of available MVs.'))
         embed_fields.append(('!userinfo', 'Show your user information.'))
         embed_fields.append(('!serverinfo', 'Show server information.'))
+        embed_fields.append(('!aichan-blogpics', 'Get pictures from the latest blog post by Aichan.'))
         embed_fields.append(('!seiyuu-vids', 'Show link to the wiki page with WUG seiyuu content.'))
         embed_fields.append(('!tl *japanese text*', 'Translate the provided Japanese text into English via Google Translate.'))
         embed_fields.append(('!currency *amount* *x* to *y*', 'Convert *amount* of *x* currency to *y* currency, e.g. **!currency** 12.34 AUD to USD'))
@@ -705,6 +707,23 @@ async def mv_list(ctx):
     description = '{0}\n\n'.format('\n'.join(list(firebase_ref.child('music_videos/mv_links').get().keys())))
     description += 'Use **!mv** *song* to show the full MV. You can also write the name of the song in English.'
     await ctx.send(content='**List of Available Music Videos**', embed=create_embed(description=description))
+
+@bot.command(name='aichan-blogpics')
+@commands.cooldown(1, 10, BucketType.guild)
+async def aichan_blogpics(ctx):
+    await ctx.channel.trigger_typing()
+    for _ in range(3):
+        with suppress(Exception):
+            soup = get_html_from_url('https://ameblo.jp/eino-airi/')
+            blog_entry = soup.find_all(attrs={ 'class': 'skin-entryBody' }, limit=1)[0]
+            pics = [p['href'] for p in blog_entry.find_all('a') if hkd.is_image_file(p['href'])]
+            for pic in pics:
+                await ctx.channel.trigger_typing()
+                await asyncio.sleep(1)
+                await ctx.send(pic)
+            if not pics:
+                await ctx.send(embed=create_embed(description="Couldn't find any pictures.", colour=discord.Colour.red()))
+            break
 
 @bot.command(name='seiyuu-vids', aliases=['seiyuuvids'])
 async def seiyuu_vids(ctx):
