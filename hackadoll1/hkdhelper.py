@@ -128,8 +128,8 @@ def parse_month(month):
             return str(i + 1) if i > 8 else '0{0}'.format(i + 1)
     return 'None'
 
-def is_blog_post(tweet):
-    return '@ameba_officialさんから' in tweet
+def is_blog_post(expanded_url):
+    return 'ameblo.jp/eino-airi' in expanded_url
 
 def is_image_file(filename):
     return filename.endswith(('.jpg', '.png'))

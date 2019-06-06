@@ -85,12 +85,15 @@ async def check_tweets():
                         author['url'] = 'https://twitter.com/{0}'.format(name)
                         author['icon_url'] = user['profile_image_url_https']
                         image = ''
-                        if hkd.is_blog_post(tweet_content):
-                            soup = get_html_from_url(tweet_content.split('⇒')[1].split()[0])
-                            blog_entry = soup.find(attrs={ 'class': 'skin-entryBody' })
-                            blog_images = [p['src'] for p in blog_entry.find_all('img') if '?caw=' in p['src'][-9:]]
-                            if blog_images:
-                                image = blog_images[0]
+                        expanded_urls = tweet['urls']
+                        if expanded_urls:
+                            expanded_url = expanded_urls[0].get('expanded_url', '')
+                            if expanded_url and hkd.is_blog_post(expanded_url):
+                                soup = get_html_from_url(expanded_url)
+                                blog_entry = soup.find(attrs={ 'class': 'skin-entryBody' })
+                                blog_images = [p['src'] for p in blog_entry.find_all('img') if '?caw=' in p['src'][-9:]]
+                                if blog_images:
+                                    image = blog_images[0]
                         media = tweet.get('media', '')
                         if media:
                             image = media[0].get('media_url_https', '')
