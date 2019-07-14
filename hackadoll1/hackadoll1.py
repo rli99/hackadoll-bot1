@@ -236,7 +236,6 @@ async def help(ctx):
     await ctx.channel.trigger_typing()
     if ctx.invoked_subcommand is None:
         embed_fields = []
-        embed_fields.append(('!help', 'Show this help message.'))
         embed_fields.append(('!help mod-commands', 'Show help for moderator-only commands.'))
         embed_fields.append(('!help roles', 'Show help for role commands.'))
         embed_fields.append(('!help events', 'Show help for event commands.'))
@@ -245,7 +244,9 @@ async def help(ctx):
         embed_fields.append(('!mv-list', 'Show list of available MVs.'))
         embed_fields.append(('!userinfo', 'Show your user information.'))
         embed_fields.append(('!serverinfo', 'Show server information.'))
-        embed_fields.append(('!aichan-blogpics', 'Get pictures from the latest blog post by Aichan.'))
+        embed_fields.append(('!tweetpics *url*', 'Get images from the specified tweet.'))
+        embed_fields.append(('!blogpics *url*', 'Get images from the specified Ameba blog post.'))
+        embed_fields.append(('!aichan-blogpics', 'Get images from the latest blog post by Aichan.'))
         embed_fields.append(('!seiyuu-vids', 'Show link to the wiki page with WUG seiyuu content.'))
         embed_fields.append(('!tl *japanese text*', 'Translate the provided Japanese text into English via Google Translate.'))
         embed_fields.append(('!currency *amount* *x* to *y*', 'Convert *amount* of *x* currency to *y* currency, e.g. **!currency** 12.34 AUD to USD'))
@@ -644,10 +645,7 @@ async def tag(ctx, tag_name: str):
         if not split_tag:
             await ctx.send(tag_result)
         else:
-            for link in split_tag:
-                await ctx.channel.trigger_typing()
-                await asyncio.sleep(1)
-                await ctx.send(link)
+            await hkd.send_content_with_delay(ctx, split_tag)
     else:
         await ctx.send(embed=create_embed(description="That tag doesn't exist. Use **!tagcreate** *tag_name* *Content of the tag* to create a tag.", colour=discord.Colour.red()))
 
@@ -711,22 +709,41 @@ async def mv_list(ctx):
     description += 'Use **!mv** *song* to show the full MV. You can also write the name of the song in English.'
     await ctx.send(content='**List of Available Music Videos**', embed=create_embed(description=description))
 
+@bot.command(aliases=['tweet-pics'])
+async def tweetpics(ctx, tweet_url: str):
+    await ctx.channel.trigger_typing()
+    for _ in range(3):
+        with suppress(Exception):
+            status_id = hkd.get_tweet_id_from_url(tweet_url)
+            status = twitter_api.GetStatus(status_id=status_id, include_my_retweet=False)
+            tweet = status.AsDict()
+            media = tweet.get('media', [])
+            if len(media) <= 1:
+                break
+            pics = [p.get('media_url_https', '') for p in media[1:]]
+            await hkd.send_content_with_delay(ctx, pics)
+            break
+
+@bot.command(aliases=['blog-pics'])
+@commands.cooldown(1, 10, BucketType.guild)
+async def blogpics(ctx, blog_url: str):
+    await ctx.channel.trigger_typing()
+    pics = hkd.get_pics_from_blog_post(blog_url)
+    if not pics:
+        await ctx.send(embed=create_embed(description="Couldn't find any images.", colour=discord.Colour.red()))
+        return
+    elif len(pics) == 1:
+        return
+    await hkd.send_content_with_delay(ctx, pics[1:])
+
 @bot.command(name='aichan-blogpics')
 @commands.cooldown(1, 10, BucketType.guild)
 async def aichan_blogpics(ctx):
     await ctx.channel.trigger_typing()
-    for _ in range(3):
-        with suppress(Exception):
-            soup = get_html_from_url('https://ameblo.jp/eino-airi/')
-            blog_entry = soup.find_all(attrs={ 'class': 'skin-entryBody' }, limit=1)[0]
-            pics = [p['href'] for p in blog_entry.find_all('a') if hkd.is_image_file(p['href'])]
-            for pic in pics:
-                await ctx.channel.trigger_typing()
-                await asyncio.sleep(1)
-                await ctx.send(pic)
-            if not pics:
-                await ctx.send(embed=create_embed(description="Couldn't find any pictures.", colour=discord.Colour.red()))
-            break
+    pics = hkd.get_pics_from_blog_post('https://ameblo.jp/eino-airi/')
+    await hkd.send_content_with_delay(ctx, pics)
+    if not pics:
+        await ctx.send(embed=create_embed(description="Couldn't find any images.", colour=discord.Colour.red()))
 
 @bot.command(name='seiyuu-vids', aliases=['seiyuuvids'])
 async def seiyuu_vids(ctx):

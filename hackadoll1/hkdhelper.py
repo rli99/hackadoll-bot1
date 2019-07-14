@@ -1,7 +1,8 @@
-import configparser, discord, time
+import asyncio, configparser, discord, time
 from bs4 import BeautifulSoup
 from contextlib import suppress
 from dateutil import parser
+from itertools import takewhile
 from random import choice
 from urllib.request import urlopen
 
@@ -63,7 +64,7 @@ WUG_INSTAGRAM_IDS = {
     'kayatan': 'kaayaataaaan'
 }
 FAKE_USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36', 
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36',
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36',
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0',
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36',
@@ -168,6 +169,16 @@ def get_html_from_url(url):
     html_response = urlopen(url)
     return BeautifulSoup(html_response, 'html.parser')
 
+def get_tweet_id_from_url(tweet_url):
+    return ''.join(takewhile(lambda x: x.isdigit(), iter(tweet_url.split('/status/')[-1])))
+
+def get_pics_from_blog_post(blog_url):
+    for _ in range(3):
+        with suppress(Exception):
+            soup = get_html_from_url(blog_url)
+            blog_entry = soup.find_all(attrs={ 'class': 'skin-entryBody' }, limit=1)[0]
+            return [p['href'] for p in blog_entry.find_all('a') if is_image_file(p['href'])]
+
 def get_random_header():
     return { 'User-Agent': choice(FAKE_USER_AGENTS) }
 
@@ -184,3 +195,9 @@ def create_embed(author={}, title='', description='', colour=discord.Colour.ligh
     for field in fields:
         embed.add_field(name=field[0], value=field[1], inline=inline)
     return embed
+
+async def send_content_with_delay(ctx, content):
+    for item in content:
+        await ctx.channel.trigger_typing()
+        await asyncio.sleep(1)
+        await ctx.send(item)
