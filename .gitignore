@@ -2,9 +2,12 @@
 
 !/.gitignore
 
+!__init__.py
 !hackadoll1.py
 !hkdhelper.py
 !gdrive_upload.py
+
+!**/cogs/*.py
 
 !Pipfile
 !Pipfile.lock
