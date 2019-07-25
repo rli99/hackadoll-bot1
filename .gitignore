@@ -1,0 +1,13 @@
+*
+
+!/.gitignore
+
+!hackadoll1.py
+!hkdhelper.py
+!gdrive_upload.py
+
+!Pipfile
+!Pipfile.lock
+!README.md
+
+!*/
