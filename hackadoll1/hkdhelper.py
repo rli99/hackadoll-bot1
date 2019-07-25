@@ -174,10 +174,11 @@ def get_tweet_id_from_url(tweet_url):
 
 def get_pics_from_blog_post(blog_url):
     for _ in range(3):
-        with suppress(Exception):
-            soup = get_html_from_url(blog_url)
-            blog_entry = soup.find_all(attrs={ 'class': 'skin-entryBody' }, limit=1)[0]
-            return [p['href'] for p in blog_entry.find_all('a') if is_image_file(p['href'])]
+        for article_class in ['skin-entryBody', 'articleText']:
+            with suppress(Exception):
+                soup = get_html_from_url(blog_url)
+                blog_entry = soup.find_all(attrs={ 'class': article_class }, limit=1)[0]
+                return [p['href'] for p in blog_entry.find_all('a') if is_image_file(p['href'])]
 
 def get_random_header():
     return { 'User-Agent': choice(FAKE_USER_AGENTS) }

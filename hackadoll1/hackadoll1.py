@@ -728,7 +728,7 @@ async def tweetpics(ctx, tweet_url: str):
 @commands.cooldown(1, 10, BucketType.guild)
 async def blogpics(ctx, blog_url: str):
     await ctx.channel.trigger_typing()
-    pics = hkd.get_pics_from_blog_post(blog_url)
+    pics = hkd.get_pics_from_blog_post(blog_url.replace('//gamp.ameblo.jp/', '//ameblo.jp/'))
     if not pics:
         await ctx.send(embed=create_embed(description="Couldn't find any images.", colour=discord.Colour.red()))
         return
