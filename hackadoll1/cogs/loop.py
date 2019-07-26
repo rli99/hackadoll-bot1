@@ -11,9 +11,10 @@ from hkdhelper import create_embed, dict_reverse, get_oshi_colour, get_updates_c
 from html import unescape
 
 class Loop(commands.Cog):
-    def __init__(self, bot, config, firebase_ref, twitter_api, calendar):
+    def __init__(self, bot, config, muted_members, firebase_ref, twitter_api, calendar):
         self.bot = bot
         self.config = config
+        self.muted_members = muted_members
         self.firebase_ref = firebase_ref
         self.twitter_api = twitter_api
         self.calendar = calendar

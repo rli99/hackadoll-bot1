@@ -23,7 +23,7 @@ def main():
     bot = commands.Bot(command_prefix=('!', 'ichigo ', 'alexa ', 'Ichigo ', 'Alexa '))
     bot.remove_command('help')
     certificate = credentials.Certificate(config['firebase_credentials'])
-    firebase = initialize_app(certificate, { 'databaseURL': config['firebase_db'] })
+    initialize_app(certificate, { 'databaseURL': config['firebase_db'] })
     firebase_ref = db.reference()
     muted_members = firebase_ref.child('muted_members').get() or {}
     twitter_api = twitter.Api(consumer_key=config['consumer_key'], consumer_secret=config['consumer_secret'], access_token_key=config['access_token_key'], access_token_secret=config['access_token_secret'], tweet_mode='extended')
@@ -38,7 +38,7 @@ def main():
     bot.add_cog(Pics(bot, twitter_api))
     bot.add_cog(Misc(bot, config))
     bot.add_cog(Secret(bot))
-    bot.add_cog(Loop(bot, config, firebase_ref, twitter_api, calendar))
+    bot.add_cog(Loop(bot, config, muted_members, firebase_ref, twitter_api, calendar))
 
     bot.run(config['token'])
 
