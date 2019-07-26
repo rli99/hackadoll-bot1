@@ -10,6 +10,7 @@ from oauth2client import file
 from cogs.help import Help
 from cogs.moderator import Moderator
 from cogs.oshi import Oshi
+from cogs.info import Info
 from cogs.events import Events
 from cogs.tags import Tags
 from cogs.mv import MV
@@ -32,6 +33,7 @@ def main():
     bot.add_cog(Help(bot))
     bot.add_cog(Moderator(bot, firebase_ref))
     bot.add_cog(Oshi(bot))
+    bot.add_cog(Info(bot))
     bot.add_cog(Events(bot))
     bot.add_cog(Tags(bot, firebase_ref))
     bot.add_cog(MV(bot, firebase_ref))

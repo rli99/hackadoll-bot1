@@ -28,15 +28,15 @@ class Loop(commands.Cog):
     async def check_mute_status(self):
         await self.bot.wait_until_ready()
         members_to_unmute = []
-        for member_id in muted_members:
-            if time.time() > float(muted_members[member_id]):
+        for member_id in self.muted_members:
+            if time.time() > float(self.muted_members[member_id]):
                 self.firebase_ref.child('muted_members/{0}'.format(member_id)).delete()
                 members_to_unmute.append(member_id)
                 guild = get_wug_guild(self.bot.guilds)
                 member = discord.utils.get(guild.members, id=int(member_id))
                 await member.remove_roles(hkd.get_muted_role(guild))
         for member_id in members_to_unmute:
-            muted_members.pop(member_id)
+            self.muted_members.pop(member_id)
         return
 
     @tasks.loop(seconds=20.0)
