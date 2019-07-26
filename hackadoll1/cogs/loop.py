@@ -192,7 +192,7 @@ class Loop(commands.Cog):
         now = datetime.utcnow().isoformat() + 'Z'
         for _ in range(3):
             with suppress(Exception):
-                events = calendar.events().list(calendarId='primary', timeMin=now, maxResults=10, singleEvents=True, orderBy='startTime').execute().get('items', [])
+                events = self.calendar.events().list(calendarId='primary', timeMin=now, maxResults=10, singleEvents=True, orderBy='startTime').execute().get('items', [])
                 first_event = True
                 for event in events:
                     start = parser.parse(event['start'].get('dateTime', event['start'].get('date')))
@@ -210,6 +210,6 @@ class Loop(commands.Cog):
                         await channel.send(content=content, embed=create_embed(title=event['summary'], colour=colour, url=stream_link, fields=embed_fields))
                         first_event = False
                         event['description'] = '*' + event['description']
-                        calendar.events().update(calendarId='primary', eventId=event['id'], body=event).execute()
+                        self.calendar.events().update(calendarId='primary', eventId=event['id'], body=event).execute()
                 break
         return
