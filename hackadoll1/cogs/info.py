@@ -1,6 +1,6 @@
+import hkdhelper as hkd
 from discord import Member
 from discord.ext import commands
-from hkdhelper import create_embed
 
 class Info(commands.Cog):
     def __init__(self, bot):
@@ -8,7 +8,7 @@ class Info(commands.Cog):
 
     @commands.command(aliases=['user-info'])
     @commands.guild_only()
-    async def userinfo(self, ctx, member: Member=None):
+    async def userinfo(self, ctx, member: Member = None):
         await ctx.channel.trigger_typing()
         user = member or ctx.author
         embed_fields = []
@@ -16,9 +16,9 @@ class Info(commands.Cog):
         embed_fields.append(('ID', '{0}'.format(user.id)))
         embed_fields.append(('Joined Server', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC'.format(user.joined_at)))
         embed_fields.append(('Account Created', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC'.format(user.created_at)))
-        embed_fields.append(('Roles', '{0}'.format(', '.join([r.name for r in user.roles[1:]]) if len(user.roles[1:]) > 0 else 'None')))
+        embed_fields.append(('Roles', '{0}'.format(', '.join([r.name for r in user.roles[1:]]) if user.roles[1:] else 'None')))
         embed_fields.append(('Avatar', '{0}'.format('<{0}>'.format(user.avatar_url) if user.avatar_url else 'None')))
-        await ctx.send(content='**User Information for {0.mention}**'.format(user), embed=create_embed(fields=embed_fields, inline=True))
+        await ctx.send(content='**User Information for {0.mention}**'.format(user), embed=hkd.create_embed(fields=embed_fields, inline=True))
 
     @commands.command(aliases=['server-info'])
     @commands.guild_only()
@@ -34,4 +34,4 @@ class Info(commands.Cog):
         embed_fields.append(('Created On', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M}:{0:%S} UTC'.format(guild.created_at)))
         embed_fields.append(('Region', '{0}'.format(guild.region)))
         embed_fields.append(('Icon', '{0}'.format('<{0}>'.format(guild.icon_url) if guild.icon_url else 'None')))
-        await ctx.send(content='**Server Information**', embed=create_embed(fields=embed_fields, inline=True))
+        await ctx.send(content='**Server Information**', embed=hkd.create_embed(fields=embed_fields, inline=True))

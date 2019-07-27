@@ -1,15 +1,14 @@
 import asyncio
-import hkdhelper as hkd
-
 from calendar import month_name
 from contextlib import suppress
 from datetime import datetime
+from urllib.parse import quote
+
+import hkdhelper as hkd
 from dateutil import parser
 from discord import Colour
 from discord.ext import commands
-from hkdhelper import create_embed, get_html_from_url, get_oshi_colour, parse_oshi_name
 from pytz import timezone
-from urllib.parse import quote
 
 class Events(commands.Cog):
     def __init__(self, bot):
@@ -17,7 +16,7 @@ class Events(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
-    async def events(self, ctx, *, date: str=''):
+    async def events(self, ctx, *, date: str = ''):
         await ctx.channel.trigger_typing()
         event_urls = []
         current_time = datetime.now(timezone('Japan'))
@@ -29,8 +28,8 @@ class Events(commands.Cog):
         first = True
         for _ in range(3):
             with suppress(Exception):
-                soup = get_html_from_url('https://www.eventernote.com/events/month/{0}-{1}-{2}/1?limit=1000'.format(search_year, search_date.month, search_date.day))
-                result = soup.find_all(attrs={ 'class': ['date', 'event', 'actor', 'note_count'] })
+                soup = hkd.get_html_from_url('https://www.eventernote.com/events/month/{0}-{1}-{2}/1?limit=1000'.format(search_year, search_date.month, search_date.day))
+                result = soup.find_all(attrs={'class': ['date', 'event', 'actor', 'note_count']})
                 for event in [result[i:i + 4] for i in range(0, len(result), 4)]:
                     info = event[1].find_all('a')
                     event_time = event[1].find('span')
@@ -41,7 +40,7 @@ class Events(commands.Cog):
                         if not wug_performers:
                             continue
                         await ctx.channel.trigger_typing()
-                        colour = get_oshi_colour(ctx.guild, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]) if len(wug_performers) == 1 else Colour.teal()
+                        colour = hkd.get_oshi_colour(ctx.guild, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]) if len(wug_performers) == 1 else Colour.teal()
                         if first:
                             first = False
                             await ctx.send('**Events Involving WUG Members on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date.replace(year=search_year)))
@@ -56,36 +55,36 @@ class Events(commands.Cog):
                         embed_fields.append(('Eventernote Attendees', event[3].find('p').contents[0]))
                         event_urls.append(event_url)
                         await asyncio.sleep(0.5)
-                        await ctx.send(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
+                        await ctx.send(embed=hkd.create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
                 break
         if not event_urls:
-            await ctx.send(embed=create_embed(description="Couldn't find any events on that day.", colour=Colour.red()))
+            await ctx.send(embed=hkd.create_embed(description="Couldn't find any events on that day.", colour=Colour.red()))
 
     @commands.command()
     @commands.guild_only()
-    async def eventsin(self, ctx, month: str, member: str=''):
+    async def eventsin(self, ctx, month: str, member: str = ''):
         await ctx.channel.trigger_typing()
         search_month = hkd.parse_month(month)
         if search_month == 'None':
-            await ctx.send(embed=create_embed(description="Couldn't find any events. Please follow this format for searching for events: **!eventsin** April Mayushii.", colour=Colour.red()))
+            await ctx.send(embed=hkd.create_embed(description="Couldn't find any events. Please follow this format for searching for events: **!eventsin** April Mayushii.", colour=Colour.red()))
             return
         current_time = datetime.now(timezone('Japan'))
         search_year = str(current_time.year if current_time.month <= int(search_month) else current_time.year + 1)
         search_index = [0]
         wug_names = list(hkd.WUG_ROLE_IDS.keys())
         if member:
-            if parse_oshi_name(member) not in wug_names:
-                await ctx.send(embed=create_embed(description="Couldn't find any events. Please follow this format for searching for events: **!eventsin** April Mayushii.", colour=Colour.red()))
+            if hkd.parse_oshi_name(member) not in wug_names:
+                await ctx.send(embed=hkd.create_embed(description="Couldn't find any events. Please follow this format for searching for events: **!eventsin** April Mayushii.", colour=Colour.red()))
                 return
-            search_index = [wug_names.index(parse_oshi_name(member)) + 1]
+            search_index = [wug_names.index(hkd.parse_oshi_name(member)) + 1]
         event_urls = []
         first = True
         search_start = False
         for i in search_index:
             for _ in range(3):
                 with suppress(Exception):
-                    soup = get_html_from_url('https://www.eventernote.com/actors/{0}/{1}/events?actor_id={1}&limit=5000'.format(quote(hkd.WUG_MEMBERS[i]), hkd.WUG_EVENTERNOTE_IDS[i]))
-                    result = soup.find_all(attrs={ 'class': ['date', 'event', 'actor', 'note_count'] })
+                    soup = hkd.get_html_from_url('https://www.eventernote.com/actors/{0}/{1}/events?actor_id={1}&limit=5000'.format(quote(hkd.WUG_MEMBERS[i]), hkd.WUG_EVENTERNOTE_IDS[i]))
+                    result = soup.find_all(attrs={'class': ['date', 'event', 'actor', 'note_count']})
                     events = []
                     for event in [result[i:i + 4] for i in range(0, len(result), 4)]:
                         event_date = event[0].find('p').contents[0][:10]
@@ -107,7 +106,7 @@ class Events(commands.Cog):
                             if not wug_performers:
                                 continue
                             await ctx.channel.trigger_typing()
-                            colour = get_oshi_colour(ctx.guild, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]) if len(wug_performers) == 1 else Colour.teal()
+                            colour = hkd.get_oshi_colour(ctx.guild, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]) if len(wug_performers) == 1 else Colour.teal()
                             if first:
                                 first = False
                                 await ctx.send('**Events for {0} in {1} {2}**'.format(member.title() if member else 'Wake Up, Girls!', month_name[int(search_month)], search_year))
@@ -122,7 +121,7 @@ class Events(commands.Cog):
                             embed_fields.append(('Eventernote Attendees', event[3].find('p').contents[0]))
                             event_urls.append(event_url)
                             await asyncio.sleep(0.5)
-                            await ctx.send(embed=create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
+                            await ctx.send(embed=hkd.create_embed(title=info[0].contents[0], colour=colour, url='https://www.eventernote.com{0}'.format(event_url), thumbnail=event[0].find('img')['src'], fields=embed_fields, inline=True))
                     break
         if not event_urls:
-            await ctx.send(embed=create_embed(description="Couldn't find any events during that month.", colour=Colour.red()))
+            await ctx.send(embed=hkd.create_embed(description="Couldn't find any events during that month.", colour=Colour.red()))

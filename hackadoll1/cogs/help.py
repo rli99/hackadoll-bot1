@@ -1,5 +1,5 @@
+import hkdhelper as hkd
 from discord.ext import commands
-from hkdhelper import create_embed, get_wug_role
 
 class Help(commands.Cog):
     def __init__(self, bot):
@@ -28,7 +28,7 @@ class Help(commands.Cog):
             embed_fields.append(('!yt *query*', 'Gets the top result from YouTube based on the provided search terms.'))
             embed_fields.append(('!dl-vid *url*', 'Attempts to download the video from the specified URL using youtube-dl.'))
             embed_fields.append(('!onmusu *member*', 'Show the Onsen Musume profile for the character of the specified member.'))
-            await ctx.send(content='**Available Commands**', embed=create_embed(fields=embed_fields))
+            await ctx.send(content='**Available Commands**', embed=hkd.create_embed(fields=embed_fields))
 
     @help.command(name='mod-commands', aliases=['mod', 'mods'])
     async def mod_commands(self, ctx):
@@ -37,24 +37,24 @@ class Help(commands.Cog):
         embed_fields.append(('!ban *member*', 'Ban a member.'))
         embed_fields.append(('!mute *member* *duration*', 'Mute a member for *duration* minutes.'))
         embed_fields.append(('!unmute *member*', 'Unmute a member.'))
-        await ctx.send(content='**Commands for Moderators**', embed=create_embed(fields=embed_fields))
+        await ctx.send(content='**Commands for Moderators**', embed=hkd.create_embed(fields=embed_fields))
 
     @help.command(aliases=['role'])
     @commands.guild_only()
     async def roles(self, ctx):
         description = 'Users can have any of the 7 WUG member roles. Use **!oshihen** *member* to get the role you want.\n\n'
-        for oshi in hkd.WUG_ROLE_IDS.keys():
-            description += '**!oshihen** {0} for {1.mention}\n'.format(oshi.title(), get_wug_role(ctx.guild, oshi))
+        for oshi in hkd.WUG_ROLE_IDS:
+            description += '**!oshihen** {0} for {1.mention}\n'.format(oshi.title(), hkd.get_wug_role(ctx.guild, oshi))
         description += "\nNote that using **!oshihen** will remove all of your existing member roles. To get an extra role without removing existing ones, use **!oshimashi** *member* instead. To get all 7 roles, use **!hakooshi**. Use **!kamioshi** *member* to specify which member you want to set as your highest role (you will get that member's colour).\n\n"
         description += 'Use **!oshi-count** to show the number of members with each WUG member role, or **!kamioshi-count** to show the number of members with each WUG member role as their highest role.\n'
-        await ctx.send(content='**Commands for Roles**', embed=create_embed(description=description))
+        await ctx.send(content='**Commands for Roles**', embed=hkd.create_embed(description=description))
 
     @help.command(aliases=['event'])
     async def events(self, ctx):
         embed_fields = []
         embed_fields.append(('!events *date*', 'Get information for events involving WUG members on the specified date, e.g. **!events** apr 1. If *date* not specified, finds events happening today.'))
         embed_fields.append(('!eventsin *month* *member*', 'Get information for events involving WUG members for the specified month and member, e.g. **!eventsin** April Mayushii. If *member* not specified, searches for Wake, Up Girls! related events instead. Searches events from this month onwards only.'))
-        await ctx.send(content='**Commands for Searching Events**', embed=create_embed(fields=embed_fields))
+        await ctx.send(content='**Commands for Searching Events**', embed=hkd.create_embed(fields=embed_fields))
 
     @help.command(aliases=['tag'])
     async def tags(self, ctx):
@@ -64,4 +64,4 @@ class Help(commands.Cog):
         embed_fields.append(('!tagdelete *tag_name*', 'Delete an existing tag.'))
         embed_fields.append(('!tagsearch', 'Shows a list of all existing tags.'))
         embed_fields.append(('!tag *tag_name*', 'Display a saved tag.'))
-        await ctx.send(content='**Commands for Using Tags**', embed=create_embed(fields=embed_fields))
+        await ctx.send(content='**Commands for Using Tags**', embed=hkd.create_embed(fields=embed_fields))

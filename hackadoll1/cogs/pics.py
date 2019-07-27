@@ -1,10 +1,9 @@
-import hkdhelper as hkd
-
 from contextlib import suppress
+
+import hkdhelper as hkd
 from discord import Colour
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
-from hkdhelper import create_embed
 
 class Pics(commands.Cog):
     def __init__(self, bot, twitter_api):
@@ -32,9 +31,9 @@ class Pics(commands.Cog):
         await ctx.channel.trigger_typing()
         pics = hkd.get_pics_from_blog_post(blog_url.replace('//gamp.ameblo.jp/', '//ameblo.jp/'))
         if not pics:
-            await ctx.send(embed=create_embed(description="Couldn't find any images.", colour=Colour.red()))
+            await ctx.send(embed=hkd.create_embed(description="Couldn't find any images.", colour=Colour.red()))
             return
-        elif len(pics) == 1:
+        if len(pics) == 1:
             return
         await hkd.send_content_with_delay(ctx, pics[1:])
 
@@ -45,4 +44,4 @@ class Pics(commands.Cog):
         pics = hkd.get_pics_from_blog_post('https://ameblo.jp/eino-airi/')
         await hkd.send_content_with_delay(ctx, pics)
         if not pics:
-            await ctx.send(embed=create_embed(description="Couldn't find any images.", colour=Colour.red()))
+            await ctx.send(embed=hkd.create_embed(description="Couldn't find any images.", colour=Colour.red()))

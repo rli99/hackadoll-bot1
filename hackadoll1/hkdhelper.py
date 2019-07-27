@@ -1,10 +1,13 @@
-import asyncio, configparser, discord, time
-from bs4 import BeautifulSoup
+import asyncio
 from contextlib import suppress
-from dateutil import parser
 from itertools import takewhile
 from random import choice
 from urllib.request import urlopen
+
+import configparser
+from bs4 import BeautifulSoup
+from dateutil import parser
+from discord import Colour, Embed, utils as disc_utils
 
 SERVER_ID = 280439975911096320
 TWITTER_CHANNEL_ID = 448716340816248832
@@ -82,40 +85,41 @@ def parse_config():
     return config['DEFAULT']
 
 def get_wug_guild(guilds):
-    return discord.utils.get(guilds, id=SERVER_ID)
+    return disc_utils.get(guilds, id=SERVER_ID)
 
 def get_updates_channel(guilds):
-    guild = discord.utils.get(guilds, id=SERVER_ID)
-    return discord.utils.get(guild.channels, id=TWITTER_CHANNEL_ID)
+    guild = disc_utils.get(guilds, id=SERVER_ID)
+    return disc_utils.get(guild.channels, id=TWITTER_CHANNEL_ID)
 
 def get_seiyuu_channel(guilds):
-    guild = discord.utils.get(guilds, id=SERVER_ID)
-    return discord.utils.get(guild.channels, id=SEIYUU_CHANNEL_ID)
+    guild = disc_utils.get(guilds, id=SERVER_ID)
+    return disc_utils.get(guild.channels, id=SEIYUU_CHANNEL_ID)
 
 def get_muted_role(guild):
-    return discord.utils.get(guild.roles, id=MUTED_ROLE_ID)
+    return disc_utils.get(guild.roles, id=MUTED_ROLE_ID)
 
 def get_wug_role(guild, member):
     with suppress(Exception):
-        return discord.utils.get(guild.roles, id=WUG_ROLE_IDS[parse_oshi_name(member)])
+        return disc_utils.get(guild.roles, id=WUG_ROLE_IDS[parse_oshi_name(member)])
 
 def get_oshi_colour(guild, member):
     with suppress(Exception):
         if member == 'Everyone':
-            return discord.Colour.teal()
+            return Colour.teal()
         return get_wug_role(guild, member).colour
 
 def get_kamioshi_role(guild, member):
     with suppress(Exception):
-        return discord.utils.get(guild.roles, id=WUG_KAMIOSHI_ROLE_IDS[parse_oshi_name(member)])
+        return disc_utils.get(guild.roles, id=WUG_KAMIOSHI_ROLE_IDS[parse_oshi_name(member)])
 
 def dict_reverse(dictionary):
-    return { v: k for k, v in dictionary.items() }
+    return {v: k for k, v in dictionary.items()}
 
 def parse_oshi_name(name):
     for oshi, names in WUG_OSHI_NAMES.items():
         if name.lower() in names:
             return oshi
+    return name
 
 def parse_mv_name(name):
     for char in ' .,。、!?！？()（）':
@@ -162,7 +166,7 @@ def split_embeddable_content(tag_content):
         if is_embeddable_content(line):
             continue
         else:
-            return
+            return []
     return split_tag
 
 def get_html_from_url(url):
@@ -177,14 +181,14 @@ def get_pics_from_blog_post(blog_url):
         for article_class in ['skin-entryBody', 'articleText']:
             with suppress(Exception):
                 soup = get_html_from_url(blog_url)
-                blog_entry = soup.find_all(attrs={ 'class': article_class }, limit=1)[0]
+                blog_entry = soup.find_all(attrs={'class': article_class}, limit=1)[0]
                 return [p['href'] for p in blog_entry.find_all('a') if is_image_file(p['href'])]
 
 def get_random_header():
-    return { 'User-Agent': choice(FAKE_USER_AGENTS) }
+    return {'User-Agent': choice(FAKE_USER_AGENTS)}
 
-def create_embed(author={}, title='', description='', colour=discord.Colour.light_grey(), url='', image='', thumbnail='', fields=[], footer={}, inline=False):
-    embed = discord.Embed(title=title, description=description, colour=colour, url=url)
+def create_embed(author={}, title='', description='', colour=Colour.light_grey(), url='', image='', thumbnail='', fields=[], footer={}, inline=False):
+    embed = Embed(title=title, description=description, colour=colour, url=url)
     if author:
         embed.set_author(name=author['name'], url=author.get('url', ''), icon_url=author.get('icon_url', ''))
     if image:
