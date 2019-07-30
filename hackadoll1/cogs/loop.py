@@ -31,7 +31,6 @@ class Loop(commands.Cog):
 
     @tasks.loop(seconds=30.0)
     async def check_mute_status(self):
-        await self.bot.wait_until_ready()
         members_to_unmute = []
         for member_id in self.muted_members:
             if time.time() > float(self.muted_members[member_id]):
@@ -44,9 +43,12 @@ class Loop(commands.Cog):
             self.muted_members.pop(member_id)
         return
 
+    @check_mute_status.before_loop
+    async def before_check_mute_status(self):
+        await self.bot.wait_until_ready()
+
     @tasks.loop(seconds=20.0)
     async def check_tweets(self):
-        await self.bot.wait_until_ready()
         channel = hkd.get_updates_channel(self.bot.guilds)
         for _ in range(3):
             with suppress(Exception):
@@ -91,12 +93,14 @@ class Loop(commands.Cog):
                         await channel.send(embed=hkd.create_embed(author=author, title='Tweet by {0}'.format(user['name']), description=tweet_content, colour=colour, url='https://twitter.com/{0}/status/{1}'.format(name, tweet_id), image=image))
                     if posted_tweets:
                         self.firebase_ref.child('last_userid_tweets/{0}'.format(user_id)).set(str(max(posted_tweets)))
-                break
-        return
+                return
+
+    @check_tweets.before_loop
+    async def before_check_tweets(self):
+        await self.bot.wait_until_ready()
 
     @tasks.loop(seconds=30.0)
     async def check_instagram(self):
-        await self.bot.wait_until_ready()
         channel = hkd.get_updates_channel(self.bot.guilds)
         for _ in range(3):
             with suppress(Exception):
@@ -132,12 +136,14 @@ class Loop(commands.Cog):
                         await channel.send(embed=hkd.create_embed(author=author, title='Post by {0}'.format(user_name), description=post_text, colour=colour, url=post_link, image=post_pic))
                     if posted_updates:
                         self.firebase_ref.child('last_instagram_posts/{0}'.format(instagram_id)).set(str(max(posted_updates)))
-                break
-        return
+                return
+
+    @check_instagram.before_loop
+    async def before_check_instagram(self):
+        await self.bot.wait_until_ready()
 
     @tasks.loop(seconds=90.0)
     async def check_instagram_stories(self):
-        await self.bot.wait_until_ready()
         channel = hkd.get_updates_channel(self.bot.guilds)
         with suppress(Exception):
             instaloader_args = ['instaloader', '--login={0}'.format(self.config['instagram_user']), '--sessionfile={0}'.format('./.instaloader-session'), '--quiet', '--dirname-pattern={profile}', '--filename-pattern={profile}_{mediaid}', ':stories']
@@ -190,9 +196,12 @@ class Loop(commands.Cog):
                     self.firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).set(str(max(uploaded_story_ids)))
         return
 
+    @check_instagram_stories.before_loop
+    async def before_check_instagram_stories(self):
+        await self.bot.wait_until_ready()
+
     @tasks.loop(seconds=30.0)
     async def check_live_streams(self):
-        await self.bot.wait_until_ready()
         channel = hkd.get_seiyuu_channel(self.bot.guilds)
         now = datetime.utcnow().isoformat() + 'Z'
         for _ in range(3):
@@ -216,5 +225,8 @@ class Loop(commands.Cog):
                         first_event = False
                         event['description'] = '*' + event['description']
                         self.calendar.events().update(calendarId='primary', eventId=event['id'], body=event).execute()
-                break
-        return
+                return
+
+    @check_live_streams.before_loop
+    async def before_check_live_streams(self):
+        await self.bot.wait_until_ready()

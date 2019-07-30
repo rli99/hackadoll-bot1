@@ -1,4 +1,7 @@
 import asyncio
+import sys
+import threading
+import traceback
 from contextlib import suppress
 from itertools import takewhile
 from random import choice
@@ -206,3 +209,14 @@ async def send_content_with_delay(ctx, content):
         await ctx.channel.trigger_typing()
         await asyncio.sleep(1)
         await ctx.send(item)
+
+def dumpstacks(signal, frame):
+    id2name = dict([(th.ident, th.name) for th in threading.enumerate()])
+    code = []
+    for threadId, stack in sys._current_frames().items():
+        code.append('\n# Thread: {0}({1})'.format(id2name.get(threadId, ''), threadId))
+        for filename, lineno, name, line in traceback.extract_stack(stack):
+            code.append('File: "{0}", line {1}, in {2}'.format(filename, lineno, name))
+            if line:
+                code.append('  {0}'.format(line.strip()))
+    print('\n'.join(code))

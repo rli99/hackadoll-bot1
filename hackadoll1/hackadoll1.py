@@ -1,9 +1,10 @@
-import twitter
+import signal
 
+import twitter
 from apiclient.discovery import build
 from discord.ext import commands
 from firebase_admin import credentials, db, initialize_app
-from hkdhelper import parse_config
+from hkdhelper import dumpstacks, parse_config
 from httplib2 import Http
 from oauth2client import file
 
@@ -41,6 +42,8 @@ def main():
     bot.add_cog(Misc(bot, config))
     bot.add_cog(Secret(bot))
     bot.add_cog(Loop(bot, config, muted_members, firebase_ref, twitter_api, calendar))
+
+    signal.signal(signal.SIGQUIT, dumpstacks)
 
     bot.run(config['token'])
 
