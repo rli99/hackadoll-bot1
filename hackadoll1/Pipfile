@@ -5,7 +5,6 @@ name = "pypi"
 
 [packages]
 discord-py = "*"
-yarl = "<1.2"
 beautifulsoup4 = "*"
 firebase-admin = "*"
 forex-python = "*"

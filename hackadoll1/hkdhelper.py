@@ -67,7 +67,8 @@ WUG_TWITTER_IDS = {
 }
 WUG_INSTAGRAM_IDS = {
     'nanamin': 'aishite773',
-    'kayatan': 'kaayaataaaan'
+    'kayatan': 'kaayaataaaan',
+    'minyami': 'minazou_in_sta'
 }
 FAKE_USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36',
