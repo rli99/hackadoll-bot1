@@ -2,7 +2,7 @@ import hkdhelper as hkd
 from discord import Colour
 from discord.ext import commands
 
-class MV(commands.Cog):
+class MusicVideo(commands.Cog):
     def __init__(self, bot, firebase_ref):
         self.bot = bot
         self.firebase_ref = firebase_ref

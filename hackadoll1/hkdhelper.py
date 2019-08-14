@@ -15,6 +15,7 @@ from discord import Colour, Embed, utils as disc_utils
 SERVER_ID = 280439975911096320
 TWITTER_CHANNEL_ID = 448716340816248832
 SEIYUU_CHANNEL_ID = 309934970124763147
+WELCOME_CHANNEL_ID = 361552652988973077
 MUTED_ROLE_ID = 445572638543446016
 BOT_ADMIN_ID = 299908261438816258
 WUG_EVENTERNOTE_IDS = [6988, 3774, 6984, 6983, 6985, 6982, 6986, 6987]
@@ -191,7 +192,7 @@ def get_pics_from_blog_post(blog_url):
 def get_random_header():
     return {'User-Agent': choice(FAKE_USER_AGENTS)}
 
-def create_embed(author={}, title='', description='', colour=Colour.light_grey(), url='', image='', thumbnail='', fields=[], footer={}, inline=False):
+def create_embed(author={}, title='', description='', colour=Colour(0x242424), url='', image='', thumbnail='', fields=[], footer={}, inline=False):
     embed = Embed(title=title, description=description, colour=colour, url=url)
     if author:
         embed.set_author(name=author['name'], url=author.get('url', ''), icon_url=author.get('icon_url', ''))
@@ -210,14 +211,3 @@ async def send_content_with_delay(ctx, content):
         await ctx.channel.trigger_typing()
         await asyncio.sleep(1)
         await ctx.send(item)
-
-def dumpstacks(signal, frame):
-    id2name = dict([(th.ident, th.name) for th in threading.enumerate()])
-    code = []
-    for threadId, stack in sys._current_frames().items():
-        code.append('\n# Thread: {0}({1})'.format(id2name.get(threadId, ''), threadId))
-        for filename, lineno, name, line in traceback.extract_stack(stack):
-            code.append('File: "{0}", line {1}, in {2}'.format(filename, lineno, name))
-            if line:
-                code.append('  {0}'.format(line.strip()))
-    print('\n'.join(code))

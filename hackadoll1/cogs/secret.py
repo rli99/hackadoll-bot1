@@ -8,10 +8,6 @@ class Secret(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        print('\n-------------\nLogged in as: {0} ({1})\n-------------\n'.format(self.bot.user.name, self.bot.user.id))
-
     @commands.command()
     async def say(self, ctx, channel_name: str, *, message: str):
         if ctx.author.id != hkd.BOT_ADMIN_ID:

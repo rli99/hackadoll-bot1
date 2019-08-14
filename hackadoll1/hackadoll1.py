@@ -1,23 +1,22 @@
-import signal
-
 import twitter
 from apiclient.discovery import build
 from discord.ext import commands
 from firebase_admin import credentials, db, initialize_app
-from hkdhelper import dumpstacks, parse_config
+from hkdhelper import parse_config
 from httplib2 import Http
 from oauth2client import file
 
 from cogs.help import Help
-from cogs.moderator import Moderator
+from cogs.mod import Moderator
 from cogs.oshi import Oshi
 from cogs.info import Info
 from cogs.events import Events
 from cogs.tags import Tags
-from cogs.mv import MV
+from cogs.mv import MusicVideo
 from cogs.pics import Pics
 from cogs.misc import Misc
 from cogs.secret import Secret
+from cogs.listen import Listen
 from cogs.loop import Loop
 
 def main():
@@ -37,13 +36,12 @@ def main():
     bot.add_cog(Info(bot))
     bot.add_cog(Events(bot))
     bot.add_cog(Tags(bot, firebase_ref))
-    bot.add_cog(MV(bot, firebase_ref))
+    bot.add_cog(MusicVideo(bot, firebase_ref))
     bot.add_cog(Pics(bot, twitter_api))
     bot.add_cog(Misc(bot, config))
     bot.add_cog(Secret(bot))
     bot.add_cog(Loop(bot, config, muted_members, firebase_ref, twitter_api, calendar))
-
-    signal.signal(signal.SIGQUIT, dumpstacks)
+    bot.add_cog(Listen(bot))
 
     bot.run(config['token'])
 
