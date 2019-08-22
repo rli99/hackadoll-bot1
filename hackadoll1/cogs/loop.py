@@ -146,9 +146,13 @@ class Loop(commands.Cog):
     async def check_instagram_stories(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
         with suppress(Exception):
+            end_time = time.time() + 180
             instaloader_args = ['instaloader', '--login={0}'.format(self.config['instagram_user']), '--sessionfile={0}'.format('./.instaloader-session'), '--quiet', '--dirname-pattern={profile}', '--filename-pattern={profile}_{mediaid}', ':stories']
             proc = subprocess.Popen(args=instaloader_args)
             while proc.poll() is None:
+                if time.time() >= end_time:
+                    proc.kill()
+                    return
                 await asyncio.sleep(1)
             for instagram_id in self.firebase_ref.child('last_instagram_stories').get().keys():
                 if not os.path.isdir(instagram_id):
