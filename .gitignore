@@ -1,6 +1,7 @@
 *
 
 !/.gitignore
+!/.dependabot/config.yml
 
 !__init__.py
 !hackadoll1.py
