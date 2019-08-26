@@ -1,8 +1,8 @@
 import json
-import requests
 from contextlib import suppress
 
 import hkdhelper as hkd
+import requests
 from bs4 import BeautifulSoup
 from discord import Colour
 from discord.ext import commands
