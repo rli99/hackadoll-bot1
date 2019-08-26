@@ -72,7 +72,7 @@ class Loop(commands.Cog):
                         if user_id in hkd.WUG_TWITTER_IDS.values():
                             colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), hkd.dict_reverse(hkd.WUG_TWITTER_IDS)[user_id])
                         else:
-                            colour = Colour.light_grey()
+                            colour = Colour(0x242424)
                         author = {}
                         author['name'] = '{0} (@{1})'.format(user['name'], user['screen_name'])
                         author['url'] = 'https://twitter.com/{0}'.format(name)
@@ -99,18 +99,17 @@ class Loop(commands.Cog):
     async def before_check_tweets(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(seconds=30.0)
+    @tasks.loop(seconds=60.0)
     async def check_instagram(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
         for _ in range(3):
             with suppress(Exception):
                 for instagram_id in self.firebase_ref.child('last_instagram_posts').get().keys():
                     last_post_id = int(self.firebase_ref.child('last_instagram_posts/{0}'.format(instagram_id)).get())
-                    response = requests.get('https://www.instagram.com/{0}/'.format(instagram_id), headers=hkd.get_random_header())
-                    soup = BeautifulSoup(response.text, 'html.parser')
-                    script = soup.find('body').find('script')
-                    json_data = json.loads(script.text.strip().replace('window._sharedData =', '').replace(';', ''))
-                    user_data = json_data['entry_data']['ProfilePage'][0]['graphql']['user']
+                    request_url = 'https://www.instagram.com/{0}/?__a=1'.format(instagram_id)
+                    response = requests.get(request_url, headers=hkd.get_random_header())
+                    json_data = json.loads(response.text)
+                    user_data = json_data['graphql']['user']
                     user_name = user_data['full_name']
                     user_id = user_data['username']
                     profile_pic = user_data['profile_pic_url_hd']
@@ -128,7 +127,7 @@ class Loop(commands.Cog):
                         if instagram_id in hkd.WUG_INSTAGRAM_IDS.values():
                             colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), hkd.dict_reverse(hkd.WUG_INSTAGRAM_IDS)[instagram_id])
                         else:
-                            colour = Colour.light_grey()
+                            colour = Colour(0x242424)
                         author = {}
                         author['name'] = '{0} (@{1})'.format(user_name, user_id)
                         author['url'] = 'https://www.instagram.com/{0}/'.format(instagram_id)
@@ -146,13 +145,9 @@ class Loop(commands.Cog):
     async def check_instagram_stories(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
         with suppress(Exception):
-            end_time = time.time() + 180
             instaloader_args = ['instaloader', '--login={0}'.format(self.config['instagram_user']), '--sessionfile={0}'.format('./.instaloader-session'), '--quiet', '--dirname-pattern={profile}', '--filename-pattern={profile}_{mediaid}', ':stories']
             proc = subprocess.Popen(args=instaloader_args)
             while proc.poll() is None:
-                if time.time() >= end_time:
-                    proc.kill()
-                    return
                 await asyncio.sleep(1)
             for instagram_id in self.firebase_ref.child('last_instagram_stories').get().keys():
                 if not os.path.isdir(instagram_id):
@@ -173,18 +168,17 @@ class Loop(commands.Cog):
                         stories_to_upload.append(pic)
                         uploaded_story_ids.append(pic_id)
                 if uploaded_story_ids:
-                    response = requests.get('https://www.instagram.com/{0}/'.format(instagram_id), headers=hkd.get_random_header())
-                    soup = BeautifulSoup(response.text, 'html.parser')
-                    script = soup.find('body').find('script')
-                    json_data = json.loads(script.text.strip().replace('window._sharedData =', '').replace(';', ''))
-                    user_data = json_data['entry_data']['ProfilePage'][0]['graphql']['user']
+                    request_url = 'https://www.instagram.com/{0}/?__a=1'.format(instagram_id)
+                    response = requests.get(request_url, headers=hkd.get_random_header())
+                    json_data = json.loads(response.text)
+                    user_data = json_data['graphql']['user']
                     user_name = user_data['full_name']
                     user_id = user_data['username']
                     profile_pic = user_data['profile_pic_url_hd']
                     if instagram_id in hkd.WUG_INSTAGRAM_IDS.values():
                         colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), hkd.dict_reverse(hkd.WUG_INSTAGRAM_IDS)[instagram_id])
                     else:
-                        colour = Colour.light_grey()
+                        colour = Colour(0x242424)
                     author = {}
                     author['name'] = '{0} (@{1})'.format(user_name, user_id)
                     author['url'] = 'https://www.instagram.com/{0}/'.format(instagram_id)

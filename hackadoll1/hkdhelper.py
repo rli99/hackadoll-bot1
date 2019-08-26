@@ -188,9 +188,10 @@ def get_pics_from_blog_post(blog_url):
                 soup = get_html_from_url(blog_url)
                 blog_entry = soup.find_all(attrs={'class': article_class}, limit=1)[0]
                 return [p['href'] for p in blog_entry.find_all('a') if is_image_file(p['href'])]
+    return []
 
 def get_random_header():
-    return {'User-Agent': choice(FAKE_USER_AGENTS)}
+    return { 'User-Agent': choice(FAKE_USER_AGENTS) }
 
 def create_embed(author={}, title='', description='', colour=Colour(0x242424), url='', image='', thumbnail='', fields=[], footer={}, inline=False):
     embed = Embed(title=title, description=description, colour=colour, url=url)
