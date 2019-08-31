@@ -37,10 +37,10 @@ def main():
     bot.add_cog(Events(bot))
     bot.add_cog(Tags(bot, firebase_ref))
     bot.add_cog(MusicVideo(bot, firebase_ref))
-    bot.add_cog(Pics(bot, twitter_api))
+    bot.add_cog(Pics(bot, config, twitter_api))
     bot.add_cog(Misc(bot, config))
     bot.add_cog(Secret(bot))
-    bot.add_cog(Loop(bot, config, muted_members, firebase_ref, twitter_api, calendar))
+    bot.add_cog(Loop(bot, config, muted_members, firebase_ref, calendar, twitter_api))
     bot.add_cog(Listen(bot))
 
     bot.run(config['token'])

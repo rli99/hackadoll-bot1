@@ -1,5 +1,4 @@
 import asyncio
-import json
 import os
 import subprocess
 import time
@@ -7,7 +6,6 @@ from contextlib import suppress
 from datetime import datetime
 from html import unescape
 
-import requests
 import pytz
 import hkdhelper as hkd
 from bs4 import BeautifulSoup
@@ -16,13 +14,13 @@ from discord import Colour, File, utils as disc_utils
 from discord.ext import commands, tasks
 
 class Loop(commands.Cog):
-    def __init__(self, bot, config, muted_members, firebase_ref, twitter_api, calendar):
+    def __init__(self, bot, config, muted_members, firebase_ref, calendar, twitter_api):
         self.bot = bot
         self.config = config
         self.muted_members = muted_members
         self.firebase_ref = firebase_ref
-        self.twitter_api = twitter_api
         self.calendar = calendar
+        self.twitter_api = twitter_api
         self.check_mute_status.start()
         self.check_tweets.start()
         self.check_instagram.start()
@@ -41,7 +39,6 @@ class Loop(commands.Cog):
                 await member.remove_roles(hkd.get_muted_role(guild))
         for member_id in members_to_unmute:
             self.muted_members.pop(member_id)
-        return
 
     @check_mute_status.before_loop
     async def before_check_mute_status(self):
@@ -50,98 +47,92 @@ class Loop(commands.Cog):
     @tasks.loop(seconds=20.0)
     async def check_tweets(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
-        for _ in range(3):
-            with suppress(Exception):
-                twitter_user_ids = self.firebase_ref.child('last_userid_tweets').get().keys()
-                for user_id_str in twitter_user_ids:
-                    user_id = int(user_id_str)
-                    last_tweet_id = int(self.firebase_ref.child('last_userid_tweets/{0}'.format(user_id)).get())
-                    posted_tweets = []
-                    statuses = self.twitter_api.GetUserTimeline(user_id=user_id, since_id=last_tweet_id, count=40, include_rts=False)
-                    for status in reversed(statuses):
-                        tweet = status.AsDict()
-                        user = tweet['user']
-                        name = user['screen_name']
-                        if str(tweet.get('in_reply_to_user_id', user_id)) not in twitter_user_ids:
-                            continue
-                        await channel.trigger_typing()
-                        await asyncio.sleep(1)
-                        tweet_id = tweet['id']
-                        posted_tweets.append(tweet_id)
-                        tweet_content = unescape(tweet['full_text'])
-                        if user_id in hkd.WUG_TWITTER_IDS.values():
-                            colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), hkd.dict_reverse(hkd.WUG_TWITTER_IDS)[user_id])
-                        else:
-                            colour = Colour(0x242424)
-                        author = {}
-                        author['name'] = '{0} (@{1})'.format(user['name'], user['screen_name'])
-                        author['url'] = 'https://twitter.com/{0}'.format(name)
-                        author['icon_url'] = user['profile_image_url_https']
-                        image = ''
-                        expanded_urls = tweet['urls']
-                        if expanded_urls:
-                            expanded_url = expanded_urls[0].get('expanded_url', '')
-                            if expanded_url and hkd.is_blog_post(expanded_url):
-                                soup = hkd.get_html_from_url(expanded_url)
-                                blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
-                                blog_images = [p['src'] for p in blog_entry.find_all('img') if '?caw=' in p['src'][-9:]]
-                                if blog_images:
-                                    image = blog_images[0]
-                        media = tweet.get('media', '')
-                        if media:
-                            image = media[0].get('media_url_https', '')
-                        await channel.send(embed=hkd.create_embed(author=author, title='Tweet by {0}'.format(user['name']), description=tweet_content, colour=colour, url='https://twitter.com/{0}/status/{1}'.format(name, tweet_id), image=image))
-                    if posted_tweets:
-                        self.firebase_ref.child('last_userid_tweets/{0}'.format(user_id)).set(str(max(posted_tweets)))
-                return
+        with suppress(Exception):
+            twitter_user_ids = self.firebase_ref.child('last_userid_tweets').get().keys()
+            for user_id_str in twitter_user_ids:
+                user_id = int(user_id_str)
+                last_tweet_id = int(self.firebase_ref.child('last_userid_tweets/{0}'.format(user_id)).get())
+                posted_tweets = []
+                statuses = self.twitter_api.GetUserTimeline(user_id=user_id, since_id=last_tweet_id, count=40, include_rts=False)
+                for status in reversed(statuses):
+                    tweet = status.AsDict()
+                    user = tweet['user']
+                    name = user['screen_name']
+                    if str(tweet.get('in_reply_to_user_id', user_id)) not in twitter_user_ids:
+                        continue
+                    await channel.trigger_typing()
+                    await asyncio.sleep(1)
+                    tweet_id = tweet['id']
+                    posted_tweets.append(tweet_id)
+                    tweet_content = unescape(tweet['full_text'])
+                    if user_id in hkd.WUG_TWITTER_IDS.values():
+                        colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), hkd.dict_reverse(hkd.WUG_TWITTER_IDS)[user_id])
+                    else:
+                        colour = Colour(0x242424)
+                    author = {}
+                    author['name'] = '{0} (@{1})'.format(user['name'], user['screen_name'])
+                    author['url'] = 'https://twitter.com/{0}'.format(name)
+                    author['icon_url'] = user['profile_image_url_https']
+                    image = ''
+                    expanded_urls = tweet['urls']
+                    if expanded_urls:
+                        expanded_url = expanded_urls[0].get('expanded_url', '')
+                        if expanded_url and hkd.is_blog_post(expanded_url):
+                            soup = hkd.get_html_from_url(expanded_url)
+                            blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
+                            blog_images = [p['src'] for p in blog_entry.find_all('img') if '?caw=' in p['src'][-9:]]
+                            if blog_images:
+                                image = blog_images[0]
+                    media = tweet.get('media', '')
+                    if media:
+                        image = media[0].get('media_url_https', '')
+                    await channel.send(embed=hkd.create_embed(author=author, title='Tweet by {0}'.format(user['name']), description=tweet_content, colour=colour, url='https://twitter.com/{0}/status/{1}'.format(name, tweet_id), image=image))
+                if posted_tweets:
+                    self.firebase_ref.child('last_userid_tweets/{0}'.format(user_id)).set(str(max(posted_tweets)))
 
     @check_tweets.before_loop
     async def before_check_tweets(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(seconds=60.0)
+    @tasks.loop(seconds=120.0)
     async def check_instagram(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
-        for _ in range(3):
-            with suppress(Exception):
-                for instagram_id in self.firebase_ref.child('last_instagram_posts').get().keys():
-                    last_post_id = int(self.firebase_ref.child('last_instagram_posts/{0}'.format(instagram_id)).get())
-                    request_url = 'https://www.instagram.com/{0}/?__a=1'.format(instagram_id)
-                    response = requests.get(request_url, headers=hkd.get_random_header())
-                    json_data = json.loads(response.text)
-                    user_data = json_data['graphql']['user']
-                    user_name = user_data['full_name']
-                    user_id = user_data['username']
-                    profile_pic = user_data['profile_pic_url_hd']
-                    timeline = user_data['edge_owner_to_timeline_media']['edges']
-                    posted_updates = []
-                    for post in timeline:
-                        post_content = post['node']
-                        post_id = int(post_content['id'])
-                        if post_id <= last_post_id:
-                            break
-                        post_text = post_content['edge_media_to_caption']['edges'][0]['node']['text']
-                        post_pic = post_content['display_url']
-                        post_link = 'https://www.instagram.com/p/{0}/'.format(post_content['shortcode'])
-                        posted_updates.append(post_id)
-                        if instagram_id in hkd.WUG_INSTAGRAM_IDS.values():
-                            colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), hkd.dict_reverse(hkd.WUG_INSTAGRAM_IDS)[instagram_id])
-                        else:
-                            colour = Colour(0x242424)
-                        author = {}
-                        author['name'] = '{0} (@{1})'.format(user_name, user_id)
-                        author['url'] = 'https://www.instagram.com/{0}/'.format(instagram_id)
-                        author['icon_url'] = profile_pic
-                        await channel.send(embed=hkd.create_embed(author=author, title='Post by {0}'.format(user_name), description=post_text, colour=colour, url=post_link, image=post_pic))
-                    if posted_updates:
-                        self.firebase_ref.child('last_instagram_posts/{0}'.format(instagram_id)).set(str(max(posted_updates)))
-                return
+        with suppress(Exception):
+            for instagram_id in self.firebase_ref.child('last_instagram_posts').get().keys():
+                last_post_id = int(self.firebase_ref.child('last_instagram_posts/{0}'.format(instagram_id)).get())
+                json_data = (await hkd.get_json_from_instagram('https://www.instagram.com/{0}/'.format(instagram_id), self.config['instagram_user'], self.config['instagram_pw']))
+                user_data = json_data['entry_data']['ProfilePage'][0]['graphql']['user']
+                user_name = user_data['full_name']
+                user_id = user_data['username']
+                profile_pic = user_data['profile_pic_url_hd']
+                timeline = user_data['edge_owner_to_timeline_media']['edges']
+                posted_updates = []
+                for post in timeline:
+                    post_content = post['node']
+                    post_id = int(post_content['id'])
+                    if post_id <= last_post_id:
+                        break
+                    post_text = post_content['edge_media_to_caption']['edges'][0]['node']['text']
+                    post_pic = post_content['display_url']
+                    post_link = 'https://www.instagram.com/p/{0}/'.format(post_content['shortcode'])
+                    posted_updates.append(post_id)
+                    if instagram_id in hkd.WUG_INSTAGRAM_IDS.values():
+                        colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), hkd.dict_reverse(hkd.WUG_INSTAGRAM_IDS)[instagram_id])
+                    else:
+                        colour = Colour(0x242424)
+                    author = {}
+                    author['name'] = '{0} (@{1})'.format(user_name, user_id)
+                    author['url'] = 'https://www.instagram.com/{0}/'.format(instagram_id)
+                    author['icon_url'] = profile_pic
+                    await channel.send(embed=hkd.create_embed(author=author, title='Post by {0}'.format(user_name), description=post_text, colour=colour, url=post_link, image=post_pic))
+                if posted_updates:
+                    self.firebase_ref.child('last_instagram_posts/{0}'.format(instagram_id)).set(str(max(posted_updates)))
 
     @check_instagram.before_loop
     async def before_check_instagram(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(seconds=90.0)
+    @tasks.loop(seconds=180.0)
     async def check_instagram_stories(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
         with suppress(Exception):
@@ -168,10 +159,8 @@ class Loop(commands.Cog):
                         stories_to_upload.append(pic)
                         uploaded_story_ids.append(pic_id)
                 if uploaded_story_ids:
-                    request_url = 'https://www.instagram.com/{0}/?__a=1'.format(instagram_id)
-                    response = requests.get(request_url, headers=hkd.get_random_header())
-                    json_data = json.loads(response.text)
-                    user_data = json_data['graphql']['user']
+                    json_data = (await hkd.get_json_from_instagram('https://www.instagram.com/{0}/'.format(instagram_id), self.config['instagram_user'], self.config['instagram_pw']))
+                    user_data = json_data['entry_data']['ProfilePage'][0]['graphql']['user']
                     user_name = user_data['full_name']
                     user_id = user_data['username']
                     profile_pic = user_data['profile_pic_url_hd']
@@ -192,7 +181,6 @@ class Loop(commands.Cog):
                     await channel.send(file=File('./{0}/{1}'.format(instagram_id, story)))
                 if uploaded_story_ids:
                     self.firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).set(str(max(uploaded_story_ids)))
-        return
 
     @check_instagram_stories.before_loop
     async def before_check_instagram_stories(self):
@@ -202,28 +190,26 @@ class Loop(commands.Cog):
     async def check_live_streams(self):
         channel = hkd.get_seiyuu_channel(self.bot.guilds)
         now = datetime.utcnow().isoformat() + 'Z'
-        for _ in range(3):
-            with suppress(Exception):
-                events = self.calendar.events().list(calendarId='primary', timeMin=now, maxResults=10, singleEvents=True, orderBy='startTime').execute().get('items', [])
-                first_event = True
-                for event in events:
-                    start = parser.parse(event['start'].get('dateTime', event['start'].get('date')))
-                    if start.timestamp() - time.time() < 900 and event['description'][0] != '*':
-                        split_index = event['description'].find(';')
-                        wug_members_str, stream_link = event['description'][:split_index], event['description'][split_index + 1:]
-                        wug_members = wug_members_str.split(',')
-                        if stream_link[0] == '<':
-                            stream_link = BeautifulSoup(stream_link, 'html.parser').find('a').contents[0]
-                        colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), wug_members[0]) if len(wug_members) == 1 else Colour.teal()
-                        embed_fields = []
-                        embed_fields.append(('Time', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M} JST'.format(start.astimezone(pytz.timezone('Japan')))))
-                        embed_fields.append(('WUG Members', ', '.join(wug_members)))
-                        content = '**Starting in 15 Minutes**' if first_event else ''
-                        await channel.send(content=content, embed=hkd.create_embed(title=event['summary'], colour=colour, url=stream_link, fields=embed_fields))
-                        first_event = False
-                        event['description'] = '*' + event['description']
-                        self.calendar.events().update(calendarId='primary', eventId=event['id'], body=event).execute()
-                return
+        with suppress(Exception):
+            events = self.calendar.events().list(calendarId='primary', timeMin=now, maxResults=10, singleEvents=True, orderBy='startTime').execute().get('items', [])
+            first_event = True
+            for event in events:
+                start = parser.parse(event['start'].get('dateTime', event['start'].get('date')))
+                if start.timestamp() - time.time() < 900 and event['description'][0] != '*':
+                    split_index = event['description'].find(';')
+                    wug_members_str, stream_link = event['description'][:split_index], event['description'][split_index + 1:]
+                    wug_members = wug_members_str.split(',')
+                    if stream_link[0] == '<':
+                        stream_link = BeautifulSoup(stream_link, 'html.parser').find('a').contents[0]
+                    colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), wug_members[0]) if len(wug_members) == 1 else Colour.teal()
+                    embed_fields = []
+                    embed_fields.append(('Time', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M} JST'.format(start.astimezone(pytz.timezone('Japan')))))
+                    embed_fields.append(('WUG Members', ', '.join(wug_members)))
+                    content = '**Starting in 15 Minutes**' if first_event else ''
+                    await channel.send(content=content, embed=hkd.create_embed(title=event['summary'], colour=colour, url=stream_link, fields=embed_fields))
+                    first_event = False
+                    event['description'] = '*' + event['description']
+                    self.calendar.events().update(calendarId='primary', eventId=event['id'], body=event).execute()
 
     @check_live_streams.before_loop
     async def before_check_live_streams(self):

@@ -1,13 +1,16 @@
 import asyncio
+import json
 import sys
 import threading
-import traceback
 from contextlib import suppress
 from itertools import takewhile
 from random import choice
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
 from urllib.request import urlopen
 
 import configparser
+import requests
 from bs4 import BeautifulSoup
 from dateutil import parser
 from discord import Colour, Embed, utils as disc_utils
@@ -189,6 +192,25 @@ def get_pics_from_blog_post(blog_url):
                 blog_entry = soup.find_all(attrs={'class': article_class}, limit=1)[0]
                 return [p['href'] for p in blog_entry.find_all('a') if is_image_file(p['href'])]
     return []
+
+async def get_json_from_instagram(url, user, pw):
+    browser = webdriver.Chrome()
+    browser.get(url)
+    await asyncio.sleep(2)
+    with suppress(Exception):
+        user_input = browser.find_elements_by_css_selector('form input')[0]
+        pw_input = browser.find_elements_by_css_selector('form input')[1]
+        user_input.send_keys(user)
+        pw_input.send_keys(pw)
+        pw_input.send_keys(Keys.ENTER)
+    await asyncio.sleep(5)
+    browser.get(url)
+    await asyncio.sleep(2)
+    soup = BeautifulSoup(browser.page_source, 'html.parser')
+    browser.quit()
+    script_tag = soup.find('body').find('script')
+    raw_string = script_tag.text.strip().replace('window._sharedData =', '').replace(';', '')
+    return json.loads(raw_string)
 
 def get_random_header():
     return { 'User-Agent': choice(FAKE_USER_AGENTS) }
