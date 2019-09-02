@@ -9,9 +9,8 @@ from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 
 class Pics(commands.Cog):
-    def __init__(self, bot, config, twitter_api):
+    def __init__(self, bot, twitter_api):
         self.bot = bot
-        self.config = config
         self.twitter_api = twitter_api
 
     @commands.command(aliases=['tweet-pics', 'twitterpics', 'twitter-pics'])
@@ -35,7 +34,7 @@ class Pics(commands.Cog):
         for _ in range(3):
             with suppress(Exception):
                 await ctx.channel.trigger_typing()
-                json_data = (await hkd.get_json_from_instagram(post_url, self.config['instagram_user'], self.config['instagram_pw']))
+                json_data = (await hkd.get_json_from_instagram(post_url))
                 images = json_data['entry_data']['PostPage'][0]['graphql']['shortcode_media']['edge_sidecar_to_children']['edges']
                 if len(images) <= 1:
                     return

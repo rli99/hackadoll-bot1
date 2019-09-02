@@ -6,6 +6,7 @@ from contextlib import suppress
 from datetime import datetime
 from html import unescape
 
+import instaloader
 import pytz
 import hkdhelper as hkd
 from bs4 import BeautifulSoup
@@ -13,14 +14,17 @@ from dateutil import parser
 from discord import Colour, File, utils as disc_utils
 from discord.ext import commands, tasks
 
+import traceback
+
 class Loop(commands.Cog):
-    def __init__(self, bot, config, muted_members, firebase_ref, calendar, twitter_api):
+    def __init__(self, bot, config, muted_members, firebase_ref, calendar, twitter_api, insta_api):
         self.bot = bot
         self.config = config
         self.muted_members = muted_members
         self.firebase_ref = firebase_ref
         self.calendar = calendar
         self.twitter_api = twitter_api
+        self.insta_api = insta_api
         self.check_mute_status.start()
         self.check_tweets.start()
         self.check_instagram.start()
@@ -97,36 +101,32 @@ class Loop(commands.Cog):
     @tasks.loop(seconds=120.0)
     async def check_instagram(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
-        with suppress(Exception):
+        try:
             for instagram_id in self.firebase_ref.child('last_instagram_posts').get().keys():
                 last_post_id = int(self.firebase_ref.child('last_instagram_posts/{0}'.format(instagram_id)).get())
-                json_data = (await hkd.get_json_from_instagram('https://www.instagram.com/{0}/'.format(instagram_id), self.config['instagram_user'], self.config['instagram_pw']))
-                user_data = json_data['entry_data']['ProfilePage'][0]['graphql']['user']
-                user_name = user_data['full_name']
-                user_id = user_data['username']
-                profile_pic = user_data['profile_pic_url_hd']
-                timeline = user_data['edge_owner_to_timeline_media']['edges']
+                profile = instaloader.Profile.from_username(self.insta_api.context, instagram_id)
+                user_name = profile.username
                 posted_updates = []
-                for post in timeline:
-                    post_content = post['node']
-                    post_id = int(post_content['id'])
-                    if post_id <= last_post_id:
+                for post in profile.get_posts():
+                    if post.mediaid <= last_post_id:
                         break
-                    post_text = post_content['edge_media_to_caption']['edges'][0]['node']['text']
-                    post_pic = post_content['display_url']
-                    post_link = 'https://www.instagram.com/p/{0}/'.format(post_content['shortcode'])
-                    posted_updates.append(post_id)
+                    post_text = post.caption
+                    post_pic = post.url
+                    post_link = 'https://www.instagram.com/p/{0}/'.format(post.shortcode)
+                    posted_updates.append(post.mediaid)
                     if instagram_id in hkd.WUG_INSTAGRAM_IDS.values():
                         colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), hkd.dict_reverse(hkd.WUG_INSTAGRAM_IDS)[instagram_id])
                     else:
                         colour = Colour(0x242424)
                     author = {}
-                    author['name'] = '{0} (@{1})'.format(user_name, user_id)
+                    author['name'] = '{0} (@{1})'.format(user_name, instagram_id)
                     author['url'] = 'https://www.instagram.com/{0}/'.format(instagram_id)
-                    author['icon_url'] = profile_pic
+                    author['icon_url'] = profile.profile_pic_url
                     await channel.send(embed=hkd.create_embed(author=author, title='Post by {0}'.format(user_name), description=post_text, colour=colour, url=post_link, image=post_pic))
                 if posted_updates:
                     self.firebase_ref.child('last_instagram_posts/{0}'.format(instagram_id)).set(str(max(posted_updates)))
+        except Exception as err:
+            traceback.print_tb(err.__traceback__)
 
     @check_instagram.before_loop
     async def before_check_instagram(self):
@@ -135,8 +135,8 @@ class Loop(commands.Cog):
     @tasks.loop(seconds=180.0)
     async def check_instagram_stories(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
-        with suppress(Exception):
-            instaloader_args = ['instaloader', '--login={0}'.format(self.config['instagram_user']), '--sessionfile={0}'.format('./.instaloader-session'), '--quiet', '--dirname-pattern={profile}', '--filename-pattern={profile}_{mediaid}', ':stories']
+        try:
+            instaloader_args = ['instaloader', '--login={0}'.format(self.config['instagram_user']), '--sessionfile=./.instaloader-session', '--quiet', '--dirname-pattern={profile}', '--filename-pattern={profile}_{mediaid}', ':stories']
             proc = subprocess.Popen(args=instaloader_args)
             while proc.poll() is None:
                 await asyncio.sleep(1)
@@ -159,19 +159,16 @@ class Loop(commands.Cog):
                         stories_to_upload.append(pic)
                         uploaded_story_ids.append(pic_id)
                 if uploaded_story_ids:
-                    json_data = (await hkd.get_json_from_instagram('https://www.instagram.com/{0}/'.format(instagram_id), self.config['instagram_user'], self.config['instagram_pw']))
-                    user_data = json_data['entry_data']['ProfilePage'][0]['graphql']['user']
-                    user_name = user_data['full_name']
-                    user_id = user_data['username']
-                    profile_pic = user_data['profile_pic_url_hd']
+                    profile = instaloader.Profile.from_username(self.insta_api.context, instagram_id)
+                    user_name = profile.username
                     if instagram_id in hkd.WUG_INSTAGRAM_IDS.values():
                         colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), hkd.dict_reverse(hkd.WUG_INSTAGRAM_IDS)[instagram_id])
                     else:
                         colour = Colour(0x242424)
                     author = {}
-                    author['name'] = '{0} (@{1})'.format(user_name, user_id)
+                    author['name'] = '{0} (@{1})'.format(user_name, instagram_id)
                     author['url'] = 'https://www.instagram.com/{0}/'.format(instagram_id)
-                    author['icon_url'] = profile_pic
+                    author['icon_url'] = profile.profile_pic_url
                     story_link = 'https://www.instagram.com/stories/{0}/'.format(instagram_id)
                 first_upload = True
                 for story in sorted(stories_to_upload):
@@ -181,6 +178,8 @@ class Loop(commands.Cog):
                     await channel.send(file=File('./{0}/{1}'.format(instagram_id, story)))
                 if uploaded_story_ids:
                     self.firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).set(str(max(uploaded_story_ids)))
+        except Exception as err:
+            traceback.print_tb(err.__traceback__)
 
     @check_instagram_stories.before_loop
     async def before_check_instagram_stories(self):

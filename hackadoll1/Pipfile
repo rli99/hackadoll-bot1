@@ -19,7 +19,6 @@ pydrive = "*"
 youtube-dl = "*"
 oauth2client = "*"
 instaloader = "*"
-selenium = "*"
 
 [dev-packages]
 

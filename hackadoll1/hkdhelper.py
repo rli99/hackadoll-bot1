@@ -5,8 +5,6 @@ import threading
 from contextlib import suppress
 from itertools import takewhile
 from random import choice
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 from urllib.request import urlopen
 
 import configparser
@@ -193,21 +191,9 @@ def get_pics_from_blog_post(blog_url):
                 return [p['href'] for p in blog_entry.find_all('a') if is_image_file(p['href'])]
     return []
 
-async def get_json_from_instagram(url, user, pw):
-    browser = webdriver.Chrome()
-    browser.get(url)
-    await asyncio.sleep(2)
-    with suppress(Exception):
-        user_input = browser.find_elements_by_css_selector('form input')[0]
-        pw_input = browser.find_elements_by_css_selector('form input')[1]
-        user_input.send_keys(user)
-        pw_input.send_keys(pw)
-        pw_input.send_keys(Keys.ENTER)
-    await asyncio.sleep(5)
-    browser.get(url)
-    await asyncio.sleep(2)
-    soup = BeautifulSoup(browser.page_source, 'html.parser')
-    browser.quit()
+async def get_json_from_instagram(url):
+    response = requests.get(url, headers=get_random_header())
+    soup = BeautifulSoup(response.text, 'html.parser')
     script_tag = soup.find('body').find('script')
     raw_string = script_tag.text.strip().replace('window._sharedData =', '').replace(';', '')
     return json.loads(raw_string)
