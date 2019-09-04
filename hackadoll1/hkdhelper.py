@@ -1,7 +1,5 @@
 import asyncio
 import json
-import sys
-import threading
 from contextlib import suppress
 from itertools import takewhile
 from random import choice
@@ -199,7 +197,7 @@ async def get_json_from_instagram(url):
     return json.loads(raw_string)
 
 def get_random_header():
-    return { 'User-Agent': choice(FAKE_USER_AGENTS) }
+    return {'User-Agent': choice(FAKE_USER_AGENTS)}
 
 def create_embed(author={}, title='', description='', colour=Colour(0x242424), url='', image='', thumbnail='', fields=[], footer={}, inline=False):
     embed = Embed(title=title, description=description, colour=colour, url=url)

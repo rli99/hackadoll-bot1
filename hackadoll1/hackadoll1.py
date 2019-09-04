@@ -1,10 +1,6 @@
-import time
-import traceback
-
 import instaloader
 import twitter
 from apiclient.discovery import build
-from contextlib import suppress
 from discord.ext import commands
 from firebase_admin import credentials, db, initialize_app
 from hkdhelper import parse_config
@@ -34,13 +30,7 @@ def main():
     muted_members = firebase_ref.child('muted_members').get() or {}
     twitter_api = twitter.Api(consumer_key=config['consumer_key'], consumer_secret=config['consumer_secret'], access_token_key=config['access_token_key'], access_token_secret=config['access_token_secret'], tweet_mode='extended')
     insta_api = instaloader.Instaloader()
-    for _ in range(10):
-        try:
-            insta_api.login(config['instagram_user'], config['instagram_pw'])
-            break
-        except Exception as err:
-            traceback.print_tb(err.__traceback__)
-            time.sleep(10)
+    insta_api.load_session_from_file(config['instagram_user'], filename='./.instaloader-session')
     calendar = build('calendar', 'v3', http=file.Storage('credentials.json').get().authorize(Http()))
 
     bot.add_cog(Help(bot))

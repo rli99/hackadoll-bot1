@@ -14,8 +14,6 @@ from dateutil import parser
 from discord import Colour, File, utils as disc_utils
 from discord.ext import commands, tasks
 
-import traceback
-
 class Loop(commands.Cog):
     def __init__(self, bot, config, muted_members, firebase_ref, calendar, twitter_api, insta_api):
         self.bot = bot
@@ -31,7 +29,7 @@ class Loop(commands.Cog):
         self.check_instagram_stories.start()
         self.check_live_streams.start()
 
-    @tasks.loop(seconds=30.0)
+    @tasks.loop(seconds=60.0)
     async def check_mute_status(self):
         members_to_unmute = []
         for member_id in self.muted_members:
@@ -48,7 +46,7 @@ class Loop(commands.Cog):
     async def before_check_mute_status(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(seconds=20.0)
+    @tasks.loop(seconds=30.0)
     async def check_tweets(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
         with suppress(Exception):
@@ -98,10 +96,10 @@ class Loop(commands.Cog):
     async def before_check_tweets(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(seconds=120.0)
+    @tasks.loop(seconds=210.0)
     async def check_instagram(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
-        try:
+        with suppress(Exception):
             for instagram_id in self.firebase_ref.child('last_instagram_posts').get().keys():
                 last_post_id = int(self.firebase_ref.child('last_instagram_posts/{0}'.format(instagram_id)).get())
                 profile = instaloader.Profile.from_username(self.insta_api.context, instagram_id)
@@ -125,17 +123,15 @@ class Loop(commands.Cog):
                     await channel.send(embed=hkd.create_embed(author=author, title='Post by {0}'.format(user_name), description=post_text, colour=colour, url=post_link, image=post_pic))
                 if posted_updates:
                     self.firebase_ref.child('last_instagram_posts/{0}'.format(instagram_id)).set(str(max(posted_updates)))
-        except Exception as err:
-            traceback.print_tb(err.__traceback__)
 
     @check_instagram.before_loop
     async def before_check_instagram(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(seconds=180.0)
+    @tasks.loop(seconds=300.0)
     async def check_instagram_stories(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
-        try:
+        with suppress(Exception):
             instaloader_args = ['instaloader', '--login={0}'.format(self.config['instagram_user']), '--sessionfile=./.instaloader-session', '--quiet', '--dirname-pattern={profile}', '--filename-pattern={profile}_{mediaid}', ':stories']
             proc = subprocess.Popen(args=instaloader_args)
             while proc.poll() is None:
@@ -178,8 +174,6 @@ class Loop(commands.Cog):
                     await channel.send(file=File('./{0}/{1}'.format(instagram_id, story)))
                 if uploaded_story_ids:
                     self.firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).set(str(max(uploaded_story_ids)))
-        except Exception as err:
-            traceback.print_tb(err.__traceback__)
 
     @check_instagram_stories.before_loop
     async def before_check_instagram_stories(self):
