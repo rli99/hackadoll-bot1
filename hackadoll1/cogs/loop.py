@@ -96,14 +96,14 @@ class Loop(commands.Cog):
     async def before_check_tweets(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(seconds=210.0)
+    @tasks.loop(seconds=240.0)
     async def check_instagram(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
         with suppress(Exception):
             for instagram_id in self.firebase_ref.child('last_instagram_posts').get().keys():
                 last_post_id = int(self.firebase_ref.child('last_instagram_posts/{0}'.format(instagram_id)).get())
                 profile = instaloader.Profile.from_username(self.insta_api.context, instagram_id)
-                user_name = profile.username
+                user_name = profile.full_name
                 posted_updates = []
                 for post in profile.get_posts():
                     if post.mediaid <= last_post_id:
@@ -128,7 +128,7 @@ class Loop(commands.Cog):
     async def before_check_instagram(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(seconds=300.0)
+    @tasks.loop(seconds=360.0)
     async def check_instagram_stories(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
         with suppress(Exception):
@@ -156,7 +156,7 @@ class Loop(commands.Cog):
                         uploaded_story_ids.append(pic_id)
                 if uploaded_story_ids:
                     profile = instaloader.Profile.from_username(self.insta_api.context, instagram_id)
-                    user_name = profile.username
+                    user_name = profile.full_name
                     if instagram_id in hkd.WUG_INSTAGRAM_IDS.values():
                         colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), hkd.dict_reverse(hkd.WUG_INSTAGRAM_IDS)[instagram_id])
                     else:
