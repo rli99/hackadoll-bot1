@@ -96,7 +96,7 @@ class Loop(commands.Cog):
     async def before_check_tweets(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(seconds=600.0)
+    @tasks.loop(seconds=540.0)
     async def check_instagram(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
         with suppress(Exception):
@@ -128,7 +128,7 @@ class Loop(commands.Cog):
     async def before_check_instagram(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(seconds=540.0)
+    @tasks.loop(seconds=300.0)
     async def check_instagram_stories(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
         with suppress(Exception):
@@ -144,13 +144,13 @@ class Loop(commands.Cog):
                 uploaded_story_ids = []
                 stories_to_upload = []
                 for vid in story_videos:
-                    video_id = int(vid[:-4].rsplit('_')[1])
+                    video_id = int(vid[:-4].split('_')[-1])
                     if video_id > last_story_id:
                         stories_to_upload.append(vid)
                         uploaded_story_ids.append(video_id)
                 story_pics = [p for p in os.listdir(instagram_id) if p.endswith('.jpg')]
                 for pic in story_pics:
-                    pic_id = int(pic[:-4].rsplit('_')[1])
+                    pic_id = int(pic[:-4].split('_')[-1])
                     if pic_id > last_story_id and pic_id not in uploaded_story_ids:
                         stories_to_upload.append(pic)
                         uploaded_story_ids.append(pic_id)
@@ -189,20 +189,21 @@ class Loop(commands.Cog):
             for event in events:
                 start = parser.parse(event['start'].get('dateTime', event['start'].get('date')))
                 if start.timestamp() - time.time() < 900 and event['description'][0] != '*':
-                    split_index = event['description'].find(';')
-                    wug_members_str, stream_link = event['description'][:split_index], event['description'][split_index + 1:]
-                    wug_members = wug_members_str.split(',')
-                    if stream_link[0] == '<':
-                        stream_link = BeautifulSoup(stream_link, 'html.parser').find('a').contents[0]
-                    colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), wug_members[0]) if len(wug_members) == 1 else Colour.teal()
-                    embed_fields = []
-                    embed_fields.append(('Time', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M} JST'.format(start.astimezone(pytz.timezone('Japan')))))
-                    embed_fields.append(('WUG Members', ', '.join(wug_members)))
-                    content = '**Starting in 15 Minutes**' if first_event else ''
-                    await channel.send(content=content, embed=hkd.create_embed(title=event['summary'], colour=colour, url=stream_link, fields=embed_fields))
-                    first_event = False
-                    event['description'] = '*' + event['description']
-                    self.calendar.events().update(calendarId='primary', eventId=event['id'], body=event).execute()
+                    with suppress(Exception):
+                        split_index = event['description'].find(';')
+                        wug_members_str, stream_link = event['description'][:split_index], event['description'][split_index + 1:]
+                        wug_members = wug_members_str.split(',')
+                        if stream_link[0] == '<':
+                            stream_link = BeautifulSoup(stream_link, 'html.parser').find('a').contents[0]
+                        colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), wug_members[0]) if len(wug_members) == 1 else Colour.teal()
+                        embed_fields = []
+                        embed_fields.append(('Time', '{0:%Y}-{0:%m}-{0:%d} {0:%H}:{0:%M} JST'.format(start.astimezone(pytz.timezone('Japan')))))
+                        embed_fields.append(('WUG Members', ', '.join(wug_members)))
+                        content = '**Starting in 15 Minutes**' if first_event else ''
+                        await channel.send(content=content, embed=hkd.create_embed(title=event['summary'], colour=colour, url=stream_link, fields=embed_fields))
+                        first_event = False
+                        event['description'] = '*' + event['description']
+                        self.calendar.events().update(calendarId='primary', eventId=event['id'], body=event).execute()
 
     @check_live_streams.before_loop
     async def before_check_live_streams(self):

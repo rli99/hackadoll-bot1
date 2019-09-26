@@ -19,7 +19,7 @@ class Help(commands.Cog):
             embed_fields.append(('!userinfo', 'Show your user information.'))
             embed_fields.append(('!serverinfo', 'Show server information.'))
             embed_fields.append(('!tweetpics *url*', 'Get images from the specified tweet.'))
-            embed_fields.append(('!instapics *url*', 'Get images from the specified instagram post.'))
+            embed_fields.append(('!instapics *url*', 'Get images from the specified Instagram post.'))
             embed_fields.append(('!blogpics *url*', 'Get images from the specified Ameba blog post.'))
             embed_fields.append(('!aichan-blogpics', 'Get images from the latest blog post by Aichan.'))
             embed_fields.append(('!tl *japanese text*', 'Translate the provided Japanese text into English via Google Translate.'))
