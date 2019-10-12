@@ -31,7 +31,7 @@ class Pics(commands.Cog):
         for _ in range(3):
             with suppress(Exception):
                 await ctx.channel.trigger_typing()
-                json_data = (await hkd.get_json_from_instagram(post_url))
+                json_data = hkd.get_json_from_instagram(post_url)
                 images = json_data['entry_data']['PostPage'][0]['graphql']['shortcode_media']['edge_sidecar_to_children']['edges']
                 if len(images) <= 1:
                     return

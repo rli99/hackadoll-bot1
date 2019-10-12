@@ -4,3 +4,4 @@
 /hackadoll1/*.json
 /hackadoll1/*.yaml
 /hackadoll1/Procfile
+/hackadoll1/cogs/secret.py

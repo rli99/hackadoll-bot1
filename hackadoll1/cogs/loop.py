@@ -55,40 +55,40 @@ class Loop(commands.Cog):
                 user_id = int(user_id_str)
                 last_tweet_id = int(self.firebase_ref.child('last_userid_tweets/{0}'.format(user_id)).get())
                 posted_tweets = []
-                statuses = self.twitter_api.GetUserTimeline(user_id=user_id, since_id=last_tweet_id, count=40, include_rts=False)
-                for status in reversed(statuses):
-                    tweet = status.AsDict()
-                    user = tweet['user']
-                    name = user['screen_name']
-                    if str(tweet.get('in_reply_to_user_id', user_id)) not in twitter_user_ids:
+                tweets = self.twitter_api.GetUserTimeline(user_id=user_id, since_id=last_tweet_id, count=40, include_rts=False)
+                for tweet in reversed(tweets):
+                    user = tweet.user
+                    name = user.name
+                    username = user.screen_name
+                    if tweet.in_reply_to_user_id and str(tweet.in_reply_to_user_id) not in twitter_user_ids:
                         continue
                     await channel.trigger_typing()
                     await asyncio.sleep(1)
-                    tweet_id = tweet['id']
+                    tweet_id = tweet.id
                     posted_tweets.append(tweet_id)
-                    tweet_content = unescape(tweet['full_text'])
+                    tweet_content = unescape(tweet.full_text)
                     if user_id in hkd.WUG_TWITTER_IDS.values():
                         colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), hkd.dict_reverse(hkd.WUG_TWITTER_IDS)[user_id])
                     else:
                         colour = Colour(0x242424)
                     author = {}
-                    author['name'] = '{0} (@{1})'.format(user['name'], user['screen_name'])
-                    author['url'] = 'https://twitter.com/{0}'.format(name)
-                    author['icon_url'] = user['profile_image_url_https']
+                    author['name'] = '{0} (@{1})'.format(name, username)
+                    author['url'] = 'https://twitter.com/{0}'.format(username)
+                    author['icon_url'] = user.profile_image_url_https
                     image = ''
-                    expanded_urls = tweet['urls']
+                    expanded_urls = tweet.urls
                     if expanded_urls:
-                        expanded_url = expanded_urls[0].get('expanded_url', '')
+                        expanded_url = expanded_urls[0].expanded_url
                         if expanded_url and hkd.is_blog_post(expanded_url):
                             soup = hkd.get_html_from_url(expanded_url)
                             blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
                             blog_images = [p['src'] for p in blog_entry.find_all('img') if '?caw=' in p['src'][-9:]]
                             if blog_images:
                                 image = blog_images[0]
-                    media = tweet.get('media', '')
+                    media = tweet.media
                     if media:
-                        image = media[0].get('media_url_https', '')
-                    await channel.send(embed=hkd.create_embed(author=author, title='Tweet by {0}'.format(user['name']), description=tweet_content, colour=colour, url='https://twitter.com/{0}/status/{1}'.format(name, tweet_id), image=image))
+                        image = media[0].media_url_https
+                    await channel.send(embed=hkd.create_embed(author=author, title='Tweet by {0}'.format(name), description=tweet_content, colour=colour, url='https://twitter.com/{0}/status/{1}'.format(username, tweet_id), image=image))
                 if posted_tweets:
                     self.firebase_ref.child('last_userid_tweets/{0}'.format(user_id)).set(str(max(posted_tweets)))
 

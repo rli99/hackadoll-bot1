@@ -189,7 +189,7 @@ def get_pics_from_blog_post(blog_url):
                 return [p['href'] for p in blog_entry.find_all('a') if is_image_file(p['href'])]
     return []
 
-async def get_json_from_instagram(url):
+def get_json_from_instagram(url):
     response = requests.get(url, headers=get_random_header())
     soup = BeautifulSoup(response.text, 'html.parser')
     script_tag = soup.find('body').find('script')
