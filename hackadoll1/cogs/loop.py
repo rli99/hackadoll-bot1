@@ -76,17 +76,12 @@ class Loop(commands.Cog):
                     author['url'] = 'https://twitter.com/{0}'.format(username)
                     author['icon_url'] = user.profile_image_url_https
                     image = ''
-                    expanded_urls = tweet.urls
-                    if expanded_urls:
-                        expanded_url = expanded_urls[0].expanded_url
-                        if expanded_url and hkd.is_blog_post(expanded_url):
-                            soup = hkd.get_html_from_url(expanded_url)
-                            blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
-                            blog_images = [p['src'] for p in blog_entry.find_all('img') if '?caw=' in p['src'][-9:]]
-                            if blog_images:
-                                image = blog_images[0]
-                    media = tweet.media
-                    if media:
+                    if (expanded_urls := tweet.urls) and (expanded_url := expanded_urls[0].expanded_url) and hkd.is_blog_post(expanded_url):
+                        soup = hkd.get_html_from_url(expanded_url)
+                        blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
+                        if blog_images := [p['src'] for p in blog_entry.find_all('img') if '?caw=' in p['src'][-9:]]:
+                            image = blog_images[0]
+                    if media := tweet.media
                         image = media[0].media_url_https
                     await channel.send(embed=hkd.create_embed(author=author, title='Tweet by {0}'.format(name), description=tweet_content, colour=colour, url='https://twitter.com/{0}/status/{1}'.format(username, tweet_id), image=image))
                 if posted_tweets:

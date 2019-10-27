@@ -11,8 +11,7 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def tagcreate(self, ctx, *, tag_to_create: str):
         await ctx.channel.trigger_typing()
-        split_request = tag_to_create.split()
-        if len(split_request) > 1:
+        if len(split_request := tag_to_create.split()) > 1:
             tag_name = split_request[0]
             tag_content = tag_to_create[len(tag_name) + 1:]
             if tag_name not in self.firebase_ref.child('tags').get():
@@ -27,8 +26,7 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def tagupdate(self, ctx, *, tag_to_update: str):
         await ctx.channel.trigger_typing()
-        split_update = tag_to_update.split()
-        if len(split_update) > 1:
+        if len(split_update := tag_to_update.split()) > 1:
             tag_name = split_update[0]
             updated_content = tag_to_update[len(tag_name) + 1:]
             if tag_name in self.firebase_ref.child('tags').get():
@@ -60,10 +58,8 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def tag(self, ctx, tag_name: str):
         await ctx.channel.trigger_typing()
-        tag_result = self.firebase_ref.child('tags/{0}'.format(tag_name)).get()
-        if tag_result:
-            split_tag = hkd.split_embeddable_content(tag_result)
-            if not split_tag:
+        if tag_result := self.firebase_ref.child('tags/{0}'.format(tag_name)).get():
+            if not (split_tag := hkd.split_embeddable_content(tag_result)):
                 await ctx.send(tag_result)
             else:
                 await hkd.send_content_with_delay(ctx, split_tag)

@@ -12,9 +12,8 @@ class MusicVideo(commands.Cog):
         await ctx.channel.trigger_typing()
         name_to_mv = {}
         for video, names in list(self.firebase_ref.child('music_videos/mv_aliases').get().items()):
-            name_to_mv.update({name: video for name in names})
-        song = hkd.parse_mv_name(song_name)
-        if song in name_to_mv:
+            name_to_mv.update({name: video for name in names}) 
+        if (song := hkd.parse_mv_name(song_name)) in name_to_mv:
             await ctx.send(self.firebase_ref.child('music_videos/mv_links').get()[name_to_mv[song]])
         else:
             await ctx.send(embed=hkd.create_embed(description="Couldn't find that MV. Use **!mv-list** to show the list of available MVs.", colour=Colour.red()))

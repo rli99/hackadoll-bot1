@@ -41,8 +41,7 @@ class Misc(commands.Cog):
     @commands.command()
     async def weather(self, ctx, *, location: str):
         await ctx.channel.trigger_typing()
-        query = location.split(',')
-        if len(query) > 1:
+        if len(query := location.split(',')) > 1:
             with suppress(Exception):
                 query[1] = countries.get(name=query[1].strip().title()).alpha_2
         with suppress(Exception):
@@ -87,9 +86,8 @@ class Misc(commands.Cog):
     async def dl_vid(self, ctx, url: str):
         await ctx.channel.trigger_typing()
         await ctx.send('Attempting to download the video using youtube-dl. Please wait.')
-        niconico_vid = 'nicovideo.jp' in url
         ytdl_getfilename_args = ['youtube-dl']
-        if niconico_vid:
+        if niconico_vid := ('nicovideo.jp' in url):
             ytdl_getfilename_args += ['-u', self.config['nicovideo_user'], '-p', self.config['nicovideo_pw']]
         ytdl_getfilename_args += ['--get-filename', url]
         proc = subprocess.run(args=ytdl_getfilename_args, universal_newlines=True, stdout=subprocess.PIPE)

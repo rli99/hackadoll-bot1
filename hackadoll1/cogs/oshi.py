@@ -13,8 +13,7 @@ class Oshi(commands.Cog):
     @commands.guild_only()
     async def oshihen(self, ctx, member: str = ''):
         await ctx.channel.trigger_typing()
-        role = hkd.get_wug_role(ctx.guild, member)
-        if role is None:
+        if not (role := hkd.get_wug_role(ctx.guild, member)):
             await ctx.send(embed=hkd.create_embed(description="Couldn't find that role. Use **!help roles** to show additional help on how to get roles.", colour=Colour.red()))
             return
         roles_to_remove = []
@@ -33,8 +32,8 @@ class Oshi(commands.Cog):
     @commands.guild_only()
     async def oshimashi(self, ctx, member: str = ''):
         await ctx.channel.trigger_typing()
-        role = hkd.get_wug_role(ctx.guild, member)
-        if role is None:
+        role = 
+        if not (role := hkd.get_wug_role(ctx.guild, member)):
             await ctx.send(embed=hkd.create_embed(description="Couldn't find that role. Use **!help roles** to show additional help on how to get roles.", colour=Colour.red()))
             return
         if role not in ctx.author.roles:
@@ -51,8 +50,7 @@ class Oshi(commands.Cog):
         existing_kamioshi_roles = [r for r in ctx.author.roles if r.id in hkd.WUG_KAMIOSHI_ROLE_IDS.values()]
         kamioshi_role_name = existing_kamioshi_roles[0].name if existing_kamioshi_roles else ''
         for oshi in hkd.WUG_ROLE_IDS:
-            role = disc_utils.get(ctx.guild.roles, id=hkd.WUG_ROLE_IDS[oshi])
-            if role not in ctx.author.roles and role.name != kamioshi_role_name:
+            if (role := disc_utils.get(ctx.guild.roles, id=hkd.WUG_ROLE_IDS[oshi])) not in ctx.author.roles and role.name != kamioshi_role_name:
                 roles_to_add.append(role)
         if roles_to_add:
             await ctx.author.add_roles(*roles_to_add)
@@ -64,8 +62,7 @@ class Oshi(commands.Cog):
     @commands.guild_only()
     async def kamioshi(self, ctx, member: str = ''):
         await ctx.channel.trigger_typing()
-        role = hkd.get_wug_role(ctx.guild, member)
-        if role is None:
+        if not (role := hkd.get_wug_role(ctx.guild, member)):
             await ctx.send(embed=hkd.create_embed(description="Couldn't find that role. Use **!help roles** to show additional help on how to get roles.", colour=Colour.red()))
             return
         roles_to_remove = []
@@ -94,14 +91,12 @@ class Oshi(commands.Cog):
         ids_to_kamioshi = hkd.dict_reverse(hkd.WUG_KAMIOSHI_ROLE_IDS)
         oshi_num = {}
         for member in ctx.guild.members:
-            kamioshi_roles = [r for r in member.roles if r.id in ids_to_kamioshi]
-            if kamioshi_roles:
+            if kamioshi_roles := [r for r in member.roles if r.id in ids_to_kamioshi]:
                 kamioshi_role = kamioshi_roles[0]
                 oshi_num[ids_to_kamioshi[kamioshi_role.id]] = oshi_num.get(ids_to_kamioshi[kamioshi_role.id], 0) + 1
             else:
                 ids_to_member = hkd.dict_reverse(hkd.WUG_ROLE_IDS)
-                member_roles = [r for r in member.roles if r.id in ids_to_member]
-                if member_roles:
+                if member_roles := [r for r in member.roles if r.id in ids_to_member]:
                     role = sorted(member_roles)[-1]
                     oshi_num[ids_to_member[role.id]] = oshi_num.get(ids_to_member[role.id], 0) + 1
         description = ''
@@ -120,13 +115,11 @@ class Oshi(commands.Cog):
             counted_members = []
             for role in member.roles:
                 if role.id in ids_to_member:
-                    cur_member = ids_to_member[role.id]
-                    if cur_member not in counted_members:
+                    if (cur_member := ids_to_member[role.id]) not in counted_members:
                         oshi_num[cur_member] = oshi_num.get(cur_member, 0) + 1
                         counted_members.append(cur_member)
                 elif role.id in ids_to_kamioshi:
-                    cur_kamioshi = ids_to_kamioshi[role.id]
-                    if cur_kamioshi not in counted_members:
+                    if (cur_kamioshi := ids_to_kamioshi[role.id]) not in counted_members:
                         oshi_num[cur_kamioshi] = oshi_num.get(cur_kamioshi, 0) + 1
                         counted_members.append(cur_kamioshi)
         description = ''

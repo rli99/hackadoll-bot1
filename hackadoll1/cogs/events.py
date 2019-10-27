@@ -33,8 +33,7 @@ class Events(commands.Cog):
                 for event in [result[i:i + 4] for i in range(0, len(result), 4)]:
                     info = event[1].find_all('a')
                     event_time = event[1].find('span')
-                    event_url = info[0]['href']
-                    if event_url not in event_urls:
+                    if (event_url := info[0]['href']) not in event_urls:
                         performers = [p.contents[0] for p in event[2].find_all('a')]
                         wug_performers = [p for p in performers if p in hkd.WUG_MEMBERS]
                         if not wug_performers:
@@ -64,8 +63,7 @@ class Events(commands.Cog):
     @commands.guild_only()
     async def eventsin(self, ctx, month: str, member: str = ''):
         await ctx.channel.trigger_typing()
-        search_month = hkd.parse_month(month)
-        if search_month == 'None':
+        if (search_month := hkd.parse_month(month)) == 'None':
             await ctx.send(embed=hkd.create_embed(description="Couldn't find any events. Please follow this format for searching for events: **!eventsin** April Mayushii.", colour=Colour.red()))
             return
         current_time = datetime.now(timezone('Japan'))
@@ -99,8 +97,7 @@ class Events(commands.Cog):
                         info = event[1].find_all('a')
                         event_date = event[0].find('p').contents[0][:10]
                         event_time = event[1].find('span')
-                        event_url = info[0]['href']
-                        if event_url not in event_urls:
+                        if (event_url := info[0]['href']) not in event_urls:
                             performers = [p.contents[0] for p in event[2].find_all('a')]
                             wug_performers = [p for p in performers if p in hkd.WUG_MEMBERS]
                             if not wug_performers:
