@@ -32,7 +32,6 @@ class Oshi(commands.Cog):
     @commands.guild_only()
     async def oshimashi(self, ctx, member: str = ''):
         await ctx.channel.trigger_typing()
-        role = 
         if not (role := hkd.get_wug_role(ctx.guild, member)):
             await ctx.send(embed=hkd.create_embed(description="Couldn't find that role. Use **!help roles** to show additional help on how to get roles.", colour=Colour.red()))
             return

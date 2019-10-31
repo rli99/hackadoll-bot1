@@ -10,8 +10,9 @@ from urllib.parse import quote
 
 import requests
 import pytz
+import youtube_dl
 import hkdhelper as hkd
-from discord import Colour
+from discord import Colour, File
 from discord.ext import commands
 from forex_python.converter import CurrencyRates
 from googletrans import Translator
@@ -86,42 +87,27 @@ class Misc(commands.Cog):
     async def dl_vid(self, ctx, url: str):
         await ctx.channel.trigger_typing()
         await ctx.send('Attempting to download the video using youtube-dl. Please wait.')
-        ytdl_getfilename_args = ['youtube-dl']
-        if niconico_vid := ('nicovideo.jp' in url):
-            ytdl_getfilename_args += ['-u', self.config['nicovideo_user'], '-p', self.config['nicovideo_pw']]
-        ytdl_getfilename_args += ['--get-filename', url]
-        proc = subprocess.run(args=ytdl_getfilename_args, universal_newlines=True, stdout=subprocess.PIPE)
-        vid_filename = proc.stdout.strip()
-        ytdl_args = ['youtube-dl', '-o', vid_filename, '-f', 'best']
-        if niconico_vid:
-            ytdl_args += ['-u', self.config['nicovideo_user'], '-p', self.config['nicovideo_pw']]
-        ytdl_args.append(url)
-        last_try_time = time.time()
-        retry = True
-        while retry:
-            proc = subprocess.Popen(args=ytdl_args)
-            while proc.poll() is None:
-                await asyncio.sleep(2)
-            if proc.returncode != 0:
-                if niconico_vid and time.time() - last_try_time > 30:
-                    last_try_time = time.time()
-                    continue
-                else:
-                    await ctx.send(embed=hkd.create_embed(title='Failed to download video.', colour=Colour.red()))
-                    with suppress(Exception):
-                        os.remove('{0}.part'.format(vid_filename))
-                    return
-            retry = False
-        await ctx.send('Download complete. Now uploading video to Google Drive. Please wait.')
-        proc = subprocess.Popen(args=['python', 'gdrive_upload.py', vid_filename, self.config['uploads_folder']])
-        while proc.poll() is None:
-            await asyncio.sleep(1)
-        if proc.returncode != 0:
-            await ctx.send(embed=hkd.create_embed(title='Failed to upload video to Google Drive.', colour=Colour.red()))
+        ytdl_opts = {'outtmpl': '%(id)s.%(ext)s'}
+        with youtube_dl.YoutubeDL(ytdl_opts) as ytdl:
+            result = ytdl.extract_info(url)
+        if not (files := [f for f in os.listdir('.') if os.path.isfile(f) and f.startswith(result.get('id', ''))]):
+            await ctx.send(embed=hkd.create_embed(title='Failed to download video.', colour=Colour.red()))
+        vid_filename = files[0]
+        if os.path.getsize(vid_filename) / (1024.0 * 1024.0) < 50.0:
+            await ctx.send(file=File(vid_filename))
             with suppress(Exception):
                 os.remove(vid_filename)
-            return
-        await ctx.send(content='{0.mention}'.format(ctx.author), embed=hkd.create_embed(description='Upload complete. Your video is available here: https://drive.google.com/open?id={0}. The Google Drive folder has limited space so it will be purged from time to time.'.format(self.config['uploads_folder'])))
+        else:
+            await ctx.send('Download complete. Now uploading video to Google Drive. Please wait.')
+            proc = subprocess.Popen(args=['python', 'gdrive_upload.py', vid_filename, self.config['uploads_folder']])
+            while proc.poll() is None:
+                await asyncio.sleep(1)
+            if proc.returncode != 0:
+                await ctx.send(embed=hkd.create_embed(title='Failed to upload video to Google Drive.', colour=Colour.red()))
+                with suppress(Exception):
+                    os.remove(vid_filename)
+                return
+            await ctx.send(content='{0.mention}'.format(ctx.author), embed=hkd.create_embed(description='Upload complete. Your video is available here: https://drive.google.com/open?id={0}. The Google Drive folder has limited space so it will be purged from time to time.'.format(self.config['uploads_folder'])))
 
     @commands.command(aliases=['onsenmusume'])
     async def onmusu(self, ctx, member: str = ''):

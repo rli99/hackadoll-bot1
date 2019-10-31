@@ -81,7 +81,7 @@ class Loop(commands.Cog):
                         blog_entry = soup.find(attrs={'class': 'skin-entryBody'})
                         if blog_images := [p['src'] for p in blog_entry.find_all('img') if '?caw=' in p['src'][-9:]]:
                             image = blog_images[0]
-                    if media := tweet.media
+                    if media := tweet.media:
                         image = media[0].media_url_https
                     await channel.send(embed=hkd.create_embed(author=author, title='Tweet by {0}'.format(name), description=tweet_content, colour=colour, url='https://twitter.com/{0}/status/{1}'.format(username, tweet_id), image=image))
                 if posted_tweets:
