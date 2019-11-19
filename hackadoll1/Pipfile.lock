@@ -102,10 +102,10 @@
         },
         "firebase-admin": {
             "hashes": [
-                "sha256:38a3dbe14523f3c0a7d128b601b14ac0672fb15fdd7b9cfcd6a1f76cb2667379"
+                "sha256:c0af81d62f1d36cc352e69eac8eacef700f31f322074ca86447a5a16240b628c"
             ],
             "index": "pypi",
-            "version": "==3.1.0"
+            "version": "==3.2.0"
         },
         "forex-python": {
             "hashes": [
