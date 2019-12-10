@@ -180,14 +180,14 @@ def get_html_from_url(url):
 def get_tweet_id_from_url(tweet_url):
     return ''.join(takewhile(lambda x: x.isdigit(), iter(tweet_url.split('/status/')[-1])))
 
-def get_pics_from_blog_post(blog_url):
+def get_media_from_blog_post(blog_url):
     for _ in range(3):
         for article_class in ['skin-entryBody', 'articleText']:
             with suppress(Exception):
                 soup = get_html_from_url(blog_url)
                 blog_entry = soup.find_all(attrs={'class': article_class}, limit=1)[0]
-                return [p['href'] for p in blog_entry.find_all('a') if is_image_file(p['href'])]
-    return []
+                return [p['href'] for p in blog_entry.find_all('a') if is_image_file(p['href'])], [v['src'].split('.jp/?v=', 1)[1] for v in soup.find_all('iframe') if 'blog-video' in v['src']]
+    return [], []
 
 def get_json_from_instagram(url):
     response = requests.get(url, headers=get_random_header())

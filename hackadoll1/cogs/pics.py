@@ -1,7 +1,8 @@
 from contextlib import suppress
+from urllib.request import urlretrieve
 
 import hkdhelper as hkd
-from discord import Colour
+from discord import Colour, File
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 
@@ -42,17 +43,26 @@ class Pics(commands.Cog):
     @commands.cooldown(1, 10, BucketType.guild)
     async def blogpics(self, ctx, blog_url: str):
         await ctx.channel.trigger_typing()
-        if not (pics := hkd.get_pics_from_blog_post(blog_url.replace('//gamp.ameblo.jp/', '//ameblo.jp/'))):
+        pics, vid_ids = hkd.get_media_from_blog_post(blog_url.replace('//gamp.ameblo.jp/', '//ameblo.jp/'))
+        if len(pics) <= 1 and not vid_ids:
             await ctx.send(embed=hkd.create_embed(description="Couldn't find any images.", colour=Colour.red()))
-            return
-        if len(pics) == 1:
-            return
-        await hkd.send_content_with_delay(ctx, pics[1:])
+        if len(pics) > 1:
+            await hkd.send_content_with_delay(ctx, pics[1:])
+        for vid_id in vid_ids:
+            vid_filename = '{0}.mp4'.format(vid_id)
+            urlretrieve(vid, vid_filename)
+            await ctx.send(file=File('./{0}'.format(vid_filename)))
 
     @commands.command(name='aichan-blogpics')
     @commands.cooldown(1, 10, BucketType.guild)
     async def aichan_blogpics(self, ctx):
         await ctx.channel.trigger_typing()
-        if not (pics := hkd.get_pics_from_blog_post('https://ameblo.jp/eino-airi/')):
+        pics, vid_ids = hkd.get_media_from_blog_post('https://ameblo.jp/eino-airi/')
+        if len(pics) <= 1 and not vid_ids:
             await ctx.send(embed=hkd.create_embed(description="Couldn't find any images.", colour=Colour.red()))
-        await hkd.send_content_with_delay(ctx, pics)
+        if len(pics) > 1:
+            await hkd.send_content_with_delay(ctx, pics[1:])
+        for vid_id in vid_ids:
+            vid_filename = '{0}.mp4'.format(vid_id)
+            urlretrieve(vid, vid_filename)
+            await ctx.send(file=File('./{0}'.format(vid_filename)))
