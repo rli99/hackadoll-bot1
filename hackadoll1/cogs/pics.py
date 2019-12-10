@@ -50,7 +50,7 @@ class Pics(commands.Cog):
             await hkd.send_content_with_delay(ctx, pics[1:])
         for vid_id in vid_ids:
             vid_filename = '{0}.mp4'.format(vid_id)
-            urlretrieve(vid, vid_filename)
+            urlretrieve('https://static.blog-video.jp/output/hq/{0}.mp4'.format(vid_id), vid_filename)
             await ctx.send(file=File('./{0}'.format(vid_filename)))
 
     @commands.command(name='aichan-blogpics')
@@ -64,5 +64,5 @@ class Pics(commands.Cog):
             await hkd.send_content_with_delay(ctx, pics[1:])
         for vid_id in vid_ids:
             vid_filename = '{0}.mp4'.format(vid_id)
-            urlretrieve(vid, vid_filename)
+            urlretrieve('https://static.blog-video.jp/output/hq/{0}.mp4'.format(vid_id), vid_filename)
             await ctx.send(file=File('./{0}'.format(vid_filename)))
