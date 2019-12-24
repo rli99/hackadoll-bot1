@@ -123,7 +123,7 @@ class Loop(commands.Cog):
     async def before_check_instagram(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(seconds=300.0)
+    @tasks.loop(seconds=180.0)
     async def check_instagram_stories(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
         with suppress(Exception):
