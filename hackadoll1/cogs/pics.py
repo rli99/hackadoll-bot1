@@ -58,10 +58,10 @@ class Pics(commands.Cog):
     async def aichan_blogpics(self, ctx):
         await ctx.channel.trigger_typing()
         pics, vid_ids = hkd.get_media_from_blog_post('https://ameblo.jp/eino-airi/')
-        if len(pics) <= 1 and not vid_ids:
+        if not pics and not vid_ids:
             await ctx.send(embed=hkd.create_embed(description="Couldn't find any images.", colour=Colour.red()))
-        if len(pics) > 1:
-            await hkd.send_content_with_delay(ctx, pics[1:])
+            return
+        await hkd.send_content_with_delay(ctx, pics)
         for vid_id in vid_ids:
             vid_filename = '{0}.mp4'.format(vid_id)
             urlretrieve('https://static.blog-video.jp/output/hq/{0}.mp4'.format(vid_id), vid_filename)
