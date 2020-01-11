@@ -18,6 +18,7 @@ pydrive = "*"
 youtube-dl = "*"
 instaloader = "*"
 beautifulsoup4 = "*"
+lxml = "*"
 
 [dev-packages]
 

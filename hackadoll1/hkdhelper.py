@@ -10,6 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 from dateutil import parser
 from discord import Colour, Embed, utils as disc_utils
+from lxml.html import fromstring
 
 SERVER_ID = 280439975911096320
 TWITTER_CHANNEL_ID = 448716340816248832
@@ -198,6 +199,17 @@ def get_json_from_instagram(url):
 
 def get_random_header():
     return {'User-Agent': choice(FAKE_USER_AGENTS)}
+
+def get_random_proxy():
+    url = 'https://free-proxy-list.net/'
+    response = requests.get(url)
+    parser = fromstring(response.text)
+    proxies = set()
+    for i in parser.xpath('//tbody/tr')[:20]:
+        if i.xpath('.//td[7][contains(text(),"yes")]'):
+            proxy = ":".join([i.xpath('.//td[1]/text()')[0], i.xpath('.//td[2]/text()')[0]])
+            proxies.add(proxy)
+    return choice(tuple(proxies))
 
 def create_embed(author={}, title='', description='', colour=Colour(0x242424), url='', image='', thumbnail='', fields=[], footer={}, inline=False):
     embed = Embed(title=title, description=description, colour=colour, url=url)
