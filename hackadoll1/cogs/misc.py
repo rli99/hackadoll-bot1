@@ -87,20 +87,19 @@ class Misc(commands.Cog):
     async def dl_vid(self, ctx, url: str):
         await ctx.channel.trigger_typing()
         await ctx.send('Attempting to download the video using youtube-dl. Please wait.')
-        success = False
+        result = {}
         with suppress(Exception):
             ytdl_opts = {'outtmpl': '%(id)s.%(ext)s'}
             with youtube_dl.YoutubeDL(ytdl_opts) as ytdl:
                 result = ytdl.extract_info(url)
-                success = True
-        if not success:
+        if not (files := [f for f in os.listdir('.') if os.path.isfile(f) and f.startswith(result.get('id', '---invalid-id---'))]):
             for _ in range(3):
                 with suppress(Exception):
                     ytdl_opts = {'outtmpl': '%(id)s.%(ext)s', 'proxy': hkd.get_random_proxy()}
                     with youtube_dl.YoutubeDL(ytdl_opts) as ytdl:
                         result = ytdl.extract_info(url)
                         break
-        if not (files := [f for f in os.listdir('.') if os.path.isfile(f) and f.startswith(result.get('id', ''))]):
+        if not (files := [f for f in os.listdir('.') if os.path.isfile(f) and f.startswith(result.get('id', '---invalid-id---'))]):
             await ctx.send(embed=hkd.create_embed(title='Failed to download video.', colour=Colour.red()))
         vid_filename = files[0]
         if os.path.getsize(vid_filename) < ctx.guild.filesize_limit:
