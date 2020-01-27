@@ -92,31 +92,37 @@ class Misc(commands.Cog):
             ytdl_opts = {'outtmpl': '%(id)s.%(ext)s'}
             with youtube_dl.YoutubeDL(ytdl_opts) as ytdl:
                 result = ytdl.extract_info(url)
-        if not (files := [f for f in os.listdir('.') if os.path.isfile(f) and f.startswith(result.get('id', '---invalid-id---'))]):
+        if not (vid_ids := hkd.get_ids_from_ytdl_result(result)):
+            await ctx.send(embed=hkd.create_embed(title='Failed to download video.', colour=Colour.red()))
+            return
+        if not (files := [f for f in os.listdir('.') if os.path.isfile(f) and f.startswith(vid_ids[0])]):
             for _ in range(3):
                 with suppress(Exception):
                     ytdl_opts = {'outtmpl': '%(id)s.%(ext)s', 'proxy': hkd.get_random_proxy()}
                     with youtube_dl.YoutubeDL(ytdl_opts) as ytdl:
                         result = ytdl.extract_info(url)
                         break
-        if not (files := [f for f in os.listdir('.') if os.path.isfile(f) and f.startswith(result.get('id', '---invalid-id---'))]):
+        if not (files := [f for f in os.listdir('.') if os.path.isfile(f) and f.startswith(vid_ids[0])]):
             await ctx.send(embed=hkd.create_embed(title='Failed to download video.', colour=Colour.red()))
-        vid_filename = files[0]
-        if os.path.getsize(vid_filename) < ctx.guild.filesize_limit:
-            await ctx.send(file=File(vid_filename))
-            with suppress(Exception):
-                os.remove(vid_filename)
-        else:
-            await ctx.send('Download complete. Now uploading video to Google Drive. Please wait.')
-            proc = subprocess.Popen(args=['python', 'gdrive_upload.py', vid_filename, self.config['uploads_folder']])
-            while proc.poll() is None:
-                await asyncio.sleep(1)
-            if proc.returncode != 0:
-                await ctx.send(embed=hkd.create_embed(title='Failed to upload video to Google Drive.', colour=Colour.red()))
-                with suppress(Exception):
-                    os.remove(vid_filename)
-                return
-            await ctx.send(content='{0.mention}'.format(ctx.author), embed=hkd.create_embed(description='Upload complete. Your video is available here: https://drive.google.com/open?id={0}. The Google Drive folder has limited space so it will be purged from time to time.'.format(self.config['uploads_folder'])))
+            return        
+        for vid_id in vid_ids:
+            if (files := [f for f in os.listdir('.') if os.path.isfile(f) and f.startswith(vid_id)]):
+                vid_filename = files[0]
+                if os.path.getsize(vid_filename) < ctx.guild.filesize_limit:
+                    await ctx.send(file=File(vid_filename))
+                    with suppress(Exception):
+                        os.remove(vid_filename)
+                else:
+                    await ctx.send('Download complete. Now uploading video to Google Drive. Please wait.')
+                    proc = subprocess.Popen(args=['python', 'gdrive_upload.py', vid_filename, self.config['uploads_folder']])
+                    while proc.poll() is None:
+                        await asyncio.sleep(1)
+                    if proc.returncode != 0:
+                        await ctx.send(embed=hkd.create_embed(title='Failed to upload video to Google Drive.', colour=Colour.red()))
+                        with suppress(Exception):
+                            os.remove(vid_filename)
+                        return
+                    await ctx.send(content='{0.mention}'.format(ctx.author), embed=hkd.create_embed(description='Upload complete. Your video is available here: https://drive.google.com/open?id={0}. The Google Drive folder has limited space so it will be purged from time to time.'.format(self.config['uploads_folder'])))
 
     @commands.command(aliases=['onsenmusume'])
     async def onmusu(self, ctx, member: str = ''):

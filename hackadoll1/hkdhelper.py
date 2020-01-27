@@ -197,6 +197,15 @@ def get_json_from_instagram(url):
     raw_string = script_tag.text.strip().replace('window._sharedData =', '').replace(';', '')
     return json.loads(raw_string)
 
+def get_ids_from_ytdl_result(result):
+    vid_ids = []
+    if (entries := result.get('entries', [])):
+        for entry in entries:
+            vid_ids.append(entry.get('id', ''))
+    else:
+        vid_ids.append(result.get('id'))
+    return vid_ids
+
 def get_random_header():
     return {'User-Agent': choice(FAKE_USER_AGENTS)}
 
