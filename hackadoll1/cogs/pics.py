@@ -34,9 +34,14 @@ class Pics(commands.Cog):
             with suppress(Exception):
                 await ctx.channel.trigger_typing()
                 json_data = hkd.get_json_from_instagram(post_url[int(not skip_first)])
-                if len(images := json_data['entry_data']['PostPage'][0]['graphql']['shortcode_media']['edge_sidecar_to_children']['edges']) <= 1 and skip_first:
+                json_media = json_data['entry_data']['PostPage'][0]['graphql']['shortcode_media']
+                if 'edge_sidecar_to_children' in json_media:
+                    images = [i['node']['display_url'] for i in json_media['edge_sidecar_to_children']['edges']]
+                else:
+                    images = [json_media['display_url']]
+                if len(images) <= 1 and skip_first:
                     return
-                await hkd.send_content_with_delay(ctx, [i['node']['display_url'] for i in images[skip_first:]])
+                await hkd.send_content_with_delay(ctx, images[skip_first:])
                 return
 
     @commands.command(aliases=['blog-pics'])
