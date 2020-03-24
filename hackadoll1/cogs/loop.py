@@ -190,7 +190,7 @@ class Loop(commands.Cog):
                         wug_members = wug_members_str.split(',')
                         if (link_start := stream_link.find('<a')) > 0:
                             stream_link = stream_link[:link_start]
-                        elif stream_link[0] == '<a':
+                        elif stream_link.startswith('<a'):
                             stream_link = BeautifulSoup(stream_link, 'html.parser').find('a').contents[0]
                         colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), wug_members[0]) if len(wug_members) == 1 else Colour.teal()
                         embed_fields = []
