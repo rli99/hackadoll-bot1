@@ -21,7 +21,7 @@ BOT_ADMIN_ID = 299908261438816258
 WUG_EVENTERNOTE_IDS = [6988, 3774, 6984, 6983, 6985, 6982, 6986, 6987]
 WUG_MEMBERS = ['Wake Up, Girls', '吉岡茉祐', '永野愛理', '田中美海', '青山吉能', '山下七海', '奥野香耶', '高木美佑']
 VIDEO_LINK_URLS = ['streamable.com', 'youtube.com']
-WUG_OTHER_UNITS = ['Wake Up, Girls!', "Wake Up, May'n!", 'ハッカドール', 'D-selections', 'チーム“ハナヤマタ”', 'Zähre', '4U', 'Ci+LUS', 'Adhara', 'petit corolla', 'FIVE STARS', 'TEAM OHENRO。', 'フランシュシュ', '8/pLanet!!', 'B.A.C', 'Peaky P-key', 'Clutch!']
+WUG_OTHER_UNITS = ['Wake Up, Girls!', "Wake Up, May'n!", 'ハッカドール', 'D-selections', 'チーム“ハナヤマタ”', 'Zähre', '4U', 'Ci+LUS', 'Adhara', 'petit corolla', 'FIVE STARS', 'TEAM OHENRO。', 'フランシュシュ', '8/pLanet!!', 'B.A.C', 'Peaky P-key', 'Clutch!', 'KOKORi', 'ノンシュガー', 'ときめきアイドル project']
 WUG_OSHI_NAMES = {
     'mayushii': ['mayushii', 'mayu', 'mayuchan', 'mayushi', 'mayuc'],
     'aichan': ['aichan', 'airi', 'chanai'],
