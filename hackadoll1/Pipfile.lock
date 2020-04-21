@@ -93,11 +93,11 @@
         },
         "firebase-admin": {
             "hashes": [
-                "sha256:b93fb42ab4b5938f4ad43029bd65f80d17d9d5c48f5c81daa8f01b383783ff62",
-                "sha256:cadbcc6aef11c77b37a83e87c236f4e84a787d046a5ff579bc6f7703d2e1afc8"
+                "sha256:0ce190793a4fc73a73dc6301cab98c9abdd8c045ada490310beea7eba92a6c53",
+                "sha256:86f753b69e2534bdc925c49e64ba97704a9cdf201374a480c883f4a69c7f46a6"
             ],
             "index": "pypi",
-            "version": "==4.0.1"
+            "version": "==4.1.0"
         },
         "forex-python": {
             "hashes": [
@@ -125,10 +125,10 @@
         },
         "google-api-python-client": {
             "hashes": [
-                "sha256:e2ad18d57a1bc8d982f05cd2b1503cacf56d5b4c1a052d99535baa7042557e1e",
-                "sha256:ffd6bf6310bc4be45483149f782d4569030a1a77109239f8c5ebd0ae5338a791"
+                "sha256:8dd35a3704650c2db44e6cf52abdaf9de71f409c93c56bbe48a321ab5e14ebad",
+                "sha256:bf482c13fb41a6d01770f9d62be6b33fdcd41d68c97f2beb9be02297bdd9e725"
             ],
-            "version": "==1.8.1"
+            "version": "==1.8.2"
         },
         "google-auth": {
             "hashes": [
