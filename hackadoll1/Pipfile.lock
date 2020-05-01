@@ -246,10 +246,10 @@
         },
         "instaloader": {
             "hashes": [
-                "sha256:22f98c308e9ec801c4da6335e7307c826971ffd8e3f21f58942ef06839adbe20"
+                "sha256:0fe196f82694cfc8b8466d84b3f34666b10eb38aa596ffe2cd861d954618570d"
             ],
             "index": "pypi",
-            "version": "==4.3"
+            "version": "==4.3.2"
         },
         "lxml": {
             "hashes": [
