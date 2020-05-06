@@ -1,5 +1,6 @@
 import asyncio
 import json
+import re
 from contextlib import suppress
 from itertools import takewhile
 from random import choice
@@ -70,6 +71,10 @@ WUG_INSTAGRAM_IDS = {
     'nanamin': 'aishite773',
     'kayatan': 'kaayaataaaan',
     'minyami': 'minazou_in_sta'
+}
+WUG_YOUTUBE_CHANNELS = {
+    'nanamin': 'UCZU_aYCkJToNj5OyN1S1BdQ',
+    'myu': 'UCcRVUN5NDN6U6nKmWJm4-yA'
 }
 FAKE_USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36',
@@ -205,6 +210,16 @@ def get_ids_from_ytdl_result(result):
     else:
         vid_ids.append(result.get('id'))
     return vid_ids
+
+def get_video_data_from_youtube(channel_id):
+    with suppress(Exception):
+        response = requests.get('https://www.youtube.com/channel/{0}/videos?view=2&flow=grid'.format(channel_id), headers=get_random_header())
+        if yt_data_script := re.search(r'window\["ytInitialData"\]\s*=\s*(.*);\s*window\["ytInitialPlayerResponse"\]', response.text, re.MULTILINE):
+            yt_data = json.loads(yt_data_script.group(1))
+            tabs = yt_data['contents']['twoColumnBrowseResultsRenderer']['tabs']
+            if videos_tab := [t for t in tabs if t.get('tabRenderer') and t['tabRenderer']['title'] == 'Videos']:
+                return videos_tab[0]['tabRenderer']['content']['sectionListRenderer']['contents'][0]['itemSectionRenderer']['contents'][0]['gridRenderer']['items']
+    return []
 
 def get_random_header():
     return {'User-Agent': choice(FAKE_USER_AGENTS)}

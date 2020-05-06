@@ -8,6 +8,7 @@ from html import unescape
 
 import instaloader
 import pytz
+import requests
 import hkdhelper as hkd
 from bs4 import BeautifulSoup
 from dateutil import parser
@@ -28,6 +29,7 @@ class Loop(commands.Cog):
         self.check_instagram.start()
         self.check_instagram_stories.start()
         self.check_live_streams.start()
+        self.check_youtube_streams.start()
 
     @tasks.loop(seconds=60.0)
     async def check_mute_status(self):
@@ -204,4 +206,34 @@ class Loop(commands.Cog):
 
     @check_live_streams.before_loop
     async def before_check_live_streams(self):
+        await self.bot.wait_until_ready()
+
+    @tasks.loop(seconds=30.0)
+    async def check_youtube_streams(self):
+        channel = hkd.get_seiyuu_channel(self.bot.guilds)
+        with suppress(Exception):
+            stream_status = self.firebase_ref.child('youtube_stream_status').get().keys()
+            for member in stream_status:
+                channel_id = hkd.WUG_YOUTUBE_CHANNELS[member]
+                status = self.firebase_ref.child('youtube_stream_status/{0}/status'.format(member)).get()
+                last_online = float(self.firebase_ref.child('youtube_stream_status/{0}/last_online'.format(member)).get())
+                videos = hkd.get_video_data_from_youtube(channel_id)
+                is_live = False
+                for video in videos:
+                    if (badges := video['gridVideoRenderer'].get('badges')) and [b for b in badges if b['metadataBadgeRenderer']['label'] == 'LIVE NOW']:
+                        is_live = True
+                        self.firebase_ref.child('youtube_stream_status/{0}/last_online'.format(member)).set(time.time())
+                        if status != 'LIVE':
+                            if time.time() - last_online > 600:
+                                if short_desc := video['gridVideoRenderer'].get('shortBylineText'):
+                                    if runs := short_desc['runs']:
+                                        channel_name = runs[0].get('text', hkd.parse_oshi_name(member).title())
+                                await channel.send('{0} LIVE NOW at https://www.youtube.com/watch?v={1}'.format(channel_name, video['gridVideoRenderer']['videoId']))
+                            self.firebase_ref.child('youtube_stream_status/{0}/status'.format(member)).set('LIVE')
+                        break
+                if not is_live:
+                    self.firebase_ref.child('youtube_stream_status/{0}/status'.format(member)).set('OFFLINE')
+
+    @check_youtube_streams.before_loop
+    async def before_check_youtube_streams(self):
         await self.bot.wait_until_ready()
