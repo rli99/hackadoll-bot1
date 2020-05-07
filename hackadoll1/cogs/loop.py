@@ -217,18 +217,22 @@ class Loop(commands.Cog):
                 channel_id = hkd.WUG_YOUTUBE_CHANNELS[member]
                 status = self.firebase_ref.child('youtube_stream_status/{0}/status'.format(member)).get()
                 last_online = float(self.firebase_ref.child('youtube_stream_status/{0}/last_online'.format(member)).get())
+                last_video_id = self.firebase_ref.child('youtube_stream_status/{0}/video_id'.format(member)).get()
                 videos = hkd.get_video_data_from_youtube(channel_id)
                 is_live = False
                 for video in videos:
                     if (badges := video['gridVideoRenderer'].get('badges')) and [b for b in badges if b['metadataBadgeRenderer']['label'] == 'LIVE NOW']:
                         is_live = True
+                        video_id = video['gridVideoRenderer']['videoId']
                         self.firebase_ref.child('youtube_stream_status/{0}/last_online'.format(member)).set(time.time())
+                        self.firebase_ref.child('youtube_stream_status/{0}/video_id'.format(member)).set(video_id)
                         if status != 'LIVE':
-                            if time.time() - last_online > 600:
+                            if time.time() - last_online > 120 or last_video_id != video_id:
+                                channel_name = member.title()
                                 if short_desc := video['gridVideoRenderer'].get('shortBylineText'):
                                     if runs := short_desc['runs']:
                                         channel_name = runs[0].get('text', hkd.parse_oshi_name(member).title())
-                                await channel.send('{0} LIVE NOW at https://www.youtube.com/watch?v={1}'.format(channel_name, video['gridVideoRenderer']['videoId']))
+                                await channel.send('{0} LIVE NOW at https://www.youtube.com/watch?v={1}'.format(channel_name, video_id))
                             self.firebase_ref.child('youtube_stream_status/{0}/status'.format(member)).set('LIVE')
                         break
                 if not is_live:
