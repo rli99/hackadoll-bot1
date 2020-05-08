@@ -93,11 +93,11 @@
         },
         "firebase-admin": {
             "hashes": [
-                "sha256:b93fb42ab4b5938f4ad43029bd65f80d17d9d5c48f5c81daa8f01b383783ff62",
-                "sha256:cadbcc6aef11c77b37a83e87c236f4e84a787d046a5ff579bc6f7703d2e1afc8"
+                "sha256:3c0845b42daa9db15fca48446522c7c8098f1734b1de577e964da78e5e51e3ba",
+                "sha256:cfc3ea91c60105d51cdd52cc918f2df34ea6902144573a346fc116a210fcdc61"
             ],
             "index": "pypi",
-            "version": "==4.0.1"
+            "version": "==4.2.0"
         },
         "forex-python": {
             "hashes": [
