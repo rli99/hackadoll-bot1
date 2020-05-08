@@ -1,6 +1,12 @@
-## ハッカドール１号
+<h2 align="center">ハッカドール１号</h2>
 
-### Discord bot for the Wake Up, Girls! server
+<h3 align="center">Discord bot for the Wake Up, Girls! server</h3>
 
-[![Discord Invite](https://discordapp.com/api/guilds/280439975911096320/embed.png)](https://discord.gg/3GwaeC4) [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=rli99/hackadoll-bot1)](https://dependabot.com)
-
+<p align="center">
+  <a href="https://discord.gg/3GwaeC4">
+    <img src="https://discordapp.com/api/guilds/280439975911096320/embed.png">
+  </a>
+  <a href="https://dependabot.com">
+    <img src="https://api.dependabot.com/badges/status?host=github&repo=rli99/hackadoll-bot1">
+  </a>
+</p>
