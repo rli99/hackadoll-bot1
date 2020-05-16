@@ -70,7 +70,8 @@ WUG_TWITTER_IDS = {
 WUG_INSTAGRAM_IDS = {
     'nanamin': 'aishite773',
     'kayatan': 'kaayaataaaan',
-    'minyami': 'minazou_in_sta'
+    'minyami': 'minazou_in_sta',
+    'yoppi': 'yopipinsta555'
 }
 WUG_YOUTUBE_CHANNELS = {
     'nanamin': 'UCZU_aYCkJToNj5OyN1S1BdQ',
