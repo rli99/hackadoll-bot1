@@ -38,20 +38,20 @@ class Pics(commands.Cog):
         shortcode_start = url[shortcode_search_index + 3:]
         shortcode_end_index = shortcode_start.find('/')
         shortcode = shortcode_start[:shortcode_end_index]
-        images = []
-        videos = []
+        images, video = [], []
         post = Post.from_shortcode(self.insta_api.context, shortcode)
         if post.typename == 'GraphSidecar':
-            for node in post.get_sidecar_nodes():
+            for i, node in enumerate(post.get_sidecar_nodes()):
                 if not node.is_video:
-                    images.append(node.display_url)
+                    if not (i == 0 and skip_first):
+                        images.append(node.display_url)
                 else:
                     videos.append(node.video_url)
         elif post.typename == 'GraphImage':
             images.append(post.url)
         elif post.typename == 'GraphVideo':
             videos.append(post.video_url)
-        await hkd.send_content_with_delay(ctx, images[skip_first:])
+        await hkd.send_content_with_delay(ctx, images)
         await hkd.send_content_with_delay(ctx, videos)
 
     @commands.command(aliases=['blog-pics'])
