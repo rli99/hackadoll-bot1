@@ -5,11 +5,13 @@ import hkdhelper as hkd
 from discord import Colour, File
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
+from instaloader import Post
 
 class Pics(commands.Cog):
-    def __init__(self, bot, twitter_api):
+    def __init__(self, bot, twitter_api, insta_api):
         self.bot = bot
         self.twitter_api = twitter_api
+        self.insta_api = insta_api
 
     @commands.command(aliases=['tweet-pics', 'twitterpics', 'twitter-pics'])
     async def tweetpics(self, ctx, *tweet_url: str):
@@ -29,20 +31,28 @@ class Pics(commands.Cog):
     @commands.command(aliases=['insta-pics', 'instagrampics', 'instagram-pics'])
     @commands.cooldown(1, 10, BucketType.guild)
     async def instapics(self, ctx, *post_url: str):
+        await ctx.channel.trigger_typing()
         skip_first = int(not (len(post_url) > 1 and post_url[0] == 'all'))
-        for _ in range(3):
-            with suppress(Exception):
-                await ctx.channel.trigger_typing()
-                json_data = hkd.get_json_from_instagram(post_url[int(not skip_first)])
-                json_media = json_data['entry_data']['PostPage'][0]['graphql']['shortcode_media']
-                if 'edge_sidecar_to_children' in json_media:
-                    images = [i['node']['display_url'] for i in json_media['edge_sidecar_to_children']['edges']]
+        url = post_url[int(not skip_first)]
+        shortcode_search_index = url.find('/p/')
+        shortcode_start = url[shortcode_search_index + 3:]
+        shortcode_end_index = shortcode_start.find('/')
+        shortcode = shortcode_start[:shortcode_end_index]
+        images = []
+        videos = []
+        post = Post.from_shortcode(self.insta_api.context, shortcode)
+        if post.typename == 'GraphSidecar':
+            for node in post.get_sidecar_nodes():
+                if not node.is_video:
+                    images.append(node.display_url)
                 else:
-                    images = [json_media['display_url']]
-                if len(images) <= 1 and skip_first:
-                    return
-                await hkd.send_content_with_delay(ctx, images[skip_first:])
-                return
+                    videos.append(node.video_url)
+        elif post.typename == 'GraphImage':
+            images.append(post.url)
+        elif post.typename == 'GraphVideo':
+            videos.append(post.video_url)
+        await hkd.send_content_with_delay(ctx, images[skip_first:])
+        await hkd.send_content_with_delay(ctx, videos)
 
     @commands.command(aliases=['blog-pics'])
     @commands.cooldown(1, 10, BucketType.guild)

@@ -6,7 +6,6 @@ from contextlib import suppress
 from datetime import datetime
 from html import unescape
 
-import instaloader
 import pytz
 import requests
 import hkdhelper as hkd
@@ -14,6 +13,7 @@ from bs4 import BeautifulSoup
 from dateutil import parser
 from discord import Colour, File, utils as disc_utils
 from discord.ext import commands, tasks
+from instaloader import Profile
 
 class Loop(commands.Cog):
     def __init__(self, bot, config, muted_members, firebase_ref, calendar, twitter_api, insta_api):
@@ -99,7 +99,7 @@ class Loop(commands.Cog):
         with suppress(Exception):
             for instagram_id in self.firebase_ref.child('last_instagram_posts').get().keys():
                 last_post_id = int(self.firebase_ref.child('last_instagram_posts/{0}'.format(instagram_id)).get())
-                profile = instaloader.Profile.from_username(self.insta_api.context, instagram_id)
+                profile = Profile.from_username(self.insta_api.context, instagram_id)
                 user_name = profile.full_name
                 posted_updates = []
                 for post in profile.get_posts():
@@ -125,7 +125,7 @@ class Loop(commands.Cog):
     async def before_check_instagram(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(seconds=180.0)
+    @tasks.loop(seconds=240.0)
     async def check_instagram_stories(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
         with suppress(Exception):
@@ -152,7 +152,7 @@ class Loop(commands.Cog):
                         stories_to_upload.append(pic)
                         uploaded_story_ids.append(pic_id)
                 if uploaded_story_ids:
-                    profile = instaloader.Profile.from_username(self.insta_api.context, instagram_id)
+                    profile = Profile.from_username(self.insta_api.context, instagram_id)
                     user_name = profile.full_name
                     if instagram_id in hkd.WUG_INSTAGRAM_IDS.values():
                         colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), hkd.dict_reverse(hkd.WUG_INSTAGRAM_IDS)[instagram_id])

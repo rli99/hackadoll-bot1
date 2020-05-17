@@ -196,13 +196,6 @@ def get_media_from_blog_post(blog_url):
                 return [p['href'] for p in blog_entry.find_all('a') if is_image_file(p['href'])], [v['src'].split('.jp/?v=', 1)[1] for v in soup.find_all('iframe') if 'blog-video' in v['src']]
     return [], []
 
-def get_json_from_instagram(url):
-    response = requests.get(url, headers=get_random_header())
-    soup = BeautifulSoup(response.text, 'html.parser')
-    script_tag = soup.find('body').find('script')
-    raw_string = script_tag.text.strip().replace('window._sharedData =', '').replace(';', '')
-    return json.loads(raw_string)
-
 def get_ids_from_ytdl_result(result):
     vid_ids = []
     if (entries := result.get('entries', [])):
