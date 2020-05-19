@@ -5,7 +5,7 @@ import hkdhelper as hkd
 from discord import Colour, File
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
-from instaloader import Post
+from instaloader import Post, Profile
 
 class Pics(commands.Cog):
     def __init__(self, bot, twitter_api, insta_api):
@@ -34,11 +34,8 @@ class Pics(commands.Cog):
         await ctx.channel.trigger_typing()
         skip_first = int(not (len(post_url) > 1 and post_url[0] == 'all'))
         url = post_url[int(not skip_first)]
-        shortcode_search_index = url.find('/p/')
-        shortcode_start = url[shortcode_search_index + 3:]
-        shortcode_end_index = shortcode_start.find('/')
-        shortcode = shortcode_start[:shortcode_end_index]
-        images, video = [], []
+        shortcode = hkd.get_id_from_url(url, '/p/', '/')
+        images, videos = [], []
         post = Post.from_shortcode(self.insta_api.context, shortcode)
         if post.typename == 'GraphSidecar':
             for i, node in enumerate(post.get_sidecar_nodes()):
@@ -81,3 +78,16 @@ class Pics(commands.Cog):
             vid_filename = '{0}.mp4'.format(vid_id)
             urlretrieve('https://static.blog-video.jp/output/hq/{0}.mp4'.format(vid_id), vid_filename)
             await ctx.send(file=File('./{0}'.format(vid_filename)))
+
+    @commands.command(aliases=['profile-pic'])
+    @commands.cooldown(1, 10, BucketType.guild)
+    async def profilepic(self, ctx, account_url: str):
+        await ctx.channel.trigger_typing()
+        if 'instagram.com' in account_url:
+            account_id = hkd.get_id_from_url(account_url, 'instagram.com/', '/')
+            profile = Profile.from_username(self.insta_api.context, account_id)
+            await ctx.send(profile.profile_pic_url)
+        elif 'twitter.com' in account_url:
+            account_name = hkd.get_id_from_url(account_url, 'twitter.com/', '/')
+            user = self.twitter_api.GetUser(screen_name=account_name)
+            await ctx.send(''.join(user.AsDict().get('profile_image_url_https').rsplit('_normal', 1)))

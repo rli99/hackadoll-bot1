@@ -144,6 +144,12 @@ def parse_month(month):
             return str(i + 1) if i > 8 else '0{0}'.format(i + 1)
     return 'None'
 
+def get_id_from_url(url, search, end):
+    search_index = url.find(search)
+    start = url[search_index + len(search):]
+    end_index = start.find(end)
+    return start[:end_index] if end_index != -1 else start
+
 def is_blog_post(expanded_url):
     return 'ameblo.jp/eino-airi' in expanded_url
 
