@@ -1,3 +1,4 @@
+import re
 from contextlib import suppress
 from urllib.request import urlretrieve
 
@@ -91,3 +92,6 @@ class Pics(commands.Cog):
             account_name = hkd.get_id_from_url(account_url, 'twitter.com/', '/')
             user = self.twitter_api.GetUser(screen_name=account_name)
             await ctx.send(''.join(user.AsDict().get('profile_image_url_https').rsplit('_normal', 1)))
+        elif 'youtube.com' in account_url:
+            html_response = hkd.get_html_from_url(account_url)
+            await ctx.send(re.sub(r'=s[\d]+.*', '', html_response.find(property='og:image').get('content')))
