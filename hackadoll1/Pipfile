@@ -15,10 +15,10 @@ python-twitter = "*"
 pytz = "*"
 timezonefinder = "*"
 pydrive = "*"
-youtube-dl = "*"
 instaloader = "*"
 beautifulsoup4 = "*"
 lxml = "*"
+youtube-dl = {editable = true,git = "https://github.com/rli99/youtube-dl.git",ref = "master"}
 
 [dev-packages]
 
