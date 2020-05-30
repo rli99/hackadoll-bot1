@@ -1,7 +1,7 @@
 import time
 
 import hkdhelper as hkd
-from discord import Colour, Member
+from discord import Colour, Member, ChannelType
 from discord.ext import commands
 from humanfriendly import format_timespan
 
@@ -22,19 +22,22 @@ class Moderator(commands.Cog):
             await member.kick()
             await ctx.send(embed=hkd.create_embed(title='{0} has been kicked.'.format(member)))
             self.firebase_ref.child('muted_members/{0}'.format(member.id)).delete()
-            return
-        await ctx.send(embed=hkd.create_embed(title='You do not have permission to do that.', colour=Colour.red()))
+        else:
+            await ctx.send(embed=hkd.create_embed(title='You do not have permission to do that.', colour=Colour.red()))
 
     @commands.command()
     @commands.guild_only()
     async def ban(self, ctx, member: Member):
         await ctx.channel.trigger_typing()
         if ctx.author.guild_permissions.ban_members:
+            if member.guild_permissions.administrator:
+                await ctx.send(embed=hkd.create_embed(title='Moderators cannot be banned.', colour=Colour.red()))
+                return
             await member.ban()
             await ctx.send(embed=hkd.create_embed(title='{0} has been banned.'.format(member)))
             self.firebase_ref.child('muted_members/{0}'.format(member.id)).delete()
-            return
-        await ctx.send(embed=hkd.create_embed(title='You do not have permission to do that.', colour=Colour.red()))
+        else:
+            await ctx.send(embed=hkd.create_embed(title='You do not have permission to do that.', colour=Colour.red()))
 
     @commands.command()
     @commands.guild_only()
@@ -64,5 +67,30 @@ class Moderator(commands.Cog):
             self.muted_members.pop(member.id)
             await member.remove_roles(hkd.get_muted_role(ctx.guild))
             await ctx.send(embed=hkd.create_embed(description='{0.mention} has been unmuted.'.format(member)))
+        else:
+            await ctx.send(embed=hkd.create_embed(title='You do not have permission to do that.', colour=Colour.red()))
+
+    @commands.command(name='delete-messages', aliases=['deletemessages', 'delete-message', 'deletemessage', 'clear-messages', 'clearmessages'])
+    @commands.guild_only()
+    async def delete_messages(self, ctx, number: int, member: Member = None):
+        if ctx.author.guild_permissions.administrator:
+            if ctx.channel.type == ChannelType.text:
+                if not member:
+                    count = 0
+                    async for message in ctx.channel.history(limit=number + 1, oldest_first=False):
+                        if count != 0:
+                            await message.delete()
+                        count += 1
+                else:
+                    count = 0
+                    messages_deleted = 0
+                    async for message in ctx.channel.history(limit=250, oldest_first=False):
+                        if count != 0:
+                            if message.author == member:
+                                await message.delete()
+                                messages_deleted += 1
+                                if messages_deleted == number:
+                                    break
+                        count += 1
         else:
             await ctx.send(embed=hkd.create_embed(title='You do not have permission to do that.', colour=Colour.red()))

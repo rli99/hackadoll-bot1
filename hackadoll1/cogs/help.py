@@ -39,6 +39,7 @@ class Help(commands.Cog):
         embed_fields.append(('!ban *member*', 'Ban a member.'))
         embed_fields.append(('!mute *member* *duration*', 'Mute a member for *duration* minutes.'))
         embed_fields.append(('!unmute *member*', 'Unmute a member.'))
+        embed_fields.append(('!delete-messages *number* *member*', 'Delete *number* messages from *member*, or from all messages if not specified.'))
         await ctx.send(content='**Commands for Moderators**', embed=hkd.create_embed(fields=embed_fields))
 
     @help.command(aliases=['role'])
