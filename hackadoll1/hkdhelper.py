@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import re
 from contextlib import suppress
 from itertools import takewhile
@@ -10,7 +11,7 @@ import configparser
 import requests
 from bs4 import BeautifulSoup
 from dateutil import parser
-from discord import Colour, Embed, utils as disc_utils
+from discord import Colour, Embed, File, utils as disc_utils
 from lxml.html import fromstring
 
 SERVER_ID = 280439975911096320
@@ -254,3 +255,11 @@ async def send_content_with_delay(ctx, content):
         await ctx.channel.trigger_typing()
         await asyncio.sleep(1)
         await ctx.send(item)
+
+async def send_video_check_filesize(ctx, video_file, video_link):
+    if os.path.getsize(video_file) < ctx.guild.filesize_limit:
+        await ctx.send(file=File(video_file))
+    else:
+        await ctx.send(video_link)
+    with suppress(Exception):
+        os.remove(video_file)

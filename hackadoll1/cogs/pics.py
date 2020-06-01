@@ -62,9 +62,10 @@ class Pics(commands.Cog):
         if len(pics) > 1:
             await hkd.send_content_with_delay(ctx, pics[1:])
         for vid_id in vid_ids:
-            vid_filename = '{0}.mp4'.format(vid_id)
-            urlretrieve('https://static.blog-video.jp/output/hq/{0}.mp4'.format(vid_id), vid_filename)
-            await ctx.send(file=File('./{0}'.format(vid_filename)))
+            video_file = './{0}.mp4'.format(vid_id)
+            video_link = 'https://static.blog-video.jp/output/hq/{0}.mp4'.format(vid_id)
+            urlretrieve(video_link, video_file)
+            await hkd.send_video_check_filesize(ctx, video_file, video_link)
 
     @commands.command(name='aichan-blogpics')
     @commands.cooldown(1, 10, BucketType.guild)
@@ -76,9 +77,10 @@ class Pics(commands.Cog):
             return
         await hkd.send_content_with_delay(ctx, pics)
         for vid_id in vid_ids:
-            vid_filename = '{0}.mp4'.format(vid_id)
-            urlretrieve('https://static.blog-video.jp/output/hq/{0}.mp4'.format(vid_id), vid_filename)
-            await ctx.send(file=File('./{0}'.format(vid_filename)))
+            video_file = './{0}.mp4'.format(vid_id)
+            video_link = 'https://static.blog-video.jp/output/hq/{0}.mp4'.format(vid_id)
+            urlretrieve(video_link, video_file)
+            await hkd.send_video_check_filesize(ctx, video_file, video_link)
 
     @commands.command(aliases=['profile-pic'])
     @commands.cooldown(1, 10, BucketType.guild)
