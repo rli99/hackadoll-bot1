@@ -227,7 +227,7 @@ class Loop(commands.Cog):
                         self.firebase_ref.child('youtube_stream_status/{0}/last_online'.format(member)).set(time.time())
                         self.firebase_ref.child('youtube_stream_status/{0}/video_id'.format(member)).set(video_id)
                         if status != 'LIVE':
-                            if time.time() - last_online > 120 or last_video_id != video_id:
+                            if time.time() - last_online > 300 or last_video_id != video_id:
                                 channel_name = member.title()
                                 if short_desc := video['gridVideoRenderer'].get('shortBylineText'):
                                     if runs := short_desc['runs']:
