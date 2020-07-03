@@ -243,7 +243,7 @@ class Loop(commands.Cog):
     async def before_check_youtube_streams(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loops(seconds=30.0)
+    @tasks.loop(seconds=30.0)
     async def check_showroom_lives(self):
         channel = hkd.get_seiyuu_channel(self.bot.guilds)
         for member, room_id in hkd.WUG_SHOWROOM_IDS.items():
