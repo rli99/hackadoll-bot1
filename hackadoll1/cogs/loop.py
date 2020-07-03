@@ -249,16 +249,17 @@ class Loop(commands.Cog):
         for member, room_id in hkd.WUG_SHOWROOM_IDS.items():
             status = self.firebase_ref.child('showroom_live_status/{0}/status'.format(member)).get()
             last_online = float(self.firebase_ref.child('showroom_live_status/{0}/last_online'.format(member)).get())
-            sr_data = requests.get('https://showroom-live.com/api/room/profile?room_id={0}'.format(room_id), headers=hkd.get_random_header()).json()
-            if sr_data['is_onlive']:
-                self.firebase_ref.child('showroom_live_status/{0}/last_online'.format(member)).set(time.time())
-                if status != 'LIVE':
-                    if time.time() - last_online > 300:
-                        await channel.send('{0} Broadcasting! {1}'.format(sr_data['room_name'], sr_data['share_url_live']))
-                    self.firebase_ref.child('showroom_live_status/{0}/status'.format(member)).set('LIVE')
-                break
-            else:
-                self.firebase_ref.child('showroom_live_status/{0}/status'.format(member)).set('OFFLINE')
+            with suppress(Exception):
+                sr_data = requests.get('https://showroom-live.com/api/room/profile?room_id={0}'.format(room_id), headers=hkd.get_random_header()).json()
+                if sr_data['is_onlive']:
+                    self.firebase_ref.child('showroom_live_status/{0}/last_online'.format(member)).set(time.time())
+                    if status != 'LIVE':
+                        if time.time() - last_online > 300:
+                            await channel.send('{0} Broadcasting! {1}'.format(sr_data['room_name'], sr_data['share_url_live']))
+                        self.firebase_ref.child('showroom_live_status/{0}/status'.format(member)).set('LIVE')
+                    break
+                else:
+                    self.firebase_ref.child('showroom_live_status/{0}/status'.format(member)).set('OFFLINE')
 
     @check_showroom_lives.before_loop
     async def before_check_showroom_lives(self):
