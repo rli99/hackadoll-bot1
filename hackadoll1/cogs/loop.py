@@ -254,7 +254,7 @@ class Loop(commands.Cog):
                 if sr_data['is_onlive']:
                     self.firebase_ref.child('showroom_live_status/{0}/last_online'.format(member)).set(time.time())
                     if status != 'LIVE'and time.time() - last_online > 300:
-                        await channel.send('{0} Broadcasting! {1}'.format(sr_data['room_name'], sr_data['share_url_live']))
+                        await channel.send(sr_data.get('share_text_live', '{0} Broadcasting!\n{1}'.format(sr_data['room_name'], sr_data['share_url_live'])))
                     self.firebase_ref.child('showroom_live_status/{0}/status'.format(member)).set('LIVE')
                 else:
                     self.firebase_ref.child('showroom_live_status/{0}/status'.format(member)).set('OFFLINE')
