@@ -253,11 +253,9 @@ class Loop(commands.Cog):
                 sr_data = requests.get('https://showroom-live.com/api/room/profile?room_id={0}'.format(room_id), headers=hkd.get_random_header()).json()
                 if sr_data['is_onlive']:
                     self.firebase_ref.child('showroom_live_status/{0}/last_online'.format(member)).set(time.time())
-                    if status != 'LIVE':
-                        if time.time() - last_online > 300:
-                            await channel.send('{0} Broadcasting! {1}'.format(sr_data['room_name'], sr_data['share_url_live']))
-                        self.firebase_ref.child('showroom_live_status/{0}/status'.format(member)).set('LIVE')
-                    break
+                    if status != 'LIVE'and time.time() - last_online > 300:
+                        await channel.send('{0} Broadcasting! {1}'.format(sr_data['room_name'], sr_data['share_url_live']))
+                    self.firebase_ref.child('showroom_live_status/{0}/status'.format(member)).set('LIVE')
                 else:
                     self.firebase_ref.child('showroom_live_status/{0}/status'.format(member)).set('OFFLINE')
 
