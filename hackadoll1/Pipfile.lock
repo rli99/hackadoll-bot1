@@ -86,10 +86,10 @@
         },
         "discord-py": {
             "hashes": [
-                "sha256:406871b06d86c3dc49fba63238519f28628dac946fef8a0e22988ff58ec05580"
+                "sha256:8ef58d6fc1e66903bc00ae79c4c09a38aa71043e88a83da4d2e8b9b1c9f9b9e2"
             ],
             "index": "pypi",
-            "version": "==1.3.3"
+            "version": "==1.3.4"
         },
         "firebase-admin": {
             "hashes": [
@@ -139,10 +139,10 @@
         },
         "google-auth-httplib2": {
             "hashes": [
-                "sha256:098fade613c25b4527b2c08fa42d11f3c2037dda8995d86de0745228e965d445",
-                "sha256:f1c437842155680cf9918df9bc51c1182fda41feef88c34004bd1978c8157e08"
+                "sha256:8d092cc60fb16517b12057ec0bba9185a96e3b7169d86ae12eae98e645b7bc39",
+                "sha256:aeaff501738b289717fac1980db9711d77908a6c227f60e4aa1923410b43e2ee"
             ],
-            "version": "==0.0.3"
+            "version": "==0.0.4"
         },
         "google-cloud-core": {
             "hashes": [
@@ -153,11 +153,11 @@
         },
         "google-cloud-firestore": {
             "hashes": [
-                "sha256:afd986bc4bb5a92d6ebe02977cc1d5dc56bf401590d1df43c07609dbec21155d",
-                "sha256:f7cd210fdb44d945925e69243fecf79665a3edfb69a9ca780a6bb8e0d1d07bda"
+                "sha256:0b6ed152cf782e5399f5d7ccb19383ae84da883867d7151bc7ae1dc1cc2ab871",
+                "sha256:dfe02fc0a77a4e28144c46d441553352d81498ffd8f49906b57342d06c7f5b54"
             ],
             "markers": "platform_python_implementation != 'PyPy'",
-            "version": "==1.7.0"
+            "version": "==1.8.1"
         },
         "google-cloud-storage": {
             "hashes": [
@@ -246,10 +246,10 @@
         },
         "hstspreload": {
             "hashes": [
-                "sha256:35db8d932228c2782bf0e3fdb143a54263238593f6df431458c89b006898e5f2",
-                "sha256:81225e82207ec316a774e5d130454327752853dfaf347b2bf4d21e524cc49efa"
+                "sha256:051a752188c3422558a1302be99b742a2dd9d7568419614104ae7e87233f9d63",
+                "sha256:3e1b107d6c865fc28f0f023456f193f2e916d14bca5a16c93fe440bef90c7c58"
             ],
-            "version": "==2020.6.30"
+            "version": "==2020.7.7"
         },
         "httpcore": {
             "hashes": [
