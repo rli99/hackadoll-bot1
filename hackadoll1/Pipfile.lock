@@ -296,10 +296,10 @@
         },
         "instaloader": {
             "hashes": [
-                "sha256:4a6e2baf591230fa94c9c47b51aee79cb67aa3282aca92ff302dc8cb70ee7f6c"
+                "sha256:f59c3075e3dc6e24d126e8f3ababd035428c92b8fdcf641c8c7e73cbe8ebc6fa"
             ],
             "index": "pypi",
-            "version": "==4.4.4"
+            "version": "==4.4.5"
         },
         "lxml": {
             "hashes": [
@@ -694,7 +694,7 @@
         "youtube-dl": {
             "editable": true,
             "git": "https://github.com/rli99/youtube-dl.git",
-            "ref": "969af110b57057c64cc4f9618add402ba20a2180"
+            "ref": "169c18edbdec164dfbf759c8f1c12d2b00ff80c7"
         }
     },
     "develop": {}
