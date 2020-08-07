@@ -165,10 +165,10 @@
         },
         "google-auth": {
             "hashes": [
-                "sha256:25c97cec5d4f6821f3ab67eb25b264fb00fda8fb9e2f05869bfa93dfcb8b50ee",
-                "sha256:c6e9735a2ee829a75b546702e460489db5cc35567a27fabd70b7c459f11efd58"
+                "sha256:2f34dd810090d0d4c9d5787c4ad7b4413d1fbfb941e13682c7a2298d3b6cdcc8",
+                "sha256:ce1fb80b5c6d3dd038babcc43e221edeafefc72d983b3dc28b67b996f76f00b9"
             ],
-            "version": "==1.20.0"
+            "version": "==1.20.1"
         },
         "google-auth-httplib2": {
             "hashes": [
@@ -179,10 +179,10 @@
         },
         "google-cloud-core": {
             "hashes": [
-                "sha256:07a024a26c4eb14ee3df7e6e5021c04f8f7e9f0e83d3d47863229f3635f871ce",
-                "sha256:e84d4a05c58fc905b9340118e257cd043e9c02a6d31168182204afe4afd521eb"
+                "sha256:4c9e457fcfc026fdde2e492228f04417d4c717fb0f29f070122fb0ab89e34ebd",
+                "sha256:613e56f164b6bee487dd34f606083a0130f66f42f7b10f99730afdf1630df507"
             ],
-            "version": "==1.4.0"
+            "version": "==1.4.1"
         },
         "google-cloud-firestore": {
             "hashes": [
@@ -225,10 +225,10 @@
         },
         "google-resumable-media": {
             "hashes": [
-                "sha256:280ea71f49105ebab8a3ca7a24edd0d17d49a94721b602a64523b1d090c73bd0",
-                "sha256:85848d9353770e88562e7d61dae4d3b83999de5a19ba6f466da8eb4b7b18772c"
+                "sha256:0572998cc2c7ba9ca996337896a2f93dbe8bc88866ebd81c8b7f4d7b07222957",
+                "sha256:57841f5e65fb285c01071f439724745b2549a72eb75e5fd979198eb518608ed0"
             ],
-            "version": "==0.7.0"
+            "version": "==0.7.1"
         },
         "googleapis-common-protos": {
             "hashes": [
@@ -694,11 +694,11 @@
         },
         "timezonefinder": {
             "hashes": [
-                "sha256:9c976834a36fa76931c7e270c1586d76aff3df1091637cb46dc632073bc52f8f",
-                "sha256:ccb7ee58f5da4b05eae2154eb615eb791487d3cfeaa2a690877737a898580a9e"
+                "sha256:02d1e315c3983cac7c21cdb83c0f551291b059f24fc9b4a849aee8058c953d6f",
+                "sha256:c84e0f4b501419349e67972d25c535d9b5fd6c100c319747049b67812a4c6b97"
             ],
             "index": "pypi",
-            "version": "==4.4.0"
+            "version": "==4.4.1"
         },
         "uritemplate": {
             "hashes": [
