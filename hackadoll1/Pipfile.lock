@@ -119,10 +119,10 @@
         },
         "discord-py": {
             "hashes": [
-                "sha256:2b1846bfa382b54f4eace8e437a9f59f185388c5b08749ac0e1bbd98e05bfde5"
+                "sha256:98ea3096a3585c9c379209926f530808f5fcf4930928d8cfb579d2562d119570"
             ],
             "index": "pypi",
-            "version": "==1.4.0"
+            "version": "==1.4.1"
         },
         "firebase-admin": {
             "hashes": [
@@ -311,10 +311,10 @@
         },
         "hstspreload": {
             "hashes": [
-                "sha256:7b6b4b26a6ac4d9522dd547eab7049cedd7f448d9009167ba37d3e6102e562d7",
-                "sha256:eaf0cb2e8a837c18ddce9e02574e41cec76aed7223b7805e4d89c8f604c26eed"
+                "sha256:4659d10695335c9d8a4e515104e1717f6b787e6576df31e48cf501e9a70b4cc0",
+                "sha256:d1b447c6213be6b27ae97d6d6e562cf9ae4a761514de8f1a53b5660875680b9c"
             ],
-            "version": "==2020.8.5"
+            "version": "==2020.8.8"
         },
         "httpcore": {
             "hashes": [
