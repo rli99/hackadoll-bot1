@@ -222,7 +222,7 @@ def get_video_data_from_youtube(channel_id):
             yt_data = json.loads(yt_data_script.group(1))
             tabs = yt_data['contents']['twoColumnBrowseResultsRenderer']['tabs']
             if videos_tab := [t for t in tabs if t.get('tabRenderer') and t['tabRenderer']['title'] == 'Videos']:
-                return videos_tab[0]['tabRenderer']['content']['sectionListRenderer']['contents'][0]['itemSectionRenderer']['contents'][0]['gridRenderer']['items']
+                return videos_tab[0]['tabRenderer']['content']['sectionListRenderer']['contents'][0]['itemSectionRenderer']['contents'][0]['shelfRenderer']['content']['gridRenderer']['items']
     return []
 
 def get_random_header():
@@ -240,6 +240,8 @@ def get_random_proxy():
     return choice(tuple(proxies))
 
 def create_embed(author={}, title='', description='', colour=Colour(0x242424), url='', image='', thumbnail='', fields=[], footer={}, inline=False):
+    if len(description) > 2048:
+        description = description[:2044] + ' ...'
     embed = Embed(title=title, description=description, colour=colour, url=url)
     if author:
         embed.set_author(name=author['name'], url=author.get('url', ''), icon_url=author.get('icon_url', ''))
