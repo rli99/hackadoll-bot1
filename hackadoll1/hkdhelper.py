@@ -217,12 +217,15 @@ def get_ids_from_ytdl_result(result):
 
 def get_video_data_from_youtube(channel_id):
     with suppress(Exception):
-        response = requests.get('https://www.youtube.com/channel/{0}/videos?view=2&flow=grid'.format(channel_id), headers=get_random_header())
+        response = requests.get('https://www.youtube.com/channel/{0}/videos?view=2&live_view=501'.format(channel_id), headers=get_random_header())
         if yt_data_script := re.search(r'window\["ytInitialData"\]\s*=\s*(.*);\s*window\["ytInitialPlayerResponse"\]', response.text, re.MULTILINE):
             yt_data = json.loads(yt_data_script.group(1))
             tabs = yt_data['contents']['twoColumnBrowseResultsRenderer']['tabs']
             if videos_tab := [t for t in tabs if t.get('tabRenderer') and t['tabRenderer']['title'] == 'Videos']:
-                return videos_tab[0]['tabRenderer']['content']['sectionListRenderer']['contents'][0]['itemSectionRenderer']['contents'][0]['shelfRenderer']['content']['gridRenderer']['items']
+                tab_contents = videos_tab[0]['tabRenderer']['content']['sectionListRenderer']['contents'][0]['itemSectionRenderer']['contents'][0]
+                if 'shelfRenderer' in tab_contents:
+                    return tab_contents['shelfRenderer']['content']['gridRenderer']['items']
+                return tab_contents['gridRenderer']['items']
     return []
 
 def get_random_header():
