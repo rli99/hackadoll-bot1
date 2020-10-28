@@ -18,7 +18,7 @@ pydrive = "*"
 instaloader = "*"
 beautifulsoup4 = "*"
 lxml = "*"
-youtube-dl = {editable = true,git = "https://github.com/rli99/youtube-dl.git",ref = "master"}
+# youtube-dl = {editable = true,git = "https://github.com/rli99/youtube-dl.git",ref = "master"}
 
 [dev-packages]
 
