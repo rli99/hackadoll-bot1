@@ -149,6 +149,8 @@ def parse_month(month):
     return 'None'
 
 def get_id_from_url(url, search, end):
+    if search not in url:
+        return None
     search_index = url.find(search)
     start = url[search_index + len(search):]
     end_index = start.find(end)

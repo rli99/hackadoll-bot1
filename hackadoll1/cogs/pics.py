@@ -17,25 +17,32 @@ class Pics(commands.Cog):
     @commands.command(aliases=['tweet-pics', 'twitterpics', 'twitter-pics'])
     async def tweetpics(self, ctx, *tweet_url: str):
         await ctx.channel.trigger_typing()
-        skip_first = int(not (len(tweet_url) > 1 and tweet_url[0] == 'all'))
-        for _ in range(3):
-            with suppress(Exception):
-                status_id = hkd.get_tweet_id_from_url(tweet_url[int(not skip_first)])
-                status = self.twitter_api.GetStatus(status_id=status_id, include_my_retweet=False)
-                tweet = status.AsDict()
-                if len(media := tweet.get('media', [])) <= 1 and skip_first:
-                    break
-                pics = [p.get('media_url_https', '') for p in media[skip_first:]]
-                await hkd.send_content_with_delay(ctx, pics)
+        if tweet_url[0] == 'all':
+            if len(tweet_url) == 1:
                 return
+            skip_first = False
+        else:
+            skip_first = True
+        status_id = hkd.get_tweet_id_from_url(tweet_url[not skip_first])
+        status = self.twitter_api.GetStatus(status_id=status_id, include_my_retweet=False)
+        tweet = status.AsDict()
+        if len(media := tweet.get('media', [])) <= 1 and skip_first:
+            return
+        pics = [p.get('media_url_https', '') for p in media[skip_first:]]
+        await hkd.send_content_with_delay(ctx, pics)
 
     @commands.command(aliases=['insta-pics', 'instagrampics', 'instagram-pics'])
     @commands.cooldown(1, 10, BucketType.guild)
     async def instapics(self, ctx, *post_url: str):
         await ctx.channel.trigger_typing()
-        skip_first = int(not (len(post_url) > 1 and post_url[0] == 'all'))
-        url = post_url[int(not skip_first)]
-        shortcode = hkd.get_id_from_url(url, '/p/', '/')
+        if post_url[0] == 'all':
+            if len(post_url) == 1:
+                return
+            skip_first = False
+        else:
+            skip_first = True
+        if not (shortcode := hkd.get_id_from_url(post_url[not skip_first], '/p/', '/')):
+            return
         images, videos = [], []
         post = Post.from_shortcode(self.insta_api.context, shortcode)
         if post.typename == 'GraphSidecar':
