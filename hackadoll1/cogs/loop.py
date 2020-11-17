@@ -128,7 +128,7 @@ class Loop(commands.Cog):
     async def before_check_instagram(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(minutes=20.0)
+    @tasks.loop(minutes=30.0)
     async def check_instagram_stories(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
         with suppress(Exception):
@@ -174,7 +174,7 @@ class Loop(commands.Cog):
                     await channel.send(file=File('./{0}/{1}'.format(instagram_id, story)))
                 if uploaded_story_ids:
                     self.firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).set(str(max(uploaded_story_ids)))
-        self.check_instagram.change_interval(minutes=random.randint(20, 30))
+        self.check_instagram.change_interval(minutes=random.randint(30, 50))
 
     @check_instagram_stories.before_loop
     async def before_check_instagram_stories(self):

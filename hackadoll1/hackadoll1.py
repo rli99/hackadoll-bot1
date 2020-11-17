@@ -30,7 +30,6 @@ def main():
     muted_members = firebase_ref.child('muted_members').get() or {}
     twitter_api = twitter.Api(consumer_key=config['consumer_key'], consumer_secret=config['consumer_secret'], access_token_key=config['access_token_key'], access_token_secret=config['access_token_secret'], tweet_mode='extended')
     insta_api = instaloader.Instaloader(max_connection_attempts=1)
-    insta_api.load_session_from_file(config['instagram_user'], filename='./.instaloader-session')
     calendar = build('calendar', 'v3', http=file.Storage('credentials.json').get().authorize(Http()))
 
     bot.add_cog(Help(bot))
