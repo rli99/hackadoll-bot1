@@ -23,4 +23,4 @@ youtube-dl = {editable = true,git = "https://github.com/tsukumijima/yt-dl.git",r
 [dev-packages]
 
 [requires]
-python_version = "3.8"
+python_version = "3.9"
