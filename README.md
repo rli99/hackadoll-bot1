@@ -6,7 +6,4 @@
   <a href="https://discord.gg/3GwaeC4">
     <img src="https://discordapp.com/api/guilds/280439975911096320/embed.png">
   </a>
-  <a href="https://dependabot.com">
-    <img src="https://api.dependabot.com/badges/status?host=github&repo=rli99/hackadoll-bot1">
-  </a>
 </p>
