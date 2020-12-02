@@ -1,9 +1,11 @@
 **/venv
 /hackadoll1/.gitignore
 /hackadoll1/.instaloader-session
+/hackadoll1/*.db
 /hackadoll1/*.ini
 /hackadoll1/*.json
 /hackadoll1/*.yaml
 /hackadoll1/Procfile
 /hackadoll1/cogs/secret.py
+/hackadoll1/src/
 /test*/
