@@ -5,6 +5,7 @@ import re
 from contextlib import suppress
 from itertools import takewhile
 from random import choice
+from urllib.parse import urlparse
 from urllib.request import urlopen
 
 import configparser
@@ -173,7 +174,7 @@ def is_youtube_link(text):
     return text.find('googleads.g.doubleclick.net') == -1 and text.find('googleadservices.com') == -1 and not text.startswith(('/channel', '/user'))
 
 def is_embeddable_content(content):
-    return is_image_file(content) or is_video_link(content) or 'twitter.com' in content
+    return is_image_file(content) or is_video_link(content) or check_url_host(content, ['twitter.com'])
 
 def split_embeddable_content(tag_content):
     split_tag = tag_content.split()
@@ -230,6 +231,11 @@ def get_video_data_from_youtube(channel_id):
                     return tab_contents['shelfRenderer']['content']['gridRenderer']['items']
                 return tab_contents['gridRenderer']['items']
     return []
+
+def check_url_host(url, allow_list):
+    if not (host := urlparse(url).hostname):
+        return False
+    return any([host.endswith(allowed_url) for allowed_url in allow_list])
 
 def get_random_header():
     return {'User-Agent': choice(FAKE_USER_AGENTS)}
