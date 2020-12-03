@@ -97,10 +97,10 @@ class Pics(commands.Cog):
             account_id = hkd.get_id_from_url(account_url, 'instagram.com/', '/')
             profile = Profile.from_username(self.insta_api.context, account_id)
             await ctx.send(profile.profile_pic_url)
-        elif hkd.check_url_host(account_url, ['twitter.com'])::
+        elif hkd.check_url_host(account_url, ['twitter.com']):
             account_name = hkd.get_id_from_url(account_url, 'twitter.com/', '/')
             user = self.twitter_api.GetUser(screen_name=account_name)
             await ctx.send(''.join(user.AsDict().get('profile_image_url_https').rsplit('_normal', 1)))
-        elif hkd.check_url_host(account_url, ['youtube.com'])::
+        elif hkd.check_url_host(account_url, ['youtube.com']):
             html_response = hkd.get_html_from_url(account_url)
             await ctx.send(re.sub(r'=s[\d]+.*', '', html_response.find(property='og:image').get('content')))
