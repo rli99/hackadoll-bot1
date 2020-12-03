@@ -93,14 +93,14 @@ class Pics(commands.Cog):
     @commands.cooldown(1, 10, BucketType.guild)
     async def profilepic(self, ctx, account_url: str):
         await ctx.channel.trigger_typing()
-        if 'instagram.com' in account_url:
+        if hkd.check_url_host(account_url, ['instagram.com']):
             account_id = hkd.get_id_from_url(account_url, 'instagram.com/', '/')
             profile = Profile.from_username(self.insta_api.context, account_id)
             await ctx.send(profile.profile_pic_url)
-        elif 'twitter.com' in account_url:
+        elif hkd.check_url_host(account_url, ['twitter.com'])::
             account_name = hkd.get_id_from_url(account_url, 'twitter.com/', '/')
             user = self.twitter_api.GetUser(screen_name=account_name)
             await ctx.send(''.join(user.AsDict().get('profile_image_url_https').rsplit('_normal', 1)))
-        elif 'youtube.com' in account_url:
+        elif hkd.check_url_host(account_url, ['youtube.com'])::
             html_response = hkd.get_html_from_url(account_url)
             await ctx.send(re.sub(r'=s[\d]+.*', '', html_response.find(property='og:image').get('content')))
