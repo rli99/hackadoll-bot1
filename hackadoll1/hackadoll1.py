@@ -1,3 +1,4 @@
+import discord
 import instaloader
 import twitter
 from apiclient.discovery import build
@@ -21,9 +22,12 @@ from cogs.listen import Listen
 from cogs.loop import Loop
 
 def main():
-    config = parse_config()
-    bot = commands.Bot(command_prefix=('!', 'ichigo ', 'alexa ', 'Ichigo ', 'Alexa '))
+    intents = discord.Intents.default()
+    intents.members = True
+    bot = commands.Bot(command_prefix=('!', 'ichigo ', 'alexa ', 'Ichigo ', 'Alexa '), intents=intents)
     bot.remove_command('help')
+    
+    config = parse_config()
     certificate = credentials.Certificate(config['firebase_credentials'])
     initialize_app(certificate, {'databaseURL': config['firebase_db']})
     firebase_ref = db.reference()
