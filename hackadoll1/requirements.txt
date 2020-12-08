@@ -40,7 +40,7 @@ httpx==0.13.3             # via googletrans
 humanfriendly==9.0        # via -r requirements.in
 hyperframe==5.2.0         # via h2
 idna==2.10                # via httpx, requests, yarl
-instaloader==4.5.4        # via -r requirements.in
+instaloader==4.5.5        # via -r requirements.in
 lxml==4.6.2               # via -r requirements.in
 msgpack==1.0.0            # via cachecontrol
 multidict==4.7.6          # via aiohttp, yarl
@@ -54,7 +54,6 @@ pyasn1==0.4.8             # via oauth2client, pyasn1-modules, rsa
 pycountry==20.7.3         # via -r requirements.in
 pycparser==2.20           # via cffi
 pydrive==1.3.1            # via -r requirements.in
-pyreadline==2.1           # via humanfriendly
 python-dateutil==2.8.1    # via -r requirements.in
 python-twitter==3.5       # via -r requirements.in
 pytz==2020.4              # via -r requirements.in, google-api-core, google-cloud-firestore
