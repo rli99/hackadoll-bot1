@@ -37,7 +37,7 @@ hstspreload==2020.11.21   # via httpx
 httpcore==0.9.1           # via httpx
 httplib2==0.18.1          # via google-api-python-client, google-auth-httplib2, oauth2client
 httpx==0.13.3             # via googletrans
-humanfriendly==9.0        # via -r requirements.in
+humanfriendly==9.1        # via -r requirements.in
 hyperframe==5.2.0         # via h2
 idna==2.10                # via httpx, requests, yarl
 instaloader==4.5.5        # via -r requirements.in
