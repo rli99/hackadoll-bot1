@@ -17,7 +17,6 @@ from cogs.tags import Tags
 from cogs.mv import MusicVideo
 from cogs.pics import Pics
 from cogs.misc import Misc
-from cogs.secret import Secret
 from cogs.listen import Listen
 from cogs.loop import Loop
 
@@ -45,7 +44,6 @@ def main():
     bot.add_cog(MusicVideo(bot, firebase_ref))
     bot.add_cog(Pics(bot, twitter_api, insta_api))
     bot.add_cog(Misc(bot, config))
-    bot.add_cog(Secret(bot, firebase_ref, twitter_api))
     bot.add_cog(Loop(bot, config, muted_members, firebase_ref, calendar, twitter_api, insta_api))
     bot.add_cog(Listen(bot))
 
