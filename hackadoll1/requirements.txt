@@ -56,7 +56,7 @@ pycparser==2.20           # via cffi
 pydrive==1.3.1            # via -r requirements.in
 python-dateutil==2.8.1    # via -r requirements.in
 python-twitter==3.5       # via -r requirements.in
-pytz==2020.4              # via -r requirements.in, google-api-core, google-cloud-firestore
+pytz==2020.5              # via -r requirements.in, google-api-core, google-cloud-firestore
 pyyaml==5.3.1             # via pydrive
 requests-oauthlib==1.3.0  # via python-twitter
 requests==2.25.0          # via cachecontrol, forex-python, google-api-core, google-cloud-storage, instaloader, python-twitter, requests-oauthlib
