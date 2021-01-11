@@ -40,7 +40,7 @@ httpx==0.13.3             # via googletrans
 humanfriendly==9.1        # via -r requirements.in
 hyperframe==5.2.0         # via h2
 idna==2.10                # via httpx, requests, yarl
-instaloader==4.5.5        # via -r requirements.in
+instaloader==4.6          # via -r requirements.in
 lxml==4.6.2               # via -r requirements.in
 msgpack==1.0.0            # via cachecontrol
 multidict==4.7.6          # via aiohttp, yarl
