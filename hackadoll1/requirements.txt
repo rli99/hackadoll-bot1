@@ -14,7 +14,7 @@ cachetools==4.1.1         # via google-auth
 certifi==2020.11.8        # via httpx, requests
 cffi==1.14.4              # via google-crc32c
 chardet==3.0.4            # via aiohttp, httpx, requests
-discord-py==1.5.1         # via -r requirements.in
+discord-py==1.6.0         # via -r requirements.in
 firebase-admin==4.5.0     # via -r requirements.in
 forex-python==1.5         # via -r requirements.in
 future==0.18.2            # via python-twitter
