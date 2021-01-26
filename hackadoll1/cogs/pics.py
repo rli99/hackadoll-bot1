@@ -15,43 +15,30 @@ class Pics(commands.Cog):
         self.insta_api = insta_api
 
     @commands.command(aliases=['tweet-pics', 'twitterpics', 'twitter-pics'])
-    async def tweetpics(self, ctx, *tweet_url: str):
+    async def tweetpics(self, ctx, tweet_url: str):
         await ctx.channel.trigger_typing()
-        if tweet_url[0] == 'all':
-            if len(tweet_url) == 1:
-                return
-            skip_first = False
-        else:
-            skip_first = True
-        status_id = hkd.get_tweet_id_from_url(tweet_url[not skip_first])
+        status_id = hkd.get_tweet_id_from_url(tweet_url)
         status = self.twitter_api.GetStatus(status_id=status_id, include_my_retweet=False)
         tweet = status.AsDict()
-        if len(media := tweet.get('media', [])) <= 1 and skip_first:
+        if not (media := tweet.get('media', [])):
             return
-        pics = [p.get('media_url_https', '') for p in media[skip_first:]]
+        pics = [p.get('media_url_https', '') for p in media]
         await hkd.send_content_with_delay(ctx, pics)
 
     @commands.command(aliases=['insta-pics', 'instagrampics', 'instagram-pics'])
     @commands.cooldown(1, 10, BucketType.guild)
-    async def instapics(self, ctx, *post_url: str):
+    async def instapics(self, ctx, post_url: str):
         await ctx.channel.trigger_typing()
-        if post_url[0] == 'all':
-            if len(post_url) == 1:
-                return
-            skip_first = False
-        else:
-            skip_first = True
-        if not (shortcode := hkd.get_id_from_url(post_url[not skip_first], '/p/', '/')):
+        if not ((shortcode := hkd.get_id_from_url(post_url, '/p/', '/')) or (shortcode := hkd.get_id_from_url(post_url, '/reel/', '/'))):
             return
         images, videos = [], []
         post = Post.from_shortcode(self.insta_api.context, shortcode)
         if post.typename == 'GraphSidecar':
-            for i, node in enumerate(post.get_sidecar_nodes()):
-                if not node.is_video:
-                    if not (i == 0 and skip_first):
-                        images.append(node.display_url)
-                else:
+            for node in post.get_sidecar_nodes():
+                if node.is_video:
                     videos.append(node.video_url)
+                else:
+                    images.append(node.display_url)
         elif post.typename == 'GraphImage':
             images.append(post.url)
         elif post.typename == 'GraphVideo':
