@@ -99,7 +99,7 @@ idna==2.10
     #   httpx
     #   requests
     #   yarl
-instaloader==4.6
+instaloader==4.6.1
     # via -r requirements.in
 lxml==4.6.2
     # via -r requirements.in
