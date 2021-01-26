@@ -222,7 +222,7 @@ def get_ids_from_ytdl_result(result):
 def get_video_data_from_youtube(channel_id):
     with suppress(Exception):
         response = requests.get('https://www.youtube.com/channel/{0}/videos?view=2&live_view=501'.format(channel_id), headers=get_random_header())
-        if yt_data_script := re.search(r'window\["ytInitialData"\]\s*=\s*(.*);\s*window\["ytInitialPlayerResponse"\]', response.text, re.MULTILINE):
+        if yt_data_script := re.search(r'var ytInitialData\s*=\s*(.*);</script>', response.text, re.MULTILINE):
             yt_data = json.loads(yt_data_script.group(1))
             tabs = yt_data['contents']['twoColumnBrowseResultsRenderer']['tabs']
             if videos_tab := [t for t in tabs if t.get('tabRenderer') and t['tabRenderer']['title'] == 'Videos']:
