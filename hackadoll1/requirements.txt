@@ -184,7 +184,7 @@ sniffio==1.2.0
     #   httpx
 soupsieve==2.0.1
     # via beautifulsoup4
-timezonefinder==5.1.0
+timezonefinder==5.1.1
     # via -r requirements.in
 uritemplate==3.0.1
     # via google-api-python-client
