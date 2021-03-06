@@ -186,7 +186,7 @@ sniffio==1.2.0
     #   httpx
 soupsieve==2.0.1
     # via beautifulsoup4
-timezonefinder==5.1.0
+timezonefinder==5.2.0
     # via -r requirements.in
 typing-extensions==3.7.4.3
     # via aiohttp
