@@ -31,7 +31,7 @@ chardet==3.0.4
     #   requests
 discord-py==1.6.0
     # via -r requirements.in
-firebase-admin==4.5.2
+firebase-admin==4.5.3
     # via -r requirements.in
 forex-python==1.5
     # via -r requirements.in
