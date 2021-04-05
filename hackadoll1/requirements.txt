@@ -29,7 +29,7 @@ chardet==3.0.4
     #   aiohttp
     #   httpx
     #   requests
-discord-py==1.6.0
+discord-py==1.7.0
     # via -r requirements.in
 firebase-admin==4.5.3
     # via -r requirements.in
