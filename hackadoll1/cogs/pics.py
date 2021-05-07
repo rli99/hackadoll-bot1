@@ -6,6 +6,8 @@ import hkdhelper as hkd
 from discord import Colour, File
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
+from discord_slash import cog_ext, SlashContext
+from discord_slash.utils.manage_commands import create_option
 from instaloader import Post, Profile
 
 class Pics(commands.Cog):
@@ -14,10 +16,21 @@ class Pics(commands.Cog):
         self.twitter_api = twitter_api
         self.insta_api = insta_api
 
-    @commands.command(aliases=['tweet-pics', 'twitterpics', 'twitter-pics'])
-    async def tweetpics(self, ctx, tweet_url: str):
-        await ctx.channel.trigger_typing()
-        status_id = hkd.get_tweet_id_from_url(tweet_url)
+    @cog_ext.cog_slash(
+        description="Get images from the specified tweet.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="url",
+                description="URL of the tweet.",
+                option_type=3,
+                required=True
+            )
+        ]
+    )
+    async def tweetpics(self, ctx: SlashContext, url: str):
+        await ctx.defer()
+        status_id = hkd.get_tweet_id_from_url(url)
         status = self.twitter_api.GetStatus(status_id=status_id, include_my_retweet=False)
         tweet = status.AsDict()
         if not (media := tweet.get('media', [])):
@@ -25,11 +38,22 @@ class Pics(commands.Cog):
         pics = [p.get('media_url_https', '') for p in media]
         await hkd.send_content_with_delay(ctx, pics)
 
-    @commands.command(aliases=['insta-pics', 'instagrampics', 'instagram-pics'])
+    @cog_ext.cog_slash(
+        description="Get images from the specified Instagram post.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="url",
+                description="URL of the Instagram post.",
+                option_type=3,
+                required=True
+            )
+        ]
+    )
     @commands.cooldown(1, 10, BucketType.guild)
-    async def instapics(self, ctx, post_url: str):
-        await ctx.channel.trigger_typing()
-        if not ((shortcode := hkd.get_id_from_url(post_url, '/p/', '/')) or (shortcode := hkd.get_id_from_url(post_url, '/reel/', '/'))):
+    async def instapics(self, ctx: SlashContext, url: str):
+        await ctx.defer()
+        if not ((shortcode := hkd.get_id_from_url(url, '/p/', '/')) or (shortcode := hkd.get_id_from_url(url, '/reel/', '/'))):
             return
         images, videos = [], []
         post = Post.from_shortcode(self.insta_api.context, shortcode)
@@ -46,11 +70,22 @@ class Pics(commands.Cog):
         await hkd.send_content_with_delay(ctx, images)
         await hkd.send_content_with_delay(ctx, videos)
 
-    @commands.command(aliases=['blog-pics'])
+    @cog_ext.cog_slash(
+        description="Get images from the specified Ameba blog post.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="url",
+                description="URL of the blog post.",
+                option_type=3,
+                required=True
+            )
+        ]
+    )
     @commands.cooldown(1, 10, BucketType.guild)
-    async def blogpics(self, ctx, blog_url: str):
-        await ctx.channel.trigger_typing()
-        pics, vid_ids = hkd.get_media_from_blog_post(blog_url.replace('//gamp.ameblo.jp/', '//ameblo.jp/'))
+    async def blogpics(self, ctx: SlashContext, url: str):
+        await ctx.defer()
+        pics, vid_ids = hkd.get_media_from_blog_post(url.replace('//gamp.ameblo.jp/', '//ameblo.jp/'))
         if len(pics) <= 1 and not vid_ids:
             await ctx.send(embed=hkd.create_embed(description="Couldn't find any images.", colour=Colour.red()))
         if len(pics) > 1:
@@ -61,10 +96,14 @@ class Pics(commands.Cog):
             urlretrieve(video_link, video_file)
             await hkd.send_video_check_filesize(ctx, video_file, video_link)
 
-    @commands.command(name='aichan-blogpics')
+    @cog_ext.cog_slash(
+        name="aichan-blogpics",
+        description="Get images from the latest blog post by Aichan.",
+        guild_ids=hkd.get_all_guild_ids()
+    )
     @commands.cooldown(1, 10, BucketType.guild)
-    async def aichan_blogpics(self, ctx):
-        await ctx.channel.trigger_typing()
+    async def aichan_blogpics(self, ctx: SlashContext):
+        await ctx.defer()
         pics, vid_ids = hkd.get_media_from_blog_post('https://ameblo.jp/eino-airi/')
         if not pics and not vid_ids:
             await ctx.send(embed=hkd.create_embed(description="Couldn't find any images.", colour=Colour.red()))
@@ -76,18 +115,30 @@ class Pics(commands.Cog):
             urlretrieve(video_link, video_file)
             await hkd.send_video_check_filesize(ctx, video_file, video_link)
 
-    @commands.command(aliases=['profile-pic'])
+    @cog_ext.cog_slash(
+        name="profile-pic",
+        description="Attempts to get the profile pic from the specified SNS account.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="url",
+                description="URL of the SNS account.",
+                option_type=3,
+                required=True
+            )
+        ]
+    )
     @commands.cooldown(1, 10, BucketType.guild)
-    async def profilepic(self, ctx, account_url: str):
-        await ctx.channel.trigger_typing()
-        if hkd.check_url_host(account_url, ['instagram.com']):
-            account_id = hkd.get_id_from_url(account_url, 'instagram.com/', '/')
+    async def profilepic(self, ctx: SlashContext, url: str):
+        await ctx.defer()
+        if hkd.check_url_host(url, ['instagram.com']):
+            account_id = hkd.get_id_from_url(url, 'instagram.com/', '/')
             profile = Profile.from_username(self.insta_api.context, account_id)
             await ctx.send(profile.profile_pic_url)
-        elif hkd.check_url_host(account_url, ['twitter.com']):
-            account_name = hkd.get_id_from_url(account_url, 'twitter.com/', '/')
+        elif hkd.check_url_host(url, ['twitter.com']):
+            account_name = hkd.get_id_from_url(url, 'twitter.com/', '/')
             user = self.twitter_api.GetUser(screen_name=account_name)
             await ctx.send(''.join(user.AsDict().get('profile_image_url_https').rsplit('_normal', 1)))
-        elif hkd.check_url_host(account_url, ['youtube.com']):
-            html_response = hkd.get_html_from_url(account_url)
+        elif hkd.check_url_host(url, ['youtube.com']):
+            html_response = hkd.get_html_from_url(url)
             await ctx.send(re.sub(r'=s[\d]+.*', '', html_response.find(property='og:image').get('content')))

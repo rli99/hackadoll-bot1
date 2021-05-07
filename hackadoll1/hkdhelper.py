@@ -13,9 +13,11 @@ import requests
 from bs4 import BeautifulSoup
 from dateutil import parser
 from discord import Colour, Embed, File, utils as disc_utils
+from discord_slash.utils.manage_commands import create_choice
 from lxml.html import fromstring
 
 SERVER_ID = 280439975911096320
+TEST_SERVER_ID = 439669047978622977
 TWITTER_CHANNEL_ID = 448716340816248832
 SEIYUU_CHANNEL_ID = 309934970124763147
 WELCOME_CHANNEL_ID = 361552652988973077
@@ -101,6 +103,9 @@ def parse_config():
     config.read('config.ini')
     return config['DEFAULT']
 
+def get_all_guild_ids():
+    return [SERVER_ID, TEST_SERVER_ID]
+
 def get_wug_guild(guilds):
     return disc_utils.get(guilds, id=SERVER_ID)
 
@@ -137,6 +142,12 @@ def parse_oshi_name(name):
         if name.lower() in names:
             return oshi
     return name
+
+def get_member_choices():
+    choices = []
+    for member in WUG_OSHI_NAMES:
+        choices.append(create_choice(name=member.title(), value=member))
+    return choices
 
 def parse_mv_name(name):
     for char in ' .,。、!?！？()（）':
@@ -269,8 +280,7 @@ def create_embed(author={}, title='', description='', colour=Colour(0x242424), u
 
 async def send_content_with_delay(ctx, content):
     for item in content:
-        await ctx.channel.trigger_typing()
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.5)
         await ctx.send(item)
 
 async def send_video_check_filesize(ctx, video_file, video_link):

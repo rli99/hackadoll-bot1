@@ -14,6 +14,8 @@ import youtube_dl
 import hkdhelper as hkd
 from discord import Colour, File
 from discord.ext import commands
+from discord_slash import cog_ext, SlashContext
+from discord_slash.utils.manage_commands import create_option
 from forex_python.converter import CurrencyRates
 from googletrans import Translator
 from pycountry import countries
@@ -24,24 +26,57 @@ class Misc(commands.Cog):
         self.bot = bot
         self.config = config
 
-    @commands.command(aliases=['tl'])
+    @cog_ext.cog_slash(
+        description="Translate the provided Japanese text into English via Google Translate.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="text",
+                description="The text to translate.",
+                option_type=3,
+                required=True
+            )
+        ]
+    )
     async def translate(self, ctx, *, text: str):
-        await ctx.channel.trigger_typing()
+        await ctx.defer()
         await ctx.send(embed=hkd.create_embed(description=Translator().translate(text, src='ja', dest='en').text))
 
-    @commands.command(aliases=['convert'])
+    @cog_ext.cog_slash(
+        description="Convert currency from one type to another.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="conversion",
+                description="Convert amount of currency-a to currency-b.",
+                option_type=3,
+                required=True
+            )
+        ]
+    )
     async def currency(self, ctx, *conversion: str):
-        await ctx.channel.trigger_typing()
+        await ctx.defer()
         if len(conversion) == 4 and conversion[2].lower() == 'to':
             with suppress(Exception):
                 result = CurrencyRates().convert(conversion[1].upper(), conversion[3].upper(), Decimal(conversion[0]))
                 await ctx.send(embed=hkd.create_embed(title='{0} {1}'.format('{:f}'.format(result).rstrip('0').rstrip('.'), conversion[3].upper())))
                 return
-        await ctx.send(embed=hkd.create_embed(description="Couldn't convert. Please follow this format for converting currency: **!currency** 12.34 AUD to USD.", colour=Colour.red()))
+        await ctx.send(embed=hkd.create_embed(description="Couldn't convert. Please follow this format for converting currency: **/currency** 12.34 AUD to USD.", colour=Colour.red()))
 
-    @commands.command()
+    @cog_ext.cog_slash(
+        description="Show weather information for the specified location.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="location",
+                description="The location to show the weather for.",
+                option_type=3,
+                required=True
+            )
+        ]
+    )
     async def weather(self, ctx, *, location: str):
-        await ctx.channel.trigger_typing()
+        await ctx.defer()
         if len(query := location.split(',')) > 1:
             with suppress(Exception):
                 query[1] = countries.get(name=query[1].strip().title()).alpha_2
@@ -58,19 +93,41 @@ class Misc(commands.Cog):
             embed_fields.append(('Pressure', '{0} hPa'.format(result['main']['pressure'])))
             await ctx.send(content='**Weather for {0}, {1}**'.format(result['name'], countries.lookup(result['sys']['country']).name), embed=hkd.create_embed(fields=embed_fields, inline=True))
             return
-        await ctx.send(embed=hkd.create_embed(description="Couldn't get weather. Please follow this format for checking the weather: **!weather** Melbourne, Australia.", colour=Colour.red()))
+        await ctx.send(embed=hkd.create_embed(description="Couldn't get weather. Please follow this format for checking the weather: **/weather** Melbourne, Australia.", colour=Colour.red()))
 
-    @commands.command(aliases=['pick'])
+    @cog_ext.cog_slash(
+        description="Randomly choose from one of the provided options.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="options",
+                description="The options to choose from.",
+                option_type=3,
+                required=True
+            )
+        ]
+    )
     async def choose(self, ctx, *options: str):
-        await ctx.channel.trigger_typing()
+        await ctx.defer()
         if len(options) > 1:
             await ctx.send(embed=hkd.create_embed(description=options[randrange(len(options))]))
         else:
-            await ctx.send(embed=hkd.create_embed(description='Please provide 2 or more options to choose from, e.g. **!choose** *option1* *option2*.', colour=Colour.red()))
+            await ctx.send(embed=hkd.create_embed(description='Please provide 2 or more options to choose from, e.g. **/choose** *option1* *option2*.', colour=Colour.red()))
 
-    @commands.command(aliases=['yt', 'play'])
+    @cog_ext.cog_slash(
+        description="Gets the top result from YouTube based on the provided search terms.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="query",
+                description="Terms to search for on YouTube.",
+                option_type=3,
+                required=True
+            )
+        ]
+    )
     async def youtube(self, ctx, *, query: str):
-        await ctx.channel.trigger_typing()
+        await ctx.defer()
         for _ in range(3):
             with suppress(Exception):
                 soup = hkd.get_html_from_url('https://www.youtube.com/results?search_query={0}'.format(quote(query)))
@@ -82,10 +139,22 @@ class Misc(commands.Cog):
                 break
         await ctx.send(embed=hkd.create_embed(title="Couldn't find any results.", colour=Colour.red()))
 
-    @commands.command(name='dl-vid', aliases=['dlvid', 'youtube-dl', 'ytdl'])
+    @cog_ext.cog_slash(
+        name="dl-vid",
+        description="Attempt to download the video from the specified URL using youtube-dl.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="url",
+                description="URL to try and download video from.",
+                option_type=3,
+                required=True
+            )
+        ]
+    )
     @commands.guild_only()
     async def dl_vid(self, ctx, url: str):
-        await ctx.channel.trigger_typing()
+        await ctx.defer()
         await ctx.send('Attempting to download the video using youtube-dl. Please wait.')
         result = {}
         with suppress(Exception):
@@ -124,10 +193,22 @@ class Misc(commands.Cog):
                         return
                     await ctx.send(content='{0.mention}'.format(ctx.author), embed=hkd.create_embed(description='Upload complete. Your video is available here: https://drive.google.com/open?id={0}. The Google Drive folder has limited space so it will be purged from time to time.'.format(self.config['uploads_folder'])))
 
-    @commands.command(aliases=['onsenmusume'])
+    @cog_ext.cog_slash(
+        description="Show the Onsen Musume profile for the character of the specified member.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="member",
+                description="The member that you want to see the Onmusu profile for.",
+                option_type=3,
+                required=True,
+                choices=hkd.get_member_choices()
+            )
+        ]
+    )
     async def onmusu(self, ctx, member: str = ''):
+        await ctx.defer()
         char, char_colour = hkd.WUG_ONMUSU_CHARS[hkd.parse_oshi_name(member)]
-        await ctx.channel.trigger_typing()
         profile_link = 'https://onsen-musume.jp/character/{0}'.format(char)
         soup = hkd.get_html_from_url(profile_link)
         char_pic = 'https://onsen-musume.jp{0}'.format(soup.find('div', class_='character_ph__main').find('img')['src'])

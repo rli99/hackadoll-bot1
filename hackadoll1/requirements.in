@@ -13,3 +13,4 @@ instaloader
 beautifulsoup4
 lxml
 -e git+https://github.com/tsukumijima/youtube-dl.git@fork#egg=youtube-dl
+discord-py-slash-command

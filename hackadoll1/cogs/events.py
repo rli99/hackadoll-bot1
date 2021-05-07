@@ -8,16 +8,29 @@ import hkdhelper as hkd
 from dateutil import parser
 from discord import Colour
 from discord.ext import commands
+from discord_slash import cog_ext, SlashContext
+from discord_slash.utils.manage_commands import create_option
 from pytz import timezone
 
 class Events(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @cog_ext.cog_slash(
+        description="Show events involving WUG members on the specified date, or for today if not specified.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="date",
+                description="Date to search for events.",
+                option_type=3,
+                required=False
+            )
+        ]
+    )
     @commands.guild_only()
-    async def events(self, ctx, *, date: str = ''):
-        await ctx.channel.trigger_typing()
+    async def events(self, ctx: SlashContext, *, date: str = ''):
+        await ctx.defer()
         event_urls = []
         current_time = datetime.now(timezone('Japan'))
         search_date = parser.parse(date) if date else current_time
@@ -38,12 +51,10 @@ class Events(commands.Cog):
                         wug_performers = [p for p in performers if p in hkd.WUG_MEMBERS]
                         if not wug_performers:
                             continue
-                        await ctx.channel.trigger_typing()
                         colour = hkd.get_oshi_colour(ctx.guild, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]) if len(wug_performers) == 1 else Colour.teal()
                         if first:
                             first = False
                             await ctx.send('**Events Involving WUG Members on {0:%Y}-{0:%m}-{0:%d} ({0:%A})**'.format(search_date.replace(year=search_year)))
-                            await ctx.channel.trigger_typing()
                             await asyncio.sleep(0.5)
                         other_performers = [p for p in performers if p not in hkd.WUG_MEMBERS and p not in hkd.WUG_OTHER_UNITS]
                         embed_fields = []
@@ -59,12 +70,30 @@ class Events(commands.Cog):
         if not event_urls:
             await ctx.send(embed=hkd.create_embed(description="Couldn't find any events on that day.", colour=Colour.red()))
 
-    @commands.command()
+    @cog_ext.cog_slash(
+        description="Show events for the specified member in a month, or WUG events if member not specified.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="month",
+                description="Month to search for events.",
+                option_type=3,
+                required=True
+            ),
+            create_option(
+                name="member",
+                description="Search for events for this member.",
+                option_type=3,
+                required=False,
+                choices=hkd.get_member_choices()
+            )
+        ]
+    )
     @commands.guild_only()
-    async def eventsin(self, ctx, month: str, member: str = ''):
-        await ctx.channel.trigger_typing()
+    async def eventsin(self, ctx: SlashContext, month: str, member: str = ''):
+        await ctx.defer()
         if (search_month := hkd.parse_month(month)) == 'None':
-            await ctx.send(embed=hkd.create_embed(description="Couldn't find any events. Please follow this format for searching for events: **!eventsin** April Mayushii.", colour=Colour.red()))
+            await ctx.send(embed=hkd.create_embed(description="Couldn't find any events. Please follow this format for searching for events: **/eventsin** April Mayushii.", colour=Colour.red()))
             return
         current_time = datetime.now(timezone('Japan'))
         search_year = str(current_time.year if current_time.month <= int(search_month) else current_time.year + 1)
@@ -72,7 +101,7 @@ class Events(commands.Cog):
         wug_names = list(hkd.WUG_ROLE_IDS.keys())
         if member:
             if hkd.parse_oshi_name(member) not in wug_names:
-                await ctx.send(embed=hkd.create_embed(description="Couldn't find any events. Please follow this format for searching for events: **!eventsin** April Mayushii.", colour=Colour.red()))
+                await ctx.send(embed=hkd.create_embed(description="Couldn't find any events. Please follow this format for searching for events: **/eventsin** April Mayushii.", colour=Colour.red()))
                 return
             search_index = [wug_names.index(hkd.parse_oshi_name(member)) + 1]
         event_urls = []
@@ -102,7 +131,7 @@ class Events(commands.Cog):
                             wug_performers = [p for p in performers if p in hkd.WUG_MEMBERS]
                             if not wug_performers:
                                 continue
-                            await ctx.channel.trigger_typing()
+                            await ctx.defer()
                             colour = hkd.get_oshi_colour(ctx.guild, list(hkd.WUG_ROLE_IDS.keys())[hkd.WUG_MEMBERS.index(wug_performers[0]) - 1]) if len(wug_performers) == 1 else Colour.teal()
                             if first:
                                 first = False

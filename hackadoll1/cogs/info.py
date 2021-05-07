@@ -1,15 +1,28 @@
 import hkdhelper as hkd
 from discord import Member
 from discord.ext import commands
+from discord_slash import cog_ext, SlashContext
+from discord_slash.utils.manage_commands import create_option
 
 class Info(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=['user-info'])
+    @cog_ext.cog_slash(
+        description="Show details of the specified member, or your own details if not specified.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="member",
+                description="The member to show details for.",
+                option_type=6,
+                required=False
+            )
+        ]
+    )
     @commands.guild_only()
-    async def userinfo(self, ctx, member: Member = None):
-        await ctx.channel.trigger_typing()
+    async def userinfo(self, ctx: SlashContext, member: Member = None):
+        await ctx.defer()
         user = member or ctx.author
         embed_fields = []
         embed_fields.append(('Name', '{0}'.format(user.display_name)))
@@ -20,10 +33,13 @@ class Info(commands.Cog):
         embed_fields.append(('Avatar', '{0}'.format('<{0}>'.format(user.avatar_url) if user.avatar_url else 'None')))
         await ctx.send(content='**User Information for {0.mention}**'.format(user), embed=hkd.create_embed(fields=embed_fields, inline=True))
 
-    @commands.command(aliases=['server-info'])
+    @cog_ext.cog_slash(
+        description="Show server information.",
+        guild_ids=hkd.get_all_guild_ids(),
+    )
     @commands.guild_only()
-    async def serverinfo(self, ctx):
-        await ctx.channel.trigger_typing()
+    async def serverinfo(self, ctx: SlashContext):
+        await ctx.defer()
         guild = ctx.guild
         embed_fields = []
         embed_fields.append(('{0}'.format(guild.name), '(ID: {0})'.format(guild.id)))

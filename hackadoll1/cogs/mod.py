@@ -3,6 +3,8 @@ import time
 import hkdhelper as hkd
 from discord import Colour, Member, ChannelType
 from discord.ext import commands
+from discord_slash import cog_ext, SlashContext
+from discord_slash.utils.manage_commands import create_option
 from humanfriendly import format_timespan
 
 class Moderator(commands.Cog):
@@ -11,10 +13,21 @@ class Moderator(commands.Cog):
         self.muted_members = muted_members
         self.firebase_ref = firebase_ref
 
-    @commands.command()
+    @cog_ext.cog_slash(
+        description="[Moderator Only] Kick a member.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="member",
+                description="The member to kick.",
+                option_type=6,
+                required=True
+            )
+        ]
+    )
     @commands.guild_only()
-    async def kick(self, ctx, member: Member):
-        await ctx.channel.trigger_typing()
+    async def kick(self, ctx: SlashContext, member: Member):
+        await ctx.defer()
         if ctx.author.guild_permissions.kick_members:
             if member.guild_permissions.administrator:
                 await ctx.send(embed=hkd.create_embed(title='Moderators cannot be kicked.', colour=Colour.red()))
@@ -25,10 +38,21 @@ class Moderator(commands.Cog):
         else:
             await ctx.send(embed=hkd.create_embed(title='You do not have permission to do that.', colour=Colour.red()))
 
-    @commands.command()
+    @cog_ext.cog_slash(
+        description="[Moderator Only] Ban a member.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="member",
+                description="The member to ban.",
+                option_type=6,
+                required=True
+            )
+        ]
+    )
     @commands.guild_only()
-    async def ban(self, ctx, member: Member):
-        await ctx.channel.trigger_typing()
+    async def ban(self, ctx: SlashContext, member: Member):
+        await ctx.defer()
         if ctx.author.guild_permissions.ban_members:
             if member.guild_permissions.administrator:
                 await ctx.send(embed=hkd.create_embed(title='Moderators cannot be banned.', colour=Colour.red()))
@@ -39,10 +63,27 @@ class Moderator(commands.Cog):
         else:
             await ctx.send(embed=hkd.create_embed(title='You do not have permission to do that.', colour=Colour.red()))
 
-    @commands.command()
+    @cog_ext.cog_slash(
+        description="[Moderator Only] Mute a member.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="member",
+                description="The member to mute.",
+                option_type=6,
+                required=True
+            ),
+            create_option(
+                name="duration",
+                description="The number of minutes to mute the member.",
+                option_type=4,
+                required=True
+            )
+        ]
+    )
     @commands.guild_only()
-    async def mute(self, ctx, member: Member, duration: int):
-        await ctx.channel.trigger_typing()
+    async def mute(self, ctx: SlashContext, member: Member, duration: int):
+        await ctx.defer()
         if ctx.author.guild_permissions.kick_members:
             if member.guild_permissions.administrator:
                 await ctx.send(embed=hkd.create_embed(title='Moderators cannot be muted.', colour=Colour.red()))
@@ -58,10 +99,21 @@ class Moderator(commands.Cog):
         else:
             await ctx.send(embed=hkd.create_embed(title='You do not have permission to do that.', colour=Colour.red()))
 
-    @commands.command()
+    @cog_ext.cog_slash(
+        description="[Moderator Only] Unmute a member.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="member",
+                description="The member to unmute.",
+                option_type=6,
+                required=True
+            )
+        ]
+    )
     @commands.guild_only()
-    async def unmute(self, ctx, member: Member):
-        await ctx.channel.trigger_typing()
+    async def unmute(self, ctx: SlashContext, member: Member):
+        await ctx.defer()
         if ctx.author.guild_permissions.kick_members:
             self.firebase_ref.child('muted_members/{0}'.format(member.id)).delete()
             self.muted_members.pop(member.id)
@@ -70,9 +122,28 @@ class Moderator(commands.Cog):
         else:
             await ctx.send(embed=hkd.create_embed(title='You do not have permission to do that.', colour=Colour.red()))
 
-    @commands.command(name='delete-messages', aliases=['deletemessages', 'delete-message', 'deletemessage', 'clear-messages', 'clearmessages'])
+    @cog_ext.cog_slash(
+        name="delete-messages",
+        description="[Moderator Only] Delete messages from the current channel.",
+        guild_ids=hkd.get_all_guild_ids(),
+        options=[
+            create_option(
+                name="number",
+                description="The number of messages to delete.",
+                option_type=4,
+                required=True
+            ),
+            create_option(
+                name="member",
+                description="The member from which to delete messages. If not specified, deletes from all messages.",
+                option_type=6,
+                required=False
+            )
+        ]
+    )
     @commands.guild_only()
-    async def delete_messages(self, ctx, number: int, member: Member = None):
+    async def delete_messages(self, ctx: SlashContext, number: int, member: Member = None):
+        await ctx.defer()
         if ctx.author.guild_permissions.administrator:
             if ctx.channel.type == ChannelType.text:
                 if not member:

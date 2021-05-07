@@ -66,8 +66,7 @@ class Loop(commands.Cog):
                     username = user.screen_name
                     if tweet.in_reply_to_user_id and str(tweet.in_reply_to_user_id) not in twitter_user_ids:
                         continue
-                    await channel.trigger_typing()
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(0.5)
                     tweet_id = tweet.id
                     posted_tweets.append(tweet_id)
                     tweet_content = unescape(tweet.full_text)
