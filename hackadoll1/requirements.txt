@@ -165,7 +165,7 @@ requests==2.25.0
     #   requests-oauthlib
 rfc3986==1.4.0
     # via httpx
-rsa==4.6
+rsa==4.7
     # via
     #   google-auth
     #   oauth2client
