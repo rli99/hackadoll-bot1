@@ -35,12 +35,12 @@ class Oshi(commands.Cog):
             if existing_role.id in hkd.WUG_ROLE_IDS.values() or existing_role.id in hkd.WUG_KAMIOSHI_ROLE_IDS.values():
                 roles_to_remove.append(existing_role)
         if len(roles_to_remove) == 1 and roles_to_remove[0].name == role.name:
-            await ctx.send(embed=hkd.create_embed(description='Hello {0.message.author.mention}, you already have that role.'.format(ctx), colour=Colour.red()))
+            await ctx.send(embed=hkd.create_embed(description='Hello {0.author.mention}, you already have that role.'.format(ctx), colour=Colour.red()))
         elif roles_to_remove:
             await ctx.author.remove_roles(*roles_to_remove)
             await asyncio.sleep(0.5)
         await ctx.author.add_roles(role)
-        await ctx.send(embed=hkd.create_embed(description='Hello {0.message.author.mention}, you have oshihened to the **{1}** role {2.mention}.'.format(ctx, member.title(), role), colour=role.colour))
+        await ctx.send(embed=hkd.create_embed(description='Hello {0.author.mention}, you have oshihened to the **{1}** role {2.mention}.'.format(ctx, member.title(), role), colour=role.colour))
 
     @cog_ext.cog_slash(
         description="Get an additional WUG member role.",
@@ -63,9 +63,9 @@ class Oshi(commands.Cog):
             return
         if role not in ctx.author.roles:
             await ctx.author.add_roles(role)
-            await ctx.send(embed=hkd.create_embed(description='Hello {0.message.author.mention}, you now have the **{1}** oshi role {2.mention}.'.format(ctx, member.title(), role), colour=role.colour))
+            await ctx.send(embed=hkd.create_embed(description='Hello {0.author.mention}, you now have the **{1}** oshi role {2.mention}.'.format(ctx, member.title(), role), colour=role.colour))
         else:
-            await ctx.send(embed=hkd.create_embed(description='Hello {0.message.author.mention}, you already have that role.'.format(ctx), colour=Colour.red()))
+            await ctx.send(embed=hkd.create_embed(description='Hello {0.author.mention}, you already have that role.'.format(ctx), colour=Colour.red()))
 
     @cog_ext.cog_slash(
         description="Get all WUG member roles.",
@@ -82,9 +82,9 @@ class Oshi(commands.Cog):
                 roles_to_add.append(role)
         if roles_to_add:
             await ctx.author.add_roles(*roles_to_add)
-            await ctx.send(embed=hkd.create_embed(description='Hello {0.message.author.mention}, you now have every WUG member role.'.format(ctx), colour=Colour.teal()))
+            await ctx.send(embed=hkd.create_embed(description='Hello {0.author.mention}, you now have every WUG member role.'.format(ctx), colour=Colour.teal()))
         else:
-            await ctx.send(embed=hkd.create_embed(description='Hello {0.message.author.mention}, you already have every WUG member role.'.format(ctx), colour=Colour.red()))
+            await ctx.send(embed=hkd.create_embed(description='Hello {0.author.mention}, you already have every WUG member role.'.format(ctx), colour=Colour.red()))
 
     @cog_ext.cog_slash(
         description="Set a WUG member as your kamioshi. This will make their role show up at the top.",
@@ -120,9 +120,9 @@ class Oshi(commands.Cog):
             await asyncio.sleep(0.5)
         if kamioshi_role not in ctx.author.roles:
             await ctx.author.add_roles(kamioshi_role)
-            await ctx.send(embed=hkd.create_embed(description='Hello {0.message.author.mention}, you have set **{1}** as your kamioshi.'.format(ctx, member.title()), colour=kamioshi_role.colour))
+            await ctx.send(embed=hkd.create_embed(description='Hello {0.author.mention}, you have set **{1}** as your kamioshi.'.format(ctx, member.title()), colour=kamioshi_role.colour))
         else:
-            await ctx.send(embed=hkd.create_embed(description='Hello {0.message.author.mention}, that member is already your kamioshi.'.format(ctx), colour=Colour.red()))
+            await ctx.send(embed=hkd.create_embed(description='Hello {0.author.mention}, that member is already your kamioshi.'.format(ctx), colour=Colour.red()))
 
     @cog_ext.cog_slash(
         name="kamioshi-count",

@@ -38,7 +38,7 @@ class Misc(commands.Cog):
             )
         ]
     )
-    async def translate(self, ctx, *, text: str):
+    async def translate(self, ctx: SlashContext, *, text: str):
         await ctx.defer()
         await ctx.send(embed=hkd.create_embed(description=Translator().translate(text, src='ja', dest='en').text))
 
@@ -54,7 +54,7 @@ class Misc(commands.Cog):
             )
         ]
     )
-    async def currency(self, ctx, *conversion: str):
+    async def currency(self, ctx: SlashContext, *conversion: str):
         await ctx.defer()
         if len(conversion) == 4 and conversion[2].lower() == 'to':
             with suppress(Exception):
@@ -75,7 +75,7 @@ class Misc(commands.Cog):
             )
         ]
     )
-    async def weather(self, ctx, *, location: str):
+    async def weather(self, ctx: SlashContext, *, location: str):
         await ctx.defer()
         if len(query := location.split(',')) > 1:
             with suppress(Exception):
@@ -107,7 +107,7 @@ class Misc(commands.Cog):
             )
         ]
     )
-    async def choose(self, ctx, *options: str):
+    async def choose(self, ctx: SlashContext, *options: str):
         await ctx.defer()
         if len(options) > 1:
             await ctx.send(embed=hkd.create_embed(description=options[randrange(len(options))]))
@@ -126,7 +126,7 @@ class Misc(commands.Cog):
             )
         ]
     )
-    async def youtube(self, ctx, *, query: str):
+    async def youtube(self, ctx: SlashContext, *, query: str):
         await ctx.defer()
         for _ in range(3):
             with suppress(Exception):
@@ -153,7 +153,7 @@ class Misc(commands.Cog):
         ]
     )
     @commands.guild_only()
-    async def dl_vid(self, ctx, url: str):
+    async def dl_vid(self, ctx: SlashContext, url: str):
         await ctx.defer()
         await ctx.send('Attempting to download the video using youtube-dl. Please wait.')
         result = {}
@@ -206,7 +206,7 @@ class Misc(commands.Cog):
             )
         ]
     )
-    async def onmusu(self, ctx, member: str = ''):
+    async def onmusu(self, ctx: SlashContext, member: str = ''):
         await ctx.defer()
         char, char_colour = hkd.WUG_ONMUSU_CHARS[hkd.parse_oshi_name(member)]
         profile_link = 'https://onsen-musume.jp/character/{0}'.format(char)
