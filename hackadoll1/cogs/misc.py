@@ -38,7 +38,7 @@ class Misc(commands.Cog):
             )
         ]
     )
-    async def translate(self, ctx: SlashContext, *, text: str):
+    async def translate(self, ctx: SlashContext, text: str):
         await ctx.defer()
         await ctx.send(embed=hkd.create_embed(description=Translator().translate(text, src='ja', dest='en').text))
 
@@ -54,12 +54,13 @@ class Misc(commands.Cog):
             )
         ]
     )
-    async def currency(self, ctx: SlashContext, *conversion: str):
+    async def currency(self, ctx: SlashContext, conversion: str):
         await ctx.defer()
-        if len(conversion) == 4 and conversion[2].lower() == 'to':
+        conversion_split = conversion.split()
+        if len(conversion_split) == 4 and conversion_split[2].lower() == 'to':
             with suppress(Exception):
-                result = CurrencyRates().convert(conversion[1].upper(), conversion[3].upper(), Decimal(conversion[0]))
-                await ctx.send(embed=hkd.create_embed(title='{0} {1}'.format('{:f}'.format(result).rstrip('0').rstrip('.'), conversion[3].upper())))
+                result = CurrencyRates().convert(conversion_split[1].upper(), conversion_split[3].upper(), Decimal(conversion_split[0]))
+                await ctx.send(embed=hkd.create_embed(title='{0} {1}'.format('{:f}'.format(result).rstrip('0').rstrip('.'), conversion_split[3].upper())))
                 return
         await ctx.send(embed=hkd.create_embed(description="Couldn't convert. Please follow this format for converting currency: **/currency** 12.34 AUD to USD.", colour=Colour.red()))
 
@@ -75,7 +76,7 @@ class Misc(commands.Cog):
             )
         ]
     )
-    async def weather(self, ctx: SlashContext, *, location: str):
+    async def weather(self, ctx: SlashContext, location: str):
         await ctx.defer()
         if len(query := location.split(',')) > 1:
             with suppress(Exception):
@@ -107,37 +108,13 @@ class Misc(commands.Cog):
             )
         ]
     )
-    async def choose(self, ctx: SlashContext, *options: str):
+    async def choose(self, ctx: SlashContext, options: str):
         await ctx.defer()
-        if len(options) > 1:
-            await ctx.send(embed=hkd.create_embed(description=options[randrange(len(options))]))
+        split_options = options.split()
+        if len(split_options) > 1:
+            await ctx.send(embed=hkd.create_embed(description=split_options[randrange(len(split_options))]))
         else:
             await ctx.send(embed=hkd.create_embed(description='Please provide 2 or more options to choose from, e.g. **/choose** *option1* *option2*.', colour=Colour.red()))
-
-    @cog_ext.cog_slash(
-        description="Gets the top result from YouTube based on the provided search terms.",
-        guild_ids=hkd.get_all_guild_ids(),
-        options=[
-            create_option(
-                name="query",
-                description="Terms to search for on YouTube.",
-                option_type=3,
-                required=True
-            )
-        ]
-    )
-    async def youtube(self, ctx: SlashContext, *, query: str):
-        await ctx.defer()
-        for _ in range(3):
-            with suppress(Exception):
-                soup = hkd.get_html_from_url('https://www.youtube.com/results?search_query={0}'.format(quote(query)))
-                for result in soup.find_all(attrs={'class': 'yt-uix-tile-link'}):
-                    link = result['href']
-                    if hkd.is_youtube_link(link):
-                        await ctx.send('https://www.youtube.com{0}'.format(link))
-                        return
-                break
-        await ctx.send(embed=hkd.create_embed(title="Couldn't find any results.", colour=Colour.red()))
 
     @cog_ext.cog_slash(
         name="dl-vid",

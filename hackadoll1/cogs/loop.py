@@ -226,21 +226,7 @@ class Loop(commands.Cog):
                 if len(videos) < 10:
                     for video in videos:
                         renderer = video['gridVideoRenderer']
-                        if (badges := renderer.get('badges')) and [b for b in badges if b['metadataBadgeRenderer']['label'] == 'LIVE NOW']:
-                            is_live = True
-                            video_id = renderer['videoId']
-                            self.firebase_ref.child('youtube_stream_status/{0}/last_online'.format(member)).set(time.time())
-                            self.firebase_ref.child('youtube_stream_status/{0}/video_id'.format(member)).set(video_id)
-                            if status != 'LIVE':
-                                if time.time() - last_online > 300 or last_video_id != video_id:
-                                    channel_name = member.title()
-                                    if short_desc := renderer.get('shortBylineText'):
-                                        if runs := short_desc['runs']:
-                                            channel_name = runs[0].get('text', hkd.parse_oshi_name(member).title())
-                                    await channel.send('{0} LIVE NOW at https://www.youtube.com/watch?v={1}'.format(channel_name, video_id))
-                                self.firebase_ref.child('youtube_stream_status/{0}/status'.format(member)).set('LIVE')
-                            break
-                        elif 'thumbnailOverlays' in renderer:
+                        if 'thumbnailOverlays' in renderer:
                             overlay = renderer['thumbnailOverlays'][0]
                             if overlay['thumbnailOverlayTimeStatusRenderer']['text']['runs'][0].get('text') == 'LIVE':
                                 is_live = True

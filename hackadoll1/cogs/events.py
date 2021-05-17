@@ -29,7 +29,7 @@ class Events(commands.Cog):
         ]
     )
     @commands.guild_only()
-    async def events(self, ctx: SlashContext, *, date: str = ''):
+    async def events(self, ctx: SlashContext, date: str = ''):
         await ctx.defer()
         event_urls = []
         current_time = datetime.now(timezone('Japan'))

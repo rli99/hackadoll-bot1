@@ -23,7 +23,7 @@ class Tags(commands.Cog):
         ]
     )
     @commands.guild_only()
-    async def create(self, ctx: SlashContext, *, name: str):
+    async def create(self, ctx: SlashContext, name: str):
         await ctx.defer()
         if len(split_request := name.split()) > 1:
             tag_name = split_request[0]
@@ -50,7 +50,7 @@ class Tags(commands.Cog):
         ]
     )
     @commands.guild_only()
-    async def update(self, ctx: SlashContext, *, name: str):
+    async def update(self, ctx: SlashContext, name: str):
         await ctx.defer()
         if len(split_update := name.split()) > 1:
             tag_name = split_update[0]

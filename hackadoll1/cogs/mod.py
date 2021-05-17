@@ -152,6 +152,7 @@ class Moderator(commands.Cog):
                         if count != 0:
                             await message.delete()
                         count += 1
+                    await ctx.send(embed=hkd.create_embed(description='{0} messages deleted.'.format(number)))
                 else:
                     count = 0
                     messages_deleted = 0
@@ -163,5 +164,6 @@ class Moderator(commands.Cog):
                                 if messages_deleted == number:
                                     break
                         count += 1
+                    await ctx.send(embed=hkd.created_embed(description='{0} messages from {1.mention} deleted'.format(number, member)))
         else:
             await ctx.send(embed=hkd.create_embed(title='You do not have permission to do that.', colour=Colour.red()))

@@ -80,7 +80,8 @@ WUG_INSTAGRAM_IDS = {
 }
 WUG_YOUTUBE_CHANNELS = {
     'nanamin': 'UCZU_aYCkJToNj5OyN1S1BdQ',
-    'myu': 'UCcRVUN5NDN6U6nKmWJm4-yA'
+    'myu': 'UCcRVUN5NDN6U6nKmWJm4-yA',
+    'yoppi': 'UCCIUO6dSL13XdiZlJGn3xYA'
 }
 WUG_SHOWROOM_IDS = {
     'aichan': 316587
@@ -180,9 +181,6 @@ def is_video_link(text):
         if url in text:
             return True
     return False
-
-def is_youtube_link(text):
-    return text.find('googleads.g.doubleclick.net') == -1 and text.find('googleadservices.com') == -1 and not text.startswith(('/channel', '/user'))
 
 def is_embeddable_content(content):
     return is_image_file(content) or is_video_link(content) or check_url_host(content, ['twitter.com'])
