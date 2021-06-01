@@ -132,7 +132,6 @@ class Misc(commands.Cog):
     @commands.guild_only()
     async def dl_vid(self, ctx: SlashContext, url: str):
         await ctx.defer()
-        await ctx.send('Attempting to download the video using youtube-dl. Please wait.')
         result = {}
         with suppress(Exception):
             ytdl_opts = {'outtmpl': '%(id)s.%(ext)s'}
@@ -159,7 +158,6 @@ class Misc(commands.Cog):
                     with suppress(Exception):
                         os.remove(vid_filename)
                 else:
-                    await ctx.send('Download complete. Now uploading video to Google Drive. Please wait.')
                     proc = subprocess.Popen(args=['python', 'gdrive_upload.py', vid_filename, self.config['uploads_folder']])
                     while proc.poll() is None:
                         await asyncio.sleep(1)
@@ -168,7 +166,7 @@ class Misc(commands.Cog):
                         with suppress(Exception):
                             os.remove(vid_filename)
                         return
-                    await ctx.send(content='{0.mention}'.format(ctx.author), embed=hkd.create_embed(description='Upload complete. Your video is available here: https://drive.google.com/open?id={0}. The Google Drive folder has limited space so it will be purged from time to time.'.format(self.config['uploads_folder'])))
+                    await ctx.send(content='{0.mention}'.format(ctx.author), embed=hkd.create_embed(description='Your video has been uploaded here: https://drive.google.com/open?id={0}. The Google Drive folder has limited space so it will be purged from time to time.'.format(self.config['uploads_folder'])))
 
     @cog_ext.cog_slash(
         description="Show the Onsen Musume profile for the character of the specified member.",
