@@ -26,4 +26,5 @@ class Listen(commands.Cog):
         if member.guild == hkd.get_wug_guild(self.bot.guilds):
             for pattern in hkd.BANNED_USER_PATTERNS:
                 if pattern.lower() in member.name.lower():
-                    await member.ban()
+                    await member.ban(delete_message_days=1)
+                    return
