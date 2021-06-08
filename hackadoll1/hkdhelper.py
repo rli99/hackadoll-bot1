@@ -100,7 +100,8 @@ FAKE_USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0'
 ]
 BANNED_USER_PATTERNS = [
-    'twitter.com/h0nde'
+    'twitter.com/h0nde',
+    'Love Live! Sunshine!!'
 ]
 
 def parse_config():
