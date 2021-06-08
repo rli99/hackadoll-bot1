@@ -17,7 +17,7 @@ class Listen(commands.Cog):
             channel = disc_utils.get(guild.channels, id=hkd.WELCOME_CHANNEL_ID)
             try:
                 await member.guild.fetch_ban(member)
-                await channel.send(embed=hkd.create_embed(title='{0} ({1}) has been banned from the server.'.format(member.display_name, member)))
+                return
             except discord.NotFound:
                 await channel.send(embed=hkd.create_embed(title='{0} ({1}) has left the server.'.format(member.display_name, member)))
 
