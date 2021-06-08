@@ -99,6 +99,10 @@ FAKE_USER_AGENTS = [
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36',
     'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0'
 ]
+BANNED_USER_PATTERNS = [
+    'twitter.com/h0nde',
+    'Love Live! Sunshine!!'
+]
 
 def parse_config():
     config = configparser.ConfigParser()
