@@ -16,14 +16,20 @@ from discord import Colour, Embed, File, utils as disc_utils
 from discord_slash.utils.manage_commands import create_choice
 from lxml.html import fromstring
 
-SERVER_ID = 280439975911096320
-TEST_SERVER_ID = 439669047978622977
-TWITTER_CHANNEL_ID = 448716340816248832
-SEIYUU_CHANNEL_ID = 309934970124763147
-WELCOME_CHANNEL_ID = 361552652988973077
-MUTED_ROLE_ID = 445572638543446016
-BOT_ADMIN_ID = 299908261438816258
-ADMIN_ID = 309964848580526081
+def parse_config():
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    return config['DEFAULT']
+
+config = parse_config()
+SERVER_ID = config['SERVER_ID']
+TEST_SERVER_ID = config['TEST_SERVER_ID']
+TWITTER_CHANNEL_ID = config['TWITTER_CHANNEL_ID']
+SEIYUU_CHANNEL_ID = config['SEIYUU_CHANNEL_ID']
+WELCOME_CHANNEL_ID = config['WELCOME_CHANNEL_ID']
+MUTED_ROLE_ID = config['MUTED_ROLE_ID']
+BOT_ADMIN_ID = config['BOT_ADMIN_ID']
+ADMIN_ID = config['ADMIN_ID']
 WUG_EVENTERNOTE_IDS = [6988, 3774, 6984, 6983, 6985, 6982, 6986, 6987]
 WUG_MEMBERS = ['Wake Up, Girls', '吉岡茉祐', '永野愛理', '田中美海', '青山吉能', '山下七海', '奥野香耶', '高木美佑']
 VIDEO_LINK_URLS = ['streamable.com', 'youtube.com']
@@ -38,22 +44,22 @@ WUG_OSHI_NAMES = {
     'myu': ['myu', 'miyu', 'myuchan', 'myuu', 'myuuchan']
 }
 WUG_KAMIOSHI_ROLE_IDS = {
-    'mayushii': 499826746904805377,
-    'aichan': 499826827364139008,
-    'minyami': 499826901939126273,
-    'yoppi': 499826267890122753,
-    'nanamin': 499826972235661322,
-    'kayatan': 499826573231390730,
-    'myu': 499827054586494976
+    'mayushii': config['MAYUSHII_KAMIOSHI_ROLE_ID'],
+    'aichan': config['AICHAN_KAMIOSHI_ROLE_ID'],
+    'minyami': config['MINYAMI_KAMIOSHI_ROLE_ID'],
+    'yoppi': config['YOPPI_KAMIOSHI_ROLE_ID'],
+    'nanamin': config['NANAMIN_KAMIOSHI_ROLE_ID'],
+    'kayatan': config['KAYATAN_KAMIOSHI_ROLE_ID'],
+    'myu': config['MYU_KAMIOSHI_ROLE_ID'],
 }
 WUG_ROLE_IDS = {
-    'mayushii': 332788311280189443,
-    'aichan': 333727530680844288,
-    'minyami': 332793887200641028,
-    'yoppi': 332796755399933953,
-    'nanamin': 333721984196411392,
-    'kayatan': 333721510164430848,
-    'myu': 333722098377818115
+    'mayushii': config['MAYUSHII_ROLE_ID'],
+    'aichan': config['AICHAN_ROLE_ID'],
+    'minyami': config['MINYAMI_ROLE_ID'],
+    'yoppi': config['YOPPI_ROLE_ID'],
+    'nanamin': config['NANAMIN_ROLE_ID'],
+    'kayatan': config['KAYATAN_ROLE_ID'],
+    'myu': config['MYU_ROLE_ID'],
 }
 WUG_ONMUSU_CHARS = {
     'mayushii': ['iizaka_mahiro', 0x98d98e],
@@ -103,11 +109,6 @@ BANNED_USER_PATTERNS = [
     'twitter.com/h0nde',
     'Love Live! Sunshine!!'
 ]
-
-def parse_config():
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-    return config['DEFAULT']
 
 def get_all_guild_ids():
     return [SERVER_ID, TEST_SERVER_ID]
