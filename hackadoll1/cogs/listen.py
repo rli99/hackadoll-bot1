@@ -13,7 +13,7 @@ class Listen(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
-        if (guild := hkd.get_wug_guild()) == member.guild:
+        if (guild := hkd.get_wug_guild(self.bot.guilds)) == member.guild:
             channel = disc_utils.get(guild.channels, id=hkd.WELCOME_CHANNEL_ID)
             try:
                 await member.guild.fetch_ban(member)
@@ -23,7 +23,7 @@ class Listen(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        if member.guild == hkd.get_wug_guild():
+        if member.guild == hkd.get_wug_guild(self.bot.guilds):
             for pattern in hkd.BANNED_USER_PATTERNS:
                 if pattern in member.name:
                     await member.ban()
