@@ -25,5 +25,5 @@ class Listen(commands.Cog):
     async def on_member_join(self, member):
         if member.guild == hkd.get_wug_guild(self.bot.guilds):
             for pattern in hkd.BANNED_USER_PATTERNS:
-                if pattern in member.name:
+                if pattern.lower() in member.name.lower():
                     await member.ban()
