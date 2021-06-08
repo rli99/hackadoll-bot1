@@ -50,7 +50,7 @@ WUG_KAMIOSHI_ROLE_IDS = {
     'yoppi': config['YOPPI_KAMIOSHI_ROLE_ID'],
     'nanamin': config['NANAMIN_KAMIOSHI_ROLE_ID'],
     'kayatan': config['KAYATAN_KAMIOSHI_ROLE_ID'],
-    'myu': config['MYU_KAMIOSHI_ROLE_ID'],
+    'myu': config['MYU_KAMIOSHI_ROLE_ID']
 }
 WUG_ROLE_IDS = {
     'mayushii': config['MAYUSHII_ROLE_ID'],
@@ -59,7 +59,7 @@ WUG_ROLE_IDS = {
     'yoppi': config['YOPPI_ROLE_ID'],
     'nanamin': config['NANAMIN_ROLE_ID'],
     'kayatan': config['KAYATAN_ROLE_ID'],
-    'myu': config['MYU_ROLE_ID'],
+    'myu': config['MYU_ROLE_ID']
 }
 WUG_ONMUSU_CHARS = {
     'mayushii': ['iizaka_mahiro', 0x98d98e],
