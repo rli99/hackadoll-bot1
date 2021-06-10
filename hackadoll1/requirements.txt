@@ -35,7 +35,7 @@ discord-py==1.7.2
     # via -r requirements.in
 firebase-admin==5.0.0
     # via -r requirements.in
-forex-python==1.5
+forex-python==1.6
     # via -r requirements.in
 future==0.18.2
     # via python-twitter
