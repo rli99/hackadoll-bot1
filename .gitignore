@@ -1,4 +1,5 @@
 **/venv
+*.pyc
 /hackadoll1/.gitignore
 /hackadoll1/.instaloader-session
 /hackadoll1/*.db

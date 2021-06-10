@@ -19,7 +19,7 @@ class Moderator(commands.Cog):
         guild_ids=hkd.get_all_guild_ids(),
         default_permission=False,
         permissions={
-            hkd.SERVER_ID: [
+            hkd.get_wug_server_id(): [
                 create_permission(hkd.ADMIN_ID, SlashCommandPermissionType.ROLE, True)
             ]
         },
@@ -47,7 +47,7 @@ class Moderator(commands.Cog):
         guild_ids=hkd.get_all_guild_ids(),
         default_permission=False,
         permissions={
-            hkd.SERVER_ID: [
+            hkd.get_wug_server_id(): [
                 create_permission(hkd.ADMIN_ID, SlashCommandPermissionType.ROLE, True)
             ]
         },
@@ -75,7 +75,7 @@ class Moderator(commands.Cog):
         guild_ids=hkd.get_all_guild_ids(),
         default_permission=False,
         permissions={
-            hkd.SERVER_ID: [
+            hkd.get_wug_server_id(): [
                 create_permission(hkd.ADMIN_ID, SlashCommandPermissionType.ROLE, True)
             ]
         },
@@ -111,7 +111,7 @@ class Moderator(commands.Cog):
         guild_ids=hkd.get_all_guild_ids(),
         default_permission=False,
         permissions={
-            hkd.SERVER_ID: [
+            hkd.get_wug_server_id(): [
                 create_permission(hkd.ADMIN_ID, SlashCommandPermissionType.ROLE, True)
             ]
         },
@@ -138,7 +138,7 @@ class Moderator(commands.Cog):
         guild_ids=hkd.get_all_guild_ids(),
         default_permission=False,
         permissions={
-            hkd.SERVER_ID: [
+            hkd.get_wug_server_id(): [
                 create_permission(hkd.ADMIN_ID, SlashCommandPermissionType.ROLE, True)
             ]
         },

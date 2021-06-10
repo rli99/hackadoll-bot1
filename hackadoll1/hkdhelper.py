@@ -15,9 +15,8 @@ from dateutil import parser
 from discord import Colour, Embed, File, utils as disc_utils
 from discord_slash.utils.manage_commands import create_choice
 from lxml.html import fromstring
+from config import CONFIG
 
-SERVER_ID = 280439975911096320
-TEST_SERVER_ID = 439669047978622977
 TWITTER_CHANNEL_ID = 448716340816248832
 SEIYUU_CHANNEL_ID = 309934970124763147
 WELCOME_CHANNEL_ID = 361552652988973077
@@ -105,22 +104,25 @@ BANNED_USER_PATTERNS = [
 ]
 
 def parse_config():
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-    return config['DEFAULT']
+    config_parser = configparser.ConfigParser()
+    config_parser.read('config.ini')
+    return config_parser['DEFAULT']
+
+def get_wug_server_id():
+    return CONFIG.SERVER_ID
 
 def get_all_guild_ids():
-    return [SERVER_ID, TEST_SERVER_ID]
+    return [CONFIG.SERVER_ID, CONFIG.TEST_SERVER_ID]
 
 def get_wug_guild(guilds):
-    return disc_utils.get(guilds, id=SERVER_ID)
+    return disc_utils.get(guilds, id=CONFIG.SERVER_ID)
 
 def get_updates_channel(guilds):
-    guild = disc_utils.get(guilds, id=SERVER_ID)
+    guild = disc_utils.get(guilds, id=CONFIG.SERVER_ID)
     return disc_utils.get(guild.channels, id=TWITTER_CHANNEL_ID)
 
 def get_seiyuu_channel(guilds):
-    guild = disc_utils.get(guilds, id=SERVER_ID)
+    guild = disc_utils.get(guilds, id=CONFIG.SERVER_ID)
     return disc_utils.get(guild.channels, id=SEIYUU_CHANNEL_ID)
 
 def get_muted_role(guild):
