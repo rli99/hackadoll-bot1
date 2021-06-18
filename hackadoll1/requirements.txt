@@ -31,7 +31,7 @@ chardet==3.0.4
     #   requests
 discord-py-slash-command==1.2.2
     # via -r requirements.in
-discord-py==1.7.2
+discord-py==1.7.3
     # via -r requirements.in
 firebase-admin==5.0.0
     # via -r requirements.in
