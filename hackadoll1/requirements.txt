@@ -29,9 +29,9 @@ chardet==3.0.4
     #   aiohttp
     #   httpx
     #   requests
-discord-py-slash-command==1.2.2
-    # via -r requirements.in
 discord-py==1.7.3
+    # via -r requirements.in
+discord-py-slash-command==1.2.2
     # via -r requirements.in
 firebase-admin==5.0.1
     # via -r requirements.in
@@ -49,14 +49,14 @@ google-api-python-client==1.12.8
     # via
     #   firebase-admin
     #   pydrive
-google-auth-httplib2==0.0.4
-    # via google-api-python-client
 google-auth==1.23.0
     # via
     #   google-api-core
     #   google-api-python-client
     #   google-auth-httplib2
     #   google-cloud-storage
+google-auth-httplib2==0.0.4
+    # via google-api-python-client
 google-cloud-core==1.4.3
     # via
     #   google-cloud-firestore
@@ -126,15 +126,15 @@ protobuf==3.14.0
     #   google-api-core
     #   googleapis-common-protos
     #   proto-plus
-pyasn1-modules==0.2.8
-    # via
-    #   google-auth
-    #   oauth2client
 pyasn1==0.4.8
     # via
     #   oauth2client
     #   pyasn1-modules
     #   rsa
+pyasn1-modules==0.2.8
+    # via
+    #   google-auth
+    #   oauth2client
 pycountry==20.7.3
     # via -r requirements.in
 pycparser==2.20
@@ -143,7 +143,7 @@ pydrive==1.3.1
     # via -r requirements.in
 pyparsing==2.4.7
     # via httplib2
-python-dateutil==2.8.1
+python-dateutil==2.8.2
     # via -r requirements.in
 python-twitter==3.5
     # via -r requirements.in
@@ -154,8 +154,6 @@ pytz==2021.1
     #   google-cloud-firestore
 pyyaml==5.4
     # via pydrive
-requests-oauthlib==1.3.0
-    # via python-twitter
 requests==2.25.0
     # via
     #   cachecontrol
@@ -165,6 +163,8 @@ requests==2.25.0
     #   instaloader
     #   python-twitter
     #   requests-oauthlib
+requests-oauthlib==1.3.0
+    # via python-twitter
 rfc3986==1.4.0
     # via httpx
 rsa==4.7
