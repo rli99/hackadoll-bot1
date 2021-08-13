@@ -7,7 +7,10 @@
 -e git+https://github.com/animelover1984/youtube-dl.git@master#egg=youtube-dl  # via -r requirements.in
     # via -r requirements.in
 aiohttp==3.7.4
-    # via discord-py
+    # via
+    #   discord-py
+    #   discord-py-slash-command
+    #   discord.py
 async-timeout==3.0.1
     # via aiohttp
 attrs==20.3.0
@@ -31,8 +34,10 @@ chardet==3.0.4
     #   requests
 discord-py==1.7.3
     # via -r requirements.in
-discord-py-slash-command==1.2.2
+discord-py-slash-command==3.0.0
     # via -r requirements.in
+discord.py==1.7.3
+    # via discord-py-slash-command
 firebase-admin==5.0.1
     # via -r requirements.in
 forex-python==1.6
