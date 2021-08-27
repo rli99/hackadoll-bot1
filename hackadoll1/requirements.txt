@@ -33,7 +33,7 @@ discord-py==1.7.3
     # via -r requirements.in
 discord-py-slash-command==1.2.2
     # via -r requirements.in
-firebase-admin==5.0.1
+firebase-admin==5.0.2
     # via -r requirements.in
 forex-python==1.6
     # via -r requirements.in
