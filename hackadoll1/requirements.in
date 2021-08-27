@@ -12,7 +12,7 @@ pydrive
 instaloader
 beautifulsoup4
 lxml
-discord-py-slash-command
+discord-py-interactions
 -e git+https://github.com/animelover1984/youtube-dl.git@master#egg=youtube-dl
 mutagen
 websockets
