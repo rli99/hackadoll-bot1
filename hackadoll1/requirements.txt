@@ -203,7 +203,7 @@ uritemplate==3.0.1
     # via google-api-python-client
 urllib3==1.26.5
     # via requests
-websockets==9.1
+websockets==10.0
     # via -r requirements.in
 yarl==1.5.1
     # via aiohttp
