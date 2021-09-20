@@ -97,7 +97,7 @@ httplib2==0.19.0
     #   oauth2client
 httpx==0.13.3
     # via googletrans
-humanfriendly==9.2
+humanfriendly==10.0
     # via -r requirements.in
 hyperframe==5.2.0
     # via h2
