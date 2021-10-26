@@ -38,7 +38,7 @@ discord-py-interactions==3.0.2
     # via -r requirements.in
 discord.py==1.7.3
     # via discord-py-interactions
-firebase-admin==5.0.2
+firebase-admin==5.0.3
     # via -r requirements.in
 forex-python==1.6
     # via -r requirements.in
@@ -97,7 +97,7 @@ httplib2==0.19.0
     #   oauth2client
 httpx==0.13.3
     # via googletrans
-humanfriendly==9.2
+humanfriendly==10.0
     # via -r requirements.in
 hyperframe==5.2.0
     # via h2
