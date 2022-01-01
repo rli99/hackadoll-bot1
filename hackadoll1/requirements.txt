@@ -38,7 +38,7 @@ discord-py-interactions==3.0.2
     # via -r requirements.in
 discord.py==1.7.3
     # via discord-py-interactions
-firebase-admin==5.0.3
+firebase-admin==5.2.0
     # via -r requirements.in
 forex-python==1.8
     # via -r requirements.in
