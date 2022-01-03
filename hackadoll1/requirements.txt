@@ -108,7 +108,7 @@ idna==2.10
     #   yarl
 instaloader==4.8.2
     # via -r requirements.in
-lxml==4.6.5
+lxml==4.7.1
     # via -r requirements.in
 msgpack==1.0.0
     # via cachecontrol
