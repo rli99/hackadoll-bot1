@@ -6,11 +6,10 @@
 #
 -e git+https://github.com/animelover1984/youtube-dl.git@master#egg=youtube-dl  # via -r requirements.in
     # via -r requirements.in
-aiohttp==3.7.4
+aiohttp==3.7.4.post0
     # via
     #   discord-py
     #   discord-py-interactions
-    #   discord.py
 async-timeout==3.0.1
     # via aiohttp
 attrs==20.3.0
@@ -32,12 +31,12 @@ chardet==3.0.4
     #   aiohttp
     #   httpx
     #   requests
+colorama==0.4.4
+    # via discord-py-interactions
 discord-py==1.7.3
     # via -r requirements.in
-discord-py-interactions==3.0.2
+discord-py-interactions==4.0.2
     # via -r requirements.in
-discord.py==1.7.3
-    # via discord-py-interactions
 firebase-admin==5.2.0
     # via -r requirements.in
 forex-python==1.8
@@ -124,6 +123,8 @@ oauth2client==4.1.3
     # via pydrive
 oauthlib==3.1.0
     # via requests-oauthlib
+orjson==3.6.3
+    # via discord-py-interactions
 proto-plus==1.11.0
     # via google-cloud-firestore
 protobuf==3.14.0
