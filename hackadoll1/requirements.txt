@@ -10,7 +10,6 @@ aiohttp==3.7.4
     # via
     #   discord-py
     #   discord-py-interactions
-    #   discord.py
 async-timeout==3.0.1
     # via aiohttp
 attrs==20.3.0
@@ -33,11 +32,11 @@ chardet==3.0.4
     #   httpx
     #   requests
 discord-py==1.7.3
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   discord-py-interactions
 discord-py-interactions==3.0.2
     # via -r requirements.in
-discord.py==1.7.3
-    # via discord-py-interactions
 firebase-admin==5.2.0
     # via -r requirements.in
 forex-python==1.8
@@ -203,7 +202,7 @@ uritemplate==3.0.1
     # via google-api-python-client
 urllib3==1.26.5
     # via requests
-websockets==10.1
+websockets==10.2
     # via -r requirements.in
 yarl==1.5.1
     # via aiohttp
