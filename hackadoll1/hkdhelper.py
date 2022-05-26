@@ -73,15 +73,17 @@ WUG_TWITTER_IDS = {
 }
 WUG_INSTAGRAM_IDS = {
     'nanamin': 'aishite773',
-    'kayatan': 'kaayaataaaan',
+    'kayatan': '_kayarea_',
     'minyami': 'minazou_in_sta',
     'yoppi': 'yopipinsta555',
-    'mayushii': 'yoshioka_mayuc'
+    'mayushii': 'yoshioka_mayuc',
+    'myu': 'miyu_takagi'
 }
 WUG_YOUTUBE_CHANNELS = {
     'nanamin': 'UCZU_aYCkJToNj5OyN1S1BdQ',
     'myu': 'UCcRVUN5NDN6U6nKmWJm4-yA',
-    'yoppi': 'UCCIUO6dSL13XdiZlJGn3xYA'
+    'yoppi': 'UCCIUO6dSL13XdiZlJGn3xYA',
+    'aichan': 'UCvpjMblxDRU3DPXH1CMRtqw'
 }
 WUG_SHOWROOM_IDS = {
     'aichan': 316587
