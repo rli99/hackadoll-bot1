@@ -17,38 +17,18 @@ from discord.ext import commands, tasks
 from instaloader import Profile
 
 class Loop(commands.Cog):
-    def __init__(self, bot, config, muted_members, firebase_ref, calendar, twitter_api, insta_api):
+    def __init__(self, bot, config, firebase_ref, calendar, twitter_api, insta_api):
         self.bot = bot
         self.config = config
-        self.muted_members = muted_members
         self.firebase_ref = firebase_ref
         self.calendar = calendar
         self.twitter_api = twitter_api
         self.insta_api = insta_api
-        self.check_mute_status.start()
         self.check_tweets.start()
         self.check_instagram.start()
         self.check_instagram_stories.start()
         self.check_live_streams.start()
         self.check_youtube_streams.start()
-        self.check_showroom_lives.start()
-
-    @tasks.loop(seconds=60.0)
-    async def check_mute_status(self):
-        members_to_unmute = []
-        for member_id in self.muted_members:
-            if time.time() > float(self.muted_members[member_id]):
-                self.firebase_ref.child('muted_members/{0}'.format(member_id)).delete()
-                members_to_unmute.append(member_id)
-                guild = hkd.get_wug_guild(self.bot.guilds)
-                member = disc_utils.get(guild.members, id=int(member_id))
-                await member.remove_roles(hkd.get_muted_role(guild))
-        for member_id in members_to_unmute:
-            self.muted_members.pop(member_id)
-
-    @check_mute_status.before_loop
-    async def before_check_mute_status(self):
-        await self.bot.wait_until_ready()
 
     @tasks.loop(seconds=30.0)
     async def check_tweets(self):
@@ -247,24 +227,4 @@ class Loop(commands.Cog):
 
     @check_youtube_streams.before_loop
     async def before_check_youtube_streams(self):
-        await self.bot.wait_until_ready()
-
-    @tasks.loop(seconds=30.0)
-    async def check_showroom_lives(self):
-        channel = hkd.get_seiyuu_channel(self.bot.guilds)
-        for member, room_id in hkd.WUG_SHOWROOM_IDS.items():
-            status = self.firebase_ref.child('showroom_live_status/{0}/status'.format(member)).get()
-            last_online = float(self.firebase_ref.child('showroom_live_status/{0}/last_online'.format(member)).get())
-            with suppress(Exception):
-                sr_data = requests.get('https://showroom-live.com/api/room/profile?room_id={0}'.format(room_id), headers=hkd.get_random_header()).json()
-                if sr_data['is_onlive']:
-                    self.firebase_ref.child('showroom_live_status/{0}/last_online'.format(member)).set(time.time())
-                    if status != 'LIVE'and time.time() - last_online > 300:
-                        await channel.send(sr_data.get('share_text_live', '{0} Broadcasting!\n{1}'.format(sr_data['room_name'], sr_data['share_url_live'])))
-                    self.firebase_ref.child('showroom_live_status/{0}/status'.format(member)).set('LIVE')
-                else:
-                    self.firebase_ref.child('showroom_live_status/{0}/status'.format(member)).set('OFFLINE')
-
-    @check_showroom_lives.before_loop
-    async def before_check_showroom_lives(self):
         await self.bot.wait_until_ready()

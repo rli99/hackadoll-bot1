@@ -17,12 +17,6 @@ from discord_slash.utils.manage_commands import create_choice
 from lxml.html import fromstring
 from config import CONFIG
 
-TWITTER_CHANNEL_ID = 448716340816248832
-SEIYUU_CHANNEL_ID = 309934970124763147
-WELCOME_CHANNEL_ID = 361552652988973077
-MUTED_ROLE_ID = 445572638543446016
-BOT_ADMIN_ID = 299908261438816258
-ADMIN_ID = 309964848580526081
 WUG_EVENTERNOTE_IDS = [6988, 3774, 6984, 6983, 6985, 6982, 6986, 6987]
 WUG_MEMBERS = ['Wake Up, Girls', '吉岡茉祐', '永野愛理', '田中美海', '青山吉能', '山下七海', '奥野香耶', '高木美佑']
 VIDEO_LINK_URLS = ['streamable.com', 'youtube.com']
@@ -85,9 +79,6 @@ WUG_YOUTUBE_CHANNELS = {
     'yoppi': 'UCCIUO6dSL13XdiZlJGn3xYA',
     'aichan': 'UCvpjMblxDRU3DPXH1CMRtqw'
 }
-WUG_SHOWROOM_IDS = {
-    'aichan': 316587
-}
 FAKE_USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36',
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36',
@@ -121,14 +112,11 @@ def get_wug_guild(guilds):
 
 def get_updates_channel(guilds):
     guild = disc_utils.get(guilds, id=CONFIG.SERVER_ID)
-    return disc_utils.get(guild.channels, id=TWITTER_CHANNEL_ID)
+    return disc_utils.get(guild.channels, id=CONFIG.TWITTER_CHANNEL_ID)
 
 def get_seiyuu_channel(guilds):
     guild = disc_utils.get(guilds, id=CONFIG.SERVER_ID)
-    return disc_utils.get(guild.channels, id=SEIYUU_CHANNEL_ID)
-
-def get_muted_role(guild):
-    return disc_utils.get(guild.roles, id=MUTED_ROLE_ID)
+    return disc_utils.get(guild.channels, id=CONFIG.SEIYUU_CHANNEL_ID)
 
 def get_wug_role(guild, member):
     with suppress(Exception):
