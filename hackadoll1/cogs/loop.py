@@ -74,7 +74,7 @@ class Loop(commands.Cog):
     async def before_check_tweets(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(minutes=20.0)
+    @tasks.loop(minutes=40.0)
     async def check_instagram(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
         with suppress(Exception):
@@ -101,13 +101,13 @@ class Loop(commands.Cog):
                     await channel.send(embed=hkd.create_embed(author=author, title='Post by {0}'.format(user_name), description=post_text, colour=colour, url=post_link, image=post_pic))
                 if posted_updates:
                     self.firebase_ref.child('last_instagram_posts/{0}'.format(instagram_id)).set(str(max(posted_updates)))
-        self.check_instagram.change_interval(minutes=random.randint(20, 30))
+        self.check_instagram.change_interval(minutes=random.randint(30, 50))
 
     @check_instagram.before_loop
     async def before_check_instagram(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(minutes=30.0)
+    @tasks.loop(minutes=40.0)
     async def check_instagram_stories(self):
         channel = hkd.get_updates_channel(self.bot.guilds)
         with suppress(Exception):

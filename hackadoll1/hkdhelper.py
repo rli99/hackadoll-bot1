@@ -63,7 +63,8 @@ WUG_TWITTER_IDS = {
     'minyami': 1113445785004269568,
     'kayatan': 1123177804114190336,
     'yoppi': 1128244095887917056,
-    'aichan': 1134589498610802688
+    'aichan': 1134589498610802688,
+    'nanamin': 1549079196755849216
 }
 WUG_INSTAGRAM_IDS = {
     'nanamin': 'aishite773',
