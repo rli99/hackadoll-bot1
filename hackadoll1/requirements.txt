@@ -31,7 +31,7 @@ chardet==3.0.4
     #   aiohttp
     #   httpx
     #   requests
-discord-py==1.7.3
+discord-py==2.0.0
     # via
     #   -r requirements.in
     #   discord-py-interactions
