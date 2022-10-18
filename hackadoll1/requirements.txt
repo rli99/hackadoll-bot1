@@ -25,19 +25,23 @@ certifi==2020.11.8
     #   httpx
     #   requests
 cffi==1.14.4
-    # via google-crc32c
+    # via
+    #   cryptography
+    #   google-crc32c
 chardet==3.0.4
     # via
     #   aiohttp
     #   httpx
     #   requests
+cryptography==38.0.1
+    # via pyjwt
 discord-py==1.7.3
     # via
     #   -r requirements.in
     #   discord-py-interactions
 discord-py-interactions==3.0.2
     # via -r requirements.in
-firebase-admin==5.2.0
+firebase-admin==6.0.1
     # via -r requirements.in
 forex-python==1.8
     # via -r requirements.in
@@ -143,6 +147,8 @@ pycparser==2.20
     # via cffi
 pydrive==1.3.1
     # via -r requirements.in
+pyjwt[crypto]==2.5.0
+    # via firebase-admin
 pyparsing==2.4.7
     # via httplib2
 python-dateutil==2.8.2
@@ -194,6 +200,8 @@ soupsieve==2.0.1
     # via beautifulsoup4
 timezonefinder==5.2.0
     # via -r requirements.in
+types-cryptography==3.3.23.1
+    # via pyjwt
 typing-extensions==3.7.4.3
     # via aiohttp
 uritemplate==3.0.1
