@@ -25,7 +25,9 @@ certifi==2020.11.8
     #   httpx
     #   requests
 cffi==1.14.4
-    # via google-crc32c
+    # via
+    #   google-crc32c
+    #   timezonefinder
 chardet==3.0.4
     # via
     #   aiohttp
@@ -83,6 +85,8 @@ h11==0.9.0
     # via httpcore
 h2==3.2.0
     # via httpcore
+h3==3.7.4
+    # via timezonefinder
 hpack==3.0.0
     # via h2
 hstspreload==2020.11.21
@@ -192,7 +196,7 @@ sniffio==1.2.0
     #   httpx
 soupsieve==2.0.1
     # via beautifulsoup4
-timezonefinder==5.2.0
+timezonefinder==6.1.4
     # via -r requirements.in
 typing-extensions==3.7.4.3
     # via aiohttp
