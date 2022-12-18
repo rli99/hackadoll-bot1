@@ -103,7 +103,7 @@ idna==2.10
     #   httpx
     #   requests
     #   yarl
-lxml==4.8.0
+lxml==4.9.2
     # via -r requirements.in
 msgpack==1.0.0
     # via cachecontrol
