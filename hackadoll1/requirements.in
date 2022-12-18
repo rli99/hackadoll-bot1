@@ -8,7 +8,6 @@ python-twitter
 pytz
 timezonefinder
 pydrive
-instaloader
 beautifulsoup4
 lxml
 discord-py-interactions
