@@ -8,13 +8,11 @@ from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 from discord_slash import cog_ext, SlashContext
 from discord_slash.utils.manage_commands import create_option
-from instaloader import Post, Profile
 
 class Pics(commands.Cog):
-    def __init__(self, bot, twitter_api, insta_api):
+    def __init__(self, bot, twitter_api):
         self.bot = bot
         self.twitter_api = twitter_api
-        self.insta_api = insta_api
 
     @cog_ext.cog_slash(
         description="Get images from the specified tweet.",
@@ -37,38 +35,6 @@ class Pics(commands.Cog):
             return
         pics = [p.get('media_url_https', '') for p in media]
         await hkd.send_content_with_delay(ctx, pics)
-
-    @cog_ext.cog_slash(
-        description="Get images from the specified Instagram post.",
-        guild_ids=hkd.get_all_guild_ids(),
-        options=[
-            create_option(
-                name="url",
-                description="URL of the Instagram post.",
-                option_type=3,
-                required=True
-            )
-        ]
-    )
-    @commands.cooldown(1, 10, BucketType.guild)
-    async def instapics(self, ctx: SlashContext, url: str):
-        await ctx.defer()
-        if not ((shortcode := hkd.get_id_from_url(url, '/p/', '/')) or (shortcode := hkd.get_id_from_url(url, '/reel/', '/'))):
-            return
-        images, videos = [], []
-        post = Post.from_shortcode(self.insta_api.context, shortcode)
-        if post.typename == 'GraphSidecar':
-            for node in post.get_sidecar_nodes():
-                if node.is_video:
-                    videos.append(node.video_url)
-                else:
-                    images.append(node.display_url)
-        elif post.typename == 'GraphImage':
-            images.append(post.url)
-        elif post.typename == 'GraphVideo':
-            videos.append(post.video_url)
-        await hkd.send_content_with_delay(ctx, images)
-        await hkd.send_content_with_delay(ctx, videos)
 
     @cog_ext.cog_slash(
         description="Get images from the specified Ameba blog post.",
@@ -131,10 +97,6 @@ class Pics(commands.Cog):
     @commands.cooldown(1, 10, BucketType.guild)
     async def profilepic(self, ctx: SlashContext, url: str):
         await ctx.defer()
-        if hkd.check_url_host(url, ['instagram.com']):
-            account_id = hkd.get_id_from_url(url, 'instagram.com/', '/')
-            profile = Profile.from_username(self.insta_api.context, account_id)
-            await ctx.send(profile.profile_pic_url)
         elif hkd.check_url_host(url, ['twitter.com']):
             account_name = hkd.get_id_from_url(url, 'twitter.com/', '/')
             user = self.twitter_api.GetUser(screen_name=account_name)

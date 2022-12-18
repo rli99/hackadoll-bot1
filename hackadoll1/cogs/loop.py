@@ -1,7 +1,4 @@
 import asyncio
-import os
-import random
-import subprocess
 import time
 from contextlib import suppress
 from datetime import datetime
@@ -12,23 +9,18 @@ import requests
 import hkdhelper as hkd
 from bs4 import BeautifulSoup
 from dateutil import parser
-from discord import Colour, File, utils as disc_utils
+from discord import Colour
 from discord.ext import commands, tasks
-from instaloader import Profile
 
 class Loop(commands.Cog):
-    def __init__(self, bot, config, firebase_ref, calendar, twitter_api, insta_api):
+    def __init__(self, bot, config, firebase_ref, calendar, twitter_api):
         self.bot = bot
         self.config = config
         self.firebase_ref = firebase_ref
         self.calendar = calendar
         self.twitter_api = twitter_api
-        self.insta_api = insta_api
         self.check_tweets.start()
-        self.check_instagram.start()
-        self.check_instagram_stories.start()
         self.check_live_streams.start()
-        self.check_youtube_streams.start()
 
     @tasks.loop(seconds=30.0)
     async def check_tweets(self):
@@ -74,91 +66,6 @@ class Loop(commands.Cog):
     async def before_check_tweets(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(minutes=40.0)
-    async def check_instagram(self):
-        channel = hkd.get_updates_channel(self.bot.guilds)
-        with suppress(Exception):
-            for instagram_id in self.firebase_ref.child('last_instagram_posts').get().keys():
-                last_post_id = int(self.firebase_ref.child('last_instagram_posts/{0}'.format(instagram_id)).get())
-                profile = Profile.from_username(self.insta_api.context, instagram_id)
-                user_name = profile.full_name
-                posted_updates = []
-                for post in profile.get_posts():
-                    if post.mediaid <= last_post_id:
-                        break
-                    post_text = post.caption
-                    post_pic = post.url
-                    post_link = 'https://www.instagram.com/p/{0}/'.format(post.shortcode)
-                    posted_updates.append(post.mediaid)
-                    if instagram_id in hkd.WUG_INSTAGRAM_IDS.values():
-                        colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), hkd.dict_reverse(hkd.WUG_INSTAGRAM_IDS)[instagram_id])
-                    else:
-                        colour = Colour(0x242424)
-                    author = {}
-                    author['name'] = '{0} (@{1})'.format(user_name, instagram_id)
-                    author['url'] = 'https://www.instagram.com/{0}/'.format(instagram_id)
-                    author['icon_url'] = profile.profile_pic_url
-                    await channel.send(embed=hkd.create_embed(author=author, title='Post by {0}'.format(user_name), description=post_text, colour=colour, url=post_link, image=post_pic))
-                if posted_updates:
-                    self.firebase_ref.child('last_instagram_posts/{0}'.format(instagram_id)).set(str(max(posted_updates)))
-        self.check_instagram.change_interval(minutes=random.randint(30, 50))
-
-    @check_instagram.before_loop
-    async def before_check_instagram(self):
-        await self.bot.wait_until_ready()
-
-    @tasks.loop(minutes=40.0)
-    async def check_instagram_stories(self):
-        channel = hkd.get_updates_channel(self.bot.guilds)
-        with suppress(Exception):
-            instaloader_args = ['instaloader', '--login={0}'.format(self.config['instagram_user']), '--sessionfile=./.instaloader-session', '--quiet', '--dirname-pattern={profile}', '--filename-pattern={profile}_{mediaid}', ':stories']
-            proc = subprocess.Popen(args=instaloader_args)
-            while proc.poll() is None:
-                await asyncio.sleep(1)
-            for instagram_id in self.firebase_ref.child('last_instagram_stories').get().keys():
-                if not os.path.isdir(instagram_id):
-                    continue
-                story_videos = [v for v in os.listdir(instagram_id) if v.endswith('.mp4')]
-                last_story_id = int(self.firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).get())
-                uploaded_story_ids = []
-                stories_to_upload = []
-                for vid in story_videos:
-                    video_id = int(vid[:-4].split('_')[-1])
-                    if video_id > last_story_id:
-                        stories_to_upload.append(vid)
-                        uploaded_story_ids.append(video_id)
-                story_pics = [p for p in os.listdir(instagram_id) if p.endswith('.jpg')]
-                for pic in story_pics:
-                    pic_id = int(pic[:-4].split('_')[-1])
-                    if pic_id > last_story_id and pic_id not in uploaded_story_ids:
-                        stories_to_upload.append(pic)
-                        uploaded_story_ids.append(pic_id)
-                if uploaded_story_ids:
-                    profile = Profile.from_username(self.insta_api.context, instagram_id)
-                    user_name = profile.full_name
-                    if instagram_id in hkd.WUG_INSTAGRAM_IDS.values():
-                        colour = hkd.get_oshi_colour(hkd.get_wug_guild(self.bot.guilds), hkd.dict_reverse(hkd.WUG_INSTAGRAM_IDS)[instagram_id])
-                    else:
-                        colour = Colour(0x242424)
-                    author = {}
-                    author['name'] = '{0} (@{1})'.format(user_name, instagram_id)
-                    author['url'] = 'https://www.instagram.com/{0}/'.format(instagram_id)
-                    author['icon_url'] = profile.profile_pic_url
-                    story_link = 'https://www.instagram.com/stories/{0}/'.format(instagram_id)
-                first_upload = True
-                for story in sorted(stories_to_upload):
-                    if first_upload:
-                        await channel.send(embed=hkd.create_embed(author=author, title='Instagram Story Updated by {0}'.format(user_name), colour=colour, url=story_link))
-                        first_upload = False
-                    await channel.send(file=File('./{0}/{1}'.format(instagram_id, story)))
-                if uploaded_story_ids:
-                    self.firebase_ref.child('last_instagram_stories/{0}'.format(instagram_id)).set(str(max(uploaded_story_ids)))
-        self.check_instagram.change_interval(minutes=random.randint(30, 50))
-
-    @check_instagram_stories.before_loop
-    async def before_check_instagram_stories(self):
-        await self.bot.wait_until_ready()
-
     @tasks.loop(seconds=30.0)
     async def check_live_streams(self):
         channel = hkd.get_seiyuu_channel(self.bot.guilds)
@@ -189,42 +96,4 @@ class Loop(commands.Cog):
 
     @check_live_streams.before_loop
     async def before_check_live_streams(self):
-        await self.bot.wait_until_ready()
-
-    @tasks.loop(seconds=30.0)
-    async def check_youtube_streams(self):
-        channel = hkd.get_seiyuu_channel(self.bot.guilds)
-        with suppress(Exception):
-            stream_status = self.firebase_ref.child('youtube_stream_status').get().keys()
-            for member in stream_status:
-                channel_id = hkd.WUG_YOUTUBE_CHANNELS[member]
-                status = self.firebase_ref.child('youtube_stream_status/{0}/status'.format(member)).get()
-                last_online = float(self.firebase_ref.child('youtube_stream_status/{0}/last_online'.format(member)).get())
-                last_video_id = self.firebase_ref.child('youtube_stream_status/{0}/video_id'.format(member)).get()
-                videos = hkd.get_video_data_from_youtube(channel_id)
-                is_live = False
-                if len(videos) < 10:
-                    for video in videos:
-                        renderer = video['gridVideoRenderer']
-                        if 'thumbnailOverlays' in renderer:
-                            overlay = renderer['thumbnailOverlays'][0]
-                            if overlay['thumbnailOverlayTimeStatusRenderer']['text']['runs'][0].get('text') == 'LIVE':
-                                is_live = True
-                                video_id = renderer['videoId']
-                                self.firebase_ref.child('youtube_stream_status/{0}/last_online'.format(member)).set(time.time())
-                                self.firebase_ref.child('youtube_stream_status/{0}/video_id'.format(member)).set(video_id)
-                                if status != 'LIVE':
-                                    if time.time() - last_online > 300 or last_video_id != video_id:
-                                        channel_name = hkd.parse_oshi_name(member).title()
-                                        with suppress(Exception):
-                                            label = renderer['title']['accessibility']['accessibilityData']['label']
-                                            channel_name = label.split(' ')[-3]
-                                        await channel.send('{0} LIVE NOW at https://www.youtube.com/watch?v={1}'.format(channel_name, video_id))
-                                    self.firebase_ref.child('youtube_stream_status/{0}/status'.format(member)).set('LIVE')
-                                break
-                if status == 'LIVE' and not is_live:
-                    self.firebase_ref.child('youtube_stream_status/{0}/status'.format(member)).set('OFFLINE')
-
-    @check_youtube_streams.before_loop
-    async def before_check_youtube_streams(self):
         await self.bot.wait_until_ready()

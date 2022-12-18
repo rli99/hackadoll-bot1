@@ -1,5 +1,4 @@
 import discord
-import instaloader
 import twitter
 from apiclient.discovery import build
 from discord.ext import commands
@@ -30,8 +29,6 @@ def main():
     initialize_app(certificate, {'databaseURL': config['firebase_db']})
     firebase_ref = db.reference()
     twitter_api = twitter.Api(consumer_key=config['consumer_key'], consumer_secret=config['consumer_secret'], access_token_key=config['access_token_key'], access_token_secret=config['access_token_secret'], tweet_mode='extended')
-    insta_api = instaloader.Instaloader(max_connection_attempts=1)
-    insta_api.load_session_from_file(config['instagram_user'], filename='./.instaloader-session')
     calendar = build('calendar', 'v3', http=file.Storage('credentials.json').get().authorize(Http()))
 
     bot.add_cog(Help(bot))
@@ -39,9 +36,9 @@ def main():
     bot.add_cog(Info(bot))
     bot.add_cog(Events(bot))
     bot.add_cog(Tags(bot, firebase_ref))
-    bot.add_cog(Pics(bot, twitter_api, insta_api))
+    bot.add_cog(Pics(bot, twitter_api))
     bot.add_cog(Misc(bot, config))
-    bot.add_cog(Loop(bot, config, firebase_ref, calendar, twitter_api, insta_api))
+    bot.add_cog(Loop(bot, config, firebase_ref, calendar, twitter_api))
     bot.add_cog(Listen(bot))
 
     bot.run(config['token'])
