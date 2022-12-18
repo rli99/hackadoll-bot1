@@ -121,7 +121,7 @@ oauthlib==3.1.0
     # via requests-oauthlib
 proto-plus==1.11.0
     # via google-cloud-firestore
-protobuf==3.15.0
+protobuf==3.18.3
     # via
     #   google-api-core
     #   googleapis-common-protos
@@ -181,7 +181,6 @@ six==1.15.0
     #   google-resumable-media
     #   grpcio
     #   oauth2client
-    #   protobuf
     #   python-dateutil
 sniffio==1.2.0
     # via
