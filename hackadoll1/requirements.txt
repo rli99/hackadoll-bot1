@@ -111,7 +111,7 @@ multidict==4.7.6
     # via
     #   aiohttp
     #   yarl
-mutagen==1.45.1
+mutagen==1.46.0
     # via -r requirements.in
 numpy==1.21.0
     # via timezonefinder
